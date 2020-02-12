@@ -39,6 +39,8 @@ fi
 
 rm -f ${out_basename}_XX.txt ${out_basename}_YY.txt
 
+eda_sensitivity_path=`which eda_sensitivity.py`
+
 index=0
 while read line
 do
@@ -50,8 +52,8 @@ do
       header_options="--no-header"
    fi
    
-   echo "python eda_sensitivity.py -c ${freq_cc} -p None -g ${obsID}  -m analytic --az=${az_deg} --za=${za_deg} --outsens_file=${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 ${header_options} ${options}"
-   python eda_sensitivity.py -c ${freq_cc} -p None -g ${obsID}  -m analytic --az=${az_deg} --za=${za_deg} --outsens_file=${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 ${header_options} ${options}
+   echo "python $eda_sensitivity_path -c ${freq_cc} -p None -g ${obsID}  -m analytic --az=${az_deg} --za=${za_deg} --outsens_file=${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 ${header_options} ${options}"
+   python $eda_sensitivity_path -c ${freq_cc} -p None -g ${obsID}  -m analytic --az=${az_deg} --za=${za_deg} --outsens_file=${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 ${header_options} ${options}
    
    echo "------------------------------------------------------------ $obsID / $freq_cc ------------------------------------------------------------"
    
