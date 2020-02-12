@@ -62,6 +62,11 @@ if [[ -n "${10}" && "${10}" != "-" ]]; then
    max_az=${10}
 fi
 
+za_start=0
+if [[ -n "${11}" && "${11}" != "-" ]]; then
+   za_start=${11}
+fi
+
 
 eda_sensitivity_path=`which eda_sensitivity.py`
 
@@ -78,7 +83,7 @@ do
    echo "------------------ ux = $ux -> gps = $gps -> lst = $lst [h] -> $dtm UTC ------------------"
    obs_list=obs_list_${gps}.txt
 
-   za=0
+   za=${za_start}
    while [[ $za -le 90 ]]; 
    do
       az=0
