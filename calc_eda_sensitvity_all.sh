@@ -67,6 +67,17 @@ if [[ -n "${11}" && "${11}" != "-" ]]; then
    za_start=${11}
 fi
 
+za_end=90
+if [[ -n "${12}" && "${12}" != "-" ]]; then
+   za_end=${12}
+fi
+
+echo "########################################"
+echo "PARAMETERS:"
+echo "########################################"
+echo "za range : $za_start - $za_end [deg]"
+echo "########################################"
+
 
 eda_sensitivity_path=`which eda_sensitivity.py`
 
@@ -84,7 +95,7 @@ do
    obs_list=obs_list_${gps}.txt
 
    za=${za_start}
-   while [[ $za -le 90 ]]; 
+   while [[ $za -le ${za_end} ]]; 
    do
       az=0
       while [[ $az -le ${max_az} ]]; 
