@@ -38,7 +38,7 @@ do
      }else{
         if( $1 != "#" ){
            if( start > 0 ){
-               printf("INSERT INTO Sensitivity (polarisation,azim_deg,za_deg,frequency_mhz,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,creator,code_version) VALUES (\"%s\"%.4f,%.4f,%.2f,%.8f,%.2f,%.2f,%.8f,%.2f,%.4f,%.2f,%.2f,%d,\"%s\",\"%s\");\n",pol,az,za,$1,lst,ux,gps,$2,$3,$4,$5,$6,station_type,creator,code_version);
+               printf("INSERT INTO Sensitivity (polarisation,azim_deg,za_deg,frequency_mhz,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,creator,code_version) VALUES (\"%s\",%.4f,%.4f,%.2f,%.8f,%.2f,%.2f,%.8f,%.2f,%.4f,%.2f,%.2f,%d,\"%s\",\"%s\");\n",pol,az,za,$1,lst,ux,gps,$2,$3,$4,$5,$6,station_type,creator,code_version);
            }
          }
      }
