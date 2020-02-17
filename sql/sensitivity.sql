@@ -1,3 +1,5 @@
+DROP TABLE Sensitivity;
+
 CREATE TABLE Sensitivity (
    id             INTEGER PRIMARY KEY AUTOINCREMENT ,      -- star id
    azim_deg       real NOT NULL, -- azimuth from North (0deg) -> East (90deg) -> South (180deg) -> West (270deg)
@@ -19,5 +21,5 @@ CREATE TABLE Sensitivity (
                                  -- where eda1 - is the code exactly as in the EDA1 paper
 );   
 
-CREATE UNIQUE INDEX Sensitivity_unique_index on Sensitivity (array_type,code_version,azim_deg,za_deg,frequency_mhz,unixtime);   
+CREATE UNIQUE INDEX Sensitivity_unique_index on Sensitivity (array_type,code_version,azim_deg,za_deg,frequency_mhz,unixtime,polarisation);   
    
