@@ -1,3 +1,5 @@
+-- My cheatshit for sqlite3 : https://www.tutorialspoint.com/sqlite/sqlite_quick_guide.htm
+
 DROP TABLE Sensitivity;
 
 CREATE TABLE Sensitivity (
