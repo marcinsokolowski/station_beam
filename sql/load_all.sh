@@ -1,7 +1,5 @@
 #!/bin/bash
 
-station_beam_dir=/home/msok/github/station_beam/
-
 data_dir=/home/msok/github/station_beam/data/EDA2/nimbus5/za0-30deg
 if [[ -n "$1" && "$1" != "-" ]]; then
    data_dir=$1
@@ -12,22 +10,43 @@ if [[ -n "$2" && "$2" != "-" ]]; then
    do_convert=$2  
 fi
 
-if [[ $do_convert -gt 0 ]]; then
-   cd ${data_dir}/
-   echo "${station_beam_dir}/sql/txt2sql.sh"
-   ${station_beam_dir}/sql/txt2sql.sh
-   cd -
-else 
-   echo "WARNING : conversion step not required (set 2nd parameter to 1 to enforce)"
-fi   
+station_name=EDA2
+if [[ -n "$3" && "$3" != "-" ]]; then
+   station_name=$3
+fi
 
-for sqlfile in `ls ${data_dir}/*.sql`
+station_beam_dir=~/github/station_beam/
+if [[ -n "$4" && "$4" != "-" ]]; then
+   station_beam_dir=$4
+fi
+
+
+cd ${data_dir}/
+rm -f all.sql
+for txtfile in `ls 1*.txt`
 do
-   echo
-   date
-   echo "sqlite3 ska_station_sensitivity.db < ${sqlfile}"
-   sqlite3 ska_station_sensitivity.db < ${sqlfile}   
+   sqlfile=${txtfile%%txt}sql
+ 
+   echo "${station_beam_dir}/sql/txt2sql.sh $txtfile $sqlfile"
+   ${station_beam_dir}/sql/txt2sql.sh $txtfile $sqlfile
+   
+   echo "cat $sqlfile >> all.sql"
+   cat $sqlfile >> all.sql
 done
 
 
-
+date
+echo "sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql"
+sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql 
+date
+   
+# for txtfile in `ls 1*.txt`
+#do
+#   sqlfile=${txtfile%%txt}sql
+#      
+#   echo
+#   date
+#   echo "sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db < ${sqlfile}"
+#   sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db < ${sqlfile}   
+#done
+#cd -
