@@ -7,8 +7,8 @@ make_primarybeammap()
 
 
 """
-from mwapy import ephem_utils
-import primary_beam 
+# from mwapy import ephem_utils
+# import primary_beam 
 import beam_tools
 import eda_beam
 import read_feko
