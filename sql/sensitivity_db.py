@@ -106,19 +106,37 @@ def parse_options(idx):
    parser.add_option('-a','--azim','--azim_deg',dest="azim_deg",default=None, help="Pointing direction azimuth in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidreal time in hours [default %default]",metavar="float",type="float")
+
+   # output file :
+   parser.add_option('-f','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
 
    return (options, args)
- 
+
+def save_output_file( freq, aot, pol, out_file_base ) :
+   outfile_pol = ( "%s_%s.txt" % (out_file_base,pol) ) 
+   out_f = open( outfile_pol , "w" )
+   
+   len = freq.shape[0]
+   for i in range(0,len) :
+      line = "%.4f %.8f\n" % (freq[i],aot[i])
+      
+      out_f.write( line )
+   
+   out_f.close()
  
 if __name__ == "__main__":
     (options, args) = parse_options(1)
 
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
-       
+
+       if options.output_file is not None :
+          save_output_file( out_freq_x,out_aot_x, "X" , options.output_file )
+          save_output_file( out_freq_y,out_aot_y, "Y" , options.output_file )
+
        if options.do_plot :
           plot_sensitivity( out_freq_x,out_aot_x, out_freq_y,out_aot_y )
           # do plot AoT vs. Freq :
