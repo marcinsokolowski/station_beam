@@ -12,7 +12,7 @@ import beam_tools
 
 # script for quering SQLITE3 or PostgreSQL databases for sensitivity values :
 # HELP : python : https://www.sqlitetutorial.net/sqlite-python/ , https://www.sqlitetutorial.net/sqlite-python/sqlite-python-select/
-
+#        Plot vs. time : /home/msok/ska/aavs/aavs0.5/trunk/analysis/MWAdas/scripts$ plot_delay.py
 
 def create_connection_sqlite3( db_file ):
     """ create a database connection to the SQLite database
@@ -36,12 +36,26 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
-
-
+  
+    # select closest LST :
+    cur = conn.cursor()
+    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    print "DEBUG SQL1 : %s" % (szSQL)
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+    min_lst_distance = None
+    for row in rows:
+       min_lst_distance = float( row[0] )
+    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    
+    if min_lst_distance is None :
+       print "ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
+       return (None,None,None,None,None,None)
+ 
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
-    print "DEBUG : %s" % (szSQL)
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    print "DEBUG SQL2 : %s" % (szSQL)
     cur.execute( szSQL )
     rows = cur.fetchall()
  
@@ -157,14 +171,32 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 
 
 
-def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, point_x='go', point_y='rx' ):
+def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
 
    plt.figure()
-   plt.plot( freq_x, aot_x, point_x )
-   plt.plot( freq_y, aot_y, point_y )
+   if freq_x is not None and aot_x is not None :
+      plt.plot( freq_x, aot_x, point_x )
+   
+   if freq_y is not None and aot_y is not None :
+      plt.plot( freq_y, aot_y, point_y )
+
+   # legend :
+   if freq_x is not None and aot_x is not None and freq_y is not None and aot_y is not None :
+      plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+   else :
+      if freq_x is not None and aot_x is not None :
+         plt.legend(('X polarisation'), loc='upper right')
+      else :
+         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[freq_y, aot_y])
+   
    plt.xlabel('Frequency (MHz)')
    plt.ylabel('Sensitivity A/T [m^2/K]')
    plt.grid()
+   
+   if output_file_base is not None :
+      outfile = ( "%s.png" % (output_file_base) )
+      plt.savefig( outfile )
+   
    plt.show()
 
  
@@ -247,13 +279,17 @@ if __name__ == "__main__":
 
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
+       
+       if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
+          if options.output_file is not None :
+             if out_freq_x is not None and out_aot_x is not None :
+                save_output_file( out_freq_x,out_aot_x, "X" , options.output_file )
+             
+             if out_freq_y is not None and out_aot_y is not None :
+                save_output_file( out_freq_y,out_aot_y, "Y" , options.output_file )
 
-       if options.output_file is not None :
-          save_output_file( out_freq_x,out_aot_x, "X" , options.output_file )
-          save_output_file( out_freq_y,out_aot_y, "Y" , options.output_file )
-
-       if options.do_plot :
-          plot_sensitivity( out_freq_x,out_aot_x, out_freq_y,out_aot_y )
+          if options.do_plot :
+             plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file )
           # do plot AoT vs. Freq :
 
     # TODO :
