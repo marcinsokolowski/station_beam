@@ -6,6 +6,9 @@ from pylab import *
 import numpy
 import matplotlib.pyplot as plt
 
+# local packages :
+import beam_tools
+
 
 # script for quering SQLITE3 or PostgreSQL databases for sensitivity values :
 # HELP : python : https://www.sqlitetutorial.net/sqlite-python/ , https://www.sqlitetutorial.net/sqlite-python/sqlite-python-select/
@@ -27,14 +30,15 @@ def create_connection_sqlite3( db_file ):
 
 # get sensitivity vs. frequency for given pointing direction [degrees] and lst [hours]:
 def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
-                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="./", 
+                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00 ) :
                              
-    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)   
-    
+    # connect to the database :                             
+    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
 
 
+    # get requested data :
     cur = conn.cursor()
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (az_deg-%.4f)<%.4f" %  (lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
     cur.execute( szSQL )
@@ -86,6 +90,72 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
 
+
+# 
+def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_end_h , 
+                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00 ) :
+                             
+    # connect to the database :                             
+    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
+    conn = create_connection_sqlite3( dbname_file )
+
+
+    # get requested data :
+    cur = conn.cursor()
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between (%.4f and %.4f) AND (za_deg-%.4f)<%.4f AND (az_deg-%.4f)<%.4f AND ABS(frequency_mhz-%.4f)<%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, freq_mhz, freq_resolution_mhz )
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+ 
+    out_lst_x = []
+    out_aot_x  = []
+    out_sefd_x = []
+    
+    out_lst_y = []
+    out_aot_y  = []
+    out_sefd_y = []
+        
+    for row in rows:
+        print(row)
+        
+        id = int( row[0] )
+        azim_deg_db = float( row[1] )
+        za_deg_db   = float( row[2] )
+        freq_mhz    = float( row[3] )
+        pol         = row[4]
+        lst_db      = float( row[5] )
+        unixtime    = float( row[6] )
+        gpstime     = float( row[7] )
+        aot         = float( row[8] )
+        sefd        = (2*1380.00)/aot
+        a_eff       = float( row[9] )
+        t_rcv       = float( row[10] )
+        t_ant       = float( row[11] )
+        array_type  = int( row[12] )
+        timestamp   = row[13]
+        creator     = row[14]
+        code_version = row[15]
+        
+        print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
+        
+        if pol == "X" :
+           out_lst_x.append( lst_db )
+           out_aot_x.append( aot )
+           out_sefd_x.append( sefd ) 
+        elif pol == "Y" :
+           out_lst_y.append( lst_db )
+           out_aot_y.append( aot )
+           out_sefd_y.append( sefd )            
+        else :
+           print "ERROR : unknown polarisation = %s" % (pol)
+ 
+
+    return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
+             numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+
+
+
+
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, point_x='go', point_y='rx' ):
 
    plt.figure()
@@ -99,6 +169,11 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, point_x='go', point_y='rx' )
  
 def parse_options(idx):
    usage="Usage: %prog [options]\n"
+   usage += "Different plots / data can be obtainted:\n"
+   usage += " 1/ to plot AoT vs. freq. for a given pointing direction (az,za) and lst time use options --azim_deg, --za_deg, --lst_hours\n"
+   usage += " 2/ to plot AoT vs. time for a specified frequency use options --freq_mhz, --lst_start, --lst_end\n"
+   usage += " 3/ to plot sensitivity map over the entire sky at a specified LST and frequency specify options : --lst_hours and --freq_mhz\n"
+   
    parser = OptionParser(usage=usage,version=1.00)
 
    # TEST : azim=0, za=0, lst=15.4 
@@ -110,11 +185,31 @@ def parse_options(idx):
    # specific frequency in MHz 
    parser.add_option('-f','--freq_mhz','--frequency_mhz',dest="freq_mhz",default=None, help="Specific frequency in MHz [default %default]",metavar="float",type="float")
 
+   # specify lst range :
+   parser.add_option('--lst_start','--lst_start_hours',dest="lst_start_hours",default=None, help="Start time in Local sidreal time in hours [default %default]",metavar="float",type="float")
+   parser.add_option('--lst_end','--lst_end_hours',dest="lst_end_hours",default=None, help="End time in Local sidreal time in hours [default %default]",metavar="float",type="float")
+
+   # specify Unix time range :
+   parser.add_option('--ux_start','--unixtime_start',dest="unixtime_start",default=None, help="Start time in unixtime [default %default]",metavar="float",type="float")
+   parser.add_option('--ux_end','--unixtime_end',dest="unixtime_end",default=None, help="End time in unixtime [default %default]",metavar="float",type="float")
+
+
    # output file :
    parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
+   
+   print "###############################################################"
+   print "PARAMATERS : "
+   print "###############################################################"
+   print "Do plotting                = %s" % (options.do_plot)
+   print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+   print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
+   print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
+   print "LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours)
+   print "Unix time range            = %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+   print "###############################################################"
 
    return (options, args)
 
@@ -153,6 +248,9 @@ if __name__ == "__main__":
 
     # TODO :
     # option to plot map of the sky in zenith projection showing sensitivity across the whole sky
+    #    help : https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html
+    #           https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.RegularGridInterpolator.html
+    # 
     # option to plot sensitivity at a given pointing direction and frequency and over a specified time range 
     
         
