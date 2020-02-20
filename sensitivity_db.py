@@ -107,8 +107,11 @@ def parse_options(idx):
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidreal time in hours [default %default]",metavar="float",type="float")
 
+   # specific frequency in MHz 
+   parser.add_option('-f','--freq_mhz','--frequency_mhz',dest="freq_mhz",default=None, help="Specific frequency in MHz [default %default]",metavar="float",type="float")
+
    # output file :
-   parser.add_option('-f','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
+   parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
@@ -119,13 +122,20 @@ def save_output_file( freq, aot, pol, out_file_base ) :
    outfile_pol = ( "%s_%s.txt" % (out_file_base,pol) ) 
    out_f = open( outfile_pol , "w" )
    
+   header_line = "# Frequency[MHz]  A/T[m^2/K]\n"
+   out_f.write( header_line )
+   
    len = freq.shape[0]
+   n_lines = 0
    for i in range(0,len) :
       line = "%.4f %.8f\n" % (freq[i],aot[i])
       
       out_f.write( line )
+      n_lines += 1
    
    out_f.close()
+   
+   return n_lines
  
 if __name__ == "__main__":
     (options, args) = parse_options(1)
@@ -140,5 +150,10 @@ if __name__ == "__main__":
        if options.do_plot :
           plot_sensitivity( out_freq_x,out_aot_x, out_freq_y,out_aot_y )
           # do plot AoT vs. Freq :
+
+    # TODO :
+    # option to plot map of the sky in zenith projection showing sensitivity across the whole sky
+    # option to plot sensitivity at a given pointing direction and frequency and over a specified time range 
+    
         
     
