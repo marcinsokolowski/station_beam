@@ -2,6 +2,9 @@
 # example commands :
 #    python ./sensitivity_db.py --azim_deg=0 --za_deg=0 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot 
 #    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
+# 
+#   Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
+#     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
 #  
 #    Sensitivity map :
 #   https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
@@ -37,6 +40,7 @@ import matplotlib.pyplot as plt
 
 # local packages :
 import beam_tools
+import fits_beam
 
 debug_level = 0 
 
@@ -338,7 +342,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    plt.show()
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname="sensitivity.fits" ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
 
    azim_rad = azim_deg*(numpy.pi/180.0)
@@ -354,23 +358,27 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname="sensitivity.fits"
 #   ax.imshow(data_smth, interpolation='nearest')
 
 #   def makeAZZA(npix=256,projection='SIN',azim_from_north=False,return_all=False):
-   (az_deg,za_deg,x,y,z,d) = beam_tools.makeAZZA(npix=256,projection='SIN',azim_from_north=True, return_all=True )    
+   (az_rad,za_rad,x,y,z,d) = beam_tools.makeAZZA(npix=256,projection='SIN',azim_from_north=True, return_all=True )    
    
    
-   sensitivity = numpy.zeros( az_deg.shape )
-   for i in range(0,za_deg.shape[0]) :
-      for j in range(0,za_deg.shape[1]) :
-         az_rad = az_deg[ i , j ] * (numpy.pi/180.00)
-         za_rad = za_deg[ i , j ] * (numpy.pi/180.00)
+   sensitivity = numpy.zeros( az_rad.shape )
+   for i in range(0,za_rad.shape[0]) :
+      for j in range(0,za_rad.shape[1]) :
+         a_rad = az_rad[ i , j ]
+         z_rad = za_rad[ i , j ]
          
-         aot_value = lut( za_rad, az_rad )
-         sensitivity[ i , j ] = aot_value
-         
-
-   import fits_beam
-   fits_beam.save_fits( sensitivity , out_fitsname )
+         aot_value = lut( z_rad, a_rad )
+         if aot_value >= 0 :
+            # ignore non-physical negative values :
+            sensitivity[ i , j ] = aot_value
          
 
+   fits_beam.save_fits( sensitivity , out_fitsname_base + ".fits" )
+   fits_beam.save_fits( az_rad*(180.00/numpy.pi) , out_fitsname_base + "_azim_deg.fits" )
+   fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_fitsname_base + "_za_deg.fits" )
+         
+
+   return (lut,sensitivity)
  
 
  
@@ -384,7 +392,7 @@ def parse_options(idx):
    parser = OptionParser(usage=usage,version=1.00)
 
    # TEST : azim=0, za=0, lst=15.4 
-   parser.add_option('-p','--plot',action="store_true",dest="do_plot",default=False, help="Plot")
+   parser.add_option('-p','--plot','--do_plot',action="store_true",dest="do_plot",default=False, help="Plot")
    parser.add_option('-a','--azim','--azim_deg',dest="azim_deg",default=None, help="Pointing direction azimuth in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidreal time in hours [default %default]",metavar="float",type="float")
@@ -411,7 +419,10 @@ def parse_options(idx):
    print "PARAMATERS : "
    print "###############################################################"
    print "Do plotting                = %s" % (options.do_plot)
-   print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+   if options.azim_deg is not None and options.za_deg is not None : 
+      print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+   else :
+      print "Pointing direction not specified"
    print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
    if options.freq_mhz is not None :
       print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
@@ -466,9 +477,9 @@ if __name__ == "__main__":
           if options.do_plot :
              plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file )
           # do plot AoT vs. Freq :
-    elif options.lst_hours is not None and options.frequency_mhz is not none :
+    elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
-       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_map( options.frequency_mhz, options.lst_hours )
+       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :
@@ -480,7 +491,13 @@ if __name__ == "__main__":
                   
            # test :
            if options.do_plot :
-              plot_sensitivity_map( azim_x, za_x, aot_x )
+              # out_fitsname_base
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_X" % (options.lst_hours,options.freq_mhz)
+              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base)
+              
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
+              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base)
+
 
     # TODO :
     # option to plot map of the sky in zenith projection showing sensitivity across the whole sky
