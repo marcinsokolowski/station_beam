@@ -1,3 +1,9 @@
+# SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
+# example commands :
+#    python ./sensitivity_db.py --azim_deg=0 --za_deg=0 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot 
+#    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
+# 
+
 import sqlite3
 from optparse import OptionParser
 
