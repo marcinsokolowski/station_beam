@@ -2,6 +2,17 @@
 # example commands :
 #    python ./sensitivity_db.py --azim_deg=0 --za_deg=0 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot 
 #    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
+#  
+#    Sensitivity map :
+#      import sensitivity_db
+#      (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_map( 160.0000, 15.4 )
+#      from scipy.interpolate import SmoothSphereBivariateSpline 
+#      azim_x=azim_x*(numpy.pi/180.0)
+#      za_x=za_x*(numpy.pi/180.0)
+#      lut = SmoothSphereBivariateSpline( za_x, azim_x,aot_x , s=3.5)
+#      fine_lats = np.linspace(0., np.pi, 70)
+#      fine_lons = np.linspace(0., 2 * np.pi, 90)
+#      data_smth = lut(fine_lats, fine_lons)
 # 
 
 import sqlite3
@@ -15,10 +26,17 @@ import matplotlib.pyplot as plt
 # local packages :
 import beam_tools
 
+debug_level = 0 
 
 # script for quering SQLITE3 or PostgreSQL databases for sensitivity values :
 # HELP : python : https://www.sqlitetutorial.net/sqlite-python/ , https://www.sqlitetutorial.net/sqlite-python/sqlite-python-select/
 #        Plot vs. time : /home/msok/ska/aavs/aavs0.5/trunk/analysis/MWAdas/scripts$ plot_delay.py
+# 
+# Google : "python interpolation on sphere"
+#        https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
+#        https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.LSQSphereBivariateSpline.html
+#        https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
+
 
 def create_connection_sqlite3( db_file ):
     """ create a database connection to the SQLite database
@@ -110,6 +128,109 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+
+
+# get sensitivity map for a given LST and freq_mhz
+def get_sensitivity_map( freq_mhz, lst_hours, 
+                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00 ) :
+                       
+    global debug_level                        
+                             
+    # connect to the database :                             
+    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
+    conn = create_connection_sqlite3( dbname_file )
+  
+    # select closest LST :
+    cur = conn.cursor()
+    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (lst_hours,lst_hours,db_lst_resolution, freq_mhz, db_freq_resolution_mhz )
+    print "DEBUG SQL_best_lst : %s" % (szSQL)
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+    min_lst_distance = None
+    for row in rows:
+       min_lst_distance = float( row[0] )
+    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    
+    if min_lst_distance is None :
+       print "ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
+       return (None,None,None,None,None,None)
+
+    # select closest FREQUENCY :
+    cur = conn.cursor()
+    szSQL = "SELECT MIN(ABS(frequency_mhz-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (freq_mhz, lst_hours, min_lst_distance, freq_mhz, db_freq_resolution_mhz )
+    print "DEBUG SQL_best_freq : %s" % (szSQL)
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+    min_freq_distance = None
+    for row in rows:
+       print(row)
+       min_freq_distance = float( row[0] )
+    print "Best FREQ in database is closer than %.8f [MHz]" % (min_freq_distance)
+    
+    if min_freq_distance is None :
+       print "ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours)
+       return (None,None,None,None,None,None)
+ 
+    # get requested data :
+    cur = conn.cursor()
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<=%.8f AND ABS(frequency_mhz-%.4f)<=%.8f" %  (lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1) )
+    print "DEBUG SQL_main : %s" % (szSQL)
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+ 
+    out_azim_x = []
+    out_za_x   = []
+    out_aot_x  = []
+    out_sefd_x = []
+    
+    out_azim_y = []
+    out_za_y   = []
+    out_aot_y  = []
+    out_sefd_y = []
+        
+    for row in rows:
+        if debug_level >= 2 :
+           print(row)
+        
+        id = int( row[0] )
+        azim_deg_db = float( row[1] )
+        za_deg_db   = float( row[2] )
+        freq_mhz    = float( row[3] )
+        pol         = row[4]
+        lst_db      = float( row[5] )
+        unixtime    = float( row[6] )
+        gpstime     = float( row[7] )
+        aot         = float( row[8] )
+        sefd        = (2*1380.00)/aot
+        a_eff       = float( row[9] )
+        t_rcv       = float( row[10] )
+        t_ant       = float( row[11] )
+        array_type  = int( row[12] )
+        timestamp   = row[13]
+        creator     = row[14]
+        code_version = row[15]
+        
+        if debug_level >= 2 :
+           print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
+        
+        if pol == "X" :
+           out_azim_x.append( azim_deg_db )
+           out_za_x.append( za_deg_db )
+           out_aot_x.append( aot )
+           out_sefd_x.append( sefd ) 
+        elif pol == "Y" :
+           out_azim_y.append( azim_deg_db )
+           out_za_y.append( za_deg_db )
+           out_aot_y.append( aot )
+           out_sefd_y.append( sefd )            
+        else :
+           print "ERROR : unknown polarisation = %s" % (pol)
+ 
+
+    return ( numpy.array(out_azim_x), numpy.array(out_za_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
+             numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+
 
 
 # 
