@@ -4,16 +4,28 @@
 #    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
 #  
 #    Sensitivity map :
-#      import sensitivity_db
-#      (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_map( 160.0000, 15.4 )
-#      from scipy.interpolate import SmoothSphereBivariateSpline 
-#      azim_x=azim_x*(numpy.pi/180.0)
-#      za_x=za_x*(numpy.pi/180.0)
-#      lut = SmoothSphereBivariateSpline( za_x, azim_x,aot_x , s=3.5)
-#      fine_lats = np.linspace(0., np.pi, 70)
-#      fine_lons = np.linspace(0., 2 * np.pi, 90)
-#      data_smth = lut(fine_lats, fine_lons)
-# 
+#   https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
+# import sensitivity_db
+# (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_map( 160.0000, 15.4 )
+# sensitivity_db.plot_sensitivity_map( azim_x,za_x,aot_x )
+# or try :
+# from scipy.interpolate import SmoothSphereBivariateSpline 
+# import numpy
+# import numpy as np
+# import matplotlib.pyplot as plt
+# azim_x=azim_x*(numpy.pi/180.0)
+# za_x=za_x*(numpy.pi/180.0)
+# lut = SmoothSphereBivariateSpline( za_x, azim_x,aot_x , s=3.5)
+# fine_lats = np.linspace(0., np.pi, 90)
+# fine_lons = np.linspace(0., 2 * np.pi, 360)
+# data_smth = lut(fine_lats, fine_lons)
+# fig = plt.figure()
+# ax1 = fig.add_subplot(111)
+# ax1 = fig.add_subplot(111,polar=True)
+# ax1.imshow(data_smth, interpolation='nearest')
+# plt.show()
+# or : Google : "matplotlib polar heatmap" : https://stackoverflow.com/questions/36513312/polar-heatmaps-in-python
+
 
 import sqlite3
 from optparse import OptionParser
@@ -326,6 +338,41 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    plt.show()
 
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname="sensitivity.fits" ) :
+   from scipy.interpolate import SmoothSphereBivariateSpline    
+
+   azim_rad = azim_deg*(numpy.pi/180.0)
+   za_rad   = za_deg*(numpy.pi/180.0)
+   lut = SmoothSphereBivariateSpline( za_rad, azim_rad, aot , s=3.5)
+#   fine_lats = numpy.linspace(0., numpy.pi/2.00,256)
+#   fine_lons = numpy.linspace(0., 2 * numpy.pi, 256)
+#   data_smth = lut(fine_lats, fine_lons)
+   
+#   plt.figure()
+#   plt.plot( freq_x, aot_x )
+#   ax=fig.add_subplot(111)
+#   ax.imshow(data_smth, interpolation='nearest')
+
+#   def makeAZZA(npix=256,projection='SIN',azim_from_north=False,return_all=False):
+   (az_deg,za_deg,x,y,z,d) = beam_tools.makeAZZA(npix=256,projection='SIN',azim_from_north=True, return_all=True )    
+   
+   
+   sensitivity = numpy.zeros( az_deg.shape )
+   for i in range(0,za_deg.shape[0]) :
+      for j in range(0,za_deg.shape[1]) :
+         az_rad = az_deg[ i , j ] * (numpy.pi/180.00)
+         za_rad = za_deg[ i , j ] * (numpy.pi/180.00)
+         
+         aot_value = lut( za_rad, az_rad )
+         sensitivity[ i , j ] = aot_value
+         
+
+   import fits_beam
+   fits_beam.save_fits( sensitivity , out_fitsname )
+         
+
+ 
+
  
 def parse_options(idx):
    usage="Usage: %prog [options]\n"
@@ -405,6 +452,7 @@ if __name__ == "__main__":
     (options, args) = parse_options(1)
 
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
+       # plotting A/T vs. frequency for a given pointing direction and LST :
        (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
@@ -418,6 +466,21 @@ if __name__ == "__main__":
           if options.do_plot :
              plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file )
           # do plot AoT vs. Freq :
+    elif options.lst_hours is not None and options.frequency_mhz is not none :
+       # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
+       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_map( options.frequency_mhz, options.lst_hours )
+       
+       if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
+#           if options.output_file is not None :
+#              if azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None :
+                  # save map of sensitivity to file 
+              
+#              if azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None :
+                  # save map of sensitivity to file
+                  
+           # test :
+           if options.do_plot :
+              plot_sensitivity_map( azim_x, za_x, aot_x )
 
     # TODO :
     # option to plot map of the sky in zenith projection showing sensitivity across the whole sky
