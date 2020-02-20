@@ -40,7 +40,8 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (az_deg-%.4f)<%.4f" %  (lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    print "DEBUG : %s" % (szSQL)
     cur.execute( szSQL )
     rows = cur.fetchall()
  
@@ -206,9 +207,18 @@ def parse_options(idx):
    print "Do plotting                = %s" % (options.do_plot)
    print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
    print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
-   print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
-   print "LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours)
-   print "Unix time range            = %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+   if options.freq_mhz is not None :
+      print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
+   else :
+      print "Frequency                  = None" 
+   if options.lst_start_hours is not None and options.lst_end_hours is not None :      
+      print "LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours)
+   else :
+      print "LST range not specified"
+   if options.unixtime_start is not None and options.unixtime_end is not None :
+      print "Unix time range            = %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+   else :
+      print "Unix time range not specified"
    print "###############################################################"
 
    return (options, args)
