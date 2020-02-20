@@ -2,6 +2,7 @@
 
 DROP TABLE Sensitivity;
 
+-- List of fields : id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version
 CREATE TABLE Sensitivity (
    id             INTEGER PRIMARY KEY AUTOINCREMENT ,      -- star id
    azim_deg       real NOT NULL, -- azimuth from North (0deg) -> East (90deg) -> South (180deg) -> West (270deg)
