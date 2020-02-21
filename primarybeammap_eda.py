@@ -318,7 +318,7 @@ def main():
     T_rcv = options.T_rcv
     if options.trcv_type is not None :
        T_rcv = station_trcv.trcv_multi( frequency/1e6 , options.trcv_type )
-       print "Receiver temperature T_rcv( %.2f MHz, type=%s ) = %.4f [Kelvin]" % ((frequency/1e6),type,T_rcv)
+       print "Receiver temperature T_rcv( %.2f MHz, type=%s ) = %.4f [Kelvin]" % ((frequency/1e6),options.trcv_type,T_rcv)
        
 
     beams = None
