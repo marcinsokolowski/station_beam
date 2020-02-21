@@ -249,14 +249,16 @@ def trcv_fit_lightcurve_20160703_polfit( freq_mhz ):
 
 def trcv_multi( freq_mhz , type, use_cubic=False ):
    t_rcv = 0.00
-   if type == "eda2" :
+   if type.lower() == "eda2" or type.lower() == "trcv_eda2" :
       t_rcv = trcv_eda2( freq_mhz, use_cubic=use_cubic )
-   elif type == "eda1" :
+   elif type.lower() == "eda1" or type.lower() == "trcv_eda1" :
       t_rcv = trcv_eda1( freq_mhz, use_cubic=use_cubic )
-   elif type == "aavs2" :
+   elif type.lower() == "aavs2" or type.lower() == "trcv_aavs2" :
       t_rcv = trcv_aavs2( freq_mhz, use_cubic=use_cubic )       
    else :
-      t_rcv = trcv_from_skymodel_with_err_cubic( freq_mhz )
+      print "ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type)
+      exit(-1)
+      # t_rcv = trcv_from_skymodel_with_err_cubic( freq_mhz )
 
    return t_rcv
 
