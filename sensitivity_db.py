@@ -213,7 +213,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 # get sensitivity map for a given LST and freq_mhz
 def get_sensitivity_map( freq_mhz, lst_hours, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00 ) :
+                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00, output_file_base=None ) :
                        
     global debug_level                        
                              
@@ -254,7 +254,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
  
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<=%.8f AND ABS(frequency_mhz-%.4f)<=%.8f" %  (lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1) )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<=%.8f AND ABS(frequency_mhz-%.4f)<=%.8f ORDER BY za_deg, azim_deg ASC" %  (lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1) )
     print "DEBUG SQL_main : %s" % (szSQL)
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -268,6 +268,20 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     out_za_y   = []
     out_aot_y  = []
     out_sefd_y = []
+
+    out_txt_x_f = None
+    out_txt_y_f = None
+
+    if output_file_base :
+       out_txt_filename_X = out_fitsname_base + "_X.txt"
+       out_txt_filename_Y = out_fitsname_base + "_Y.txt"
+       
+       out_txt_x_f = open( out_txt_filename_X , "w" )
+       out_txt_y_f = open( out_txt_filename_Y , "w" )
+       
+       line = "# AZIM[deg] ZA[deg] A/T[m^2/K]"
+       out_txt_x_f.write( line + "    for X polarisation\n" )
+       out_txt_y_f.write( line + "    for Y polarisation\n" )
         
     for row in rows:
         if debug_level >= 2 :
@@ -294,19 +308,33 @@ def get_sensitivity_map( freq_mhz, lst_hours,
         if debug_level >= 2 :
            print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
         
+        line = "%.4f %.4f %.8f\n" % (azim_deg_db,za_deg_db,aot)
+        
         if pol == "X" :
            out_azim_x.append( azim_deg_db )
            out_za_x.append( za_deg_db )
            out_aot_x.append( aot )
-           out_sefd_x.append( sefd ) 
+           out_sefd_x.append( sefd )
+           
+           if out_txt_x_f is not None : 
+               out_txt_x_f.write( line )                      
         elif pol == "Y" :
            out_azim_y.append( azim_deg_db )
            out_za_y.append( za_deg_db )
            out_aot_y.append( aot )
            out_sefd_y.append( sefd )            
+           
+           if out_txt_y_f is not None : 
+               out_txt_y_f.write( line )                      
         else :
            print "ERROR : unknown polarisation = %s" % (pol)
  
+    if out_txt_x_f is not None :
+       out_txt_x_f.close()
+
+    if out_txt_y_f is not None :
+       out_txt_y_f.close()
+       
 
     return ( numpy.array(out_azim_x), numpy.array(out_za_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
@@ -441,7 +469,24 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
    fits_beam.save_fits( az_rad*(180.00/numpy.pi) , out_fitsname_base + "_azim_deg.fits" )
    fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_fitsname_base + "_za_deg.fits" )
          
-
+   # save txt file :
+   if False : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
+      out_txt_filename = out_fitsname_base + ".txt"
+      out_txt_f = open( out_txt_filename , "w" )
+      line = "# AZIM[deg] ZA[deg] A/T[m^2/K]\n"
+      out_txt_f.write( line )
+      for i in range(0,za_rad.shape[0]) :
+         for j in range(0,za_rad.shape[1]) :
+            a_rad = az_rad[ i , j ]
+            z_rad = za_rad[ i , j ]
+ 
+            aot_value = lut( z_rad, a_rad )
+            if aot_value >= 0 :
+               line = "%.4f %.4f %.8f\n" % (a_rad*(180.00/math.pi),z_rad*(180.00/math.pi),aot_value)
+               out_txt_f.write( line )
+     
+      out_txt_f.close()
+   
    return (lut,sensitivity)
  
 
@@ -476,22 +521,28 @@ def parse_options(idx):
    parser.add_option('--ut_start','--utc_start','--start_utc',dest="ut_start",default=None, help="Start time in UTC [default %default]")
    parser.add_option('--ut_end','--utc_end','--end_utc',dest="ut_end",default=None, help="End time in UTC [default %default]")
 
+   # time step for ranges :   
+   parser.add_option('--timestep','--step_seconds','--step_sec',dest="step_seconds",default=300, help="Time step in seconds for both unix/utc-string time ranges [default %default]",metavar="float",type="float")
+
    # output file :
    parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
    
+   
    # unix time range has priority over UTC string range :
-   if options.ut_start is not None and options.ut_end is not None :
-      t_start_utc = Time( options.ut_start, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
-      t_end_utc   = Time( options.ut_end, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
+   # If unix time range is not filled in, but UTC string range is -> use unixtime range to later only refer in the code to UNIXTIME ranges 
+   if options.unixtime_start is None or options.unixtime_end is None :
+      if options.ut_start is not None and options.ut_end is not None :
+         t_start_utc = Time( options.ut_start, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
+         t_end_utc   = Time( options.ut_end, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
       
-      if options.unixtime_start is None :
-         options.unixtime_start = t_start_utc.unix
+         if options.unixtime_start is None :
+            options.unixtime_start = t_start_utc.unix
 
-      if options.unixtime_end is None :
-         options.unixtime_end = t_end_utc.unix
+         if options.unixtime_end is None :
+            options.unixtime_end = t_end_utc.unix
          
    
    print "###############################################################"
@@ -562,7 +613,8 @@ if __name__ == "__main__":
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
-       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours )
+       out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
+       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :
@@ -581,6 +633,20 @@ if __name__ == "__main__":
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
               plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base)
 
+    elif options.unixtime_start is not None and options.unixtime_end is not None :
+        print "Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+
+        if options.freq_mhz is not None :
+           print "\tPlotting for specific frequency = %.2f MHz" % (options.freq_mhz)
+           
+           if options.azim_deg is not None and options.za_deg is not None :
+              print "\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+              
+              
+           else :
+              print "\tPlotting full sky maps in time - NOT YET IMPLEMENTED"  
+        else :
+           print "\tPlotting for range of frequencies (NOT YET IMPLEMENTED)"
 
     # TODO :
     # option to plot map of the sky in zenith projection showing sensitivity across the whole sky
