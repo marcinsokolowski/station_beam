@@ -219,68 +219,27 @@ def unixtime2lst( unixtime ) :
     return lst_hours
 
 
-# get sensitivity vs. time :
-def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
+# get sensitivity vs. time for a specific polarisation :
+def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
-        
-    global debug_level
+
+
+    out_uxtime = []
+    out_aot    = []
+    out_sefd   = []
     
-                             
-    # connect to the database :                             
-    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
-    conn = create_connection_sqlite3( dbname_file )
-  
-    # get requested data :
-    cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
-    print "DEBUG SQL2 : %s" % (szSQL)
-    cur.execute( szSQL )
-    rows = cur.fetchall()
-    
-    # find closest pointing direction at any LST (WARNING : no cos and sin in SQLITE3 ):
-    min_angular_distance_deg = 1e6
-    closest_gridpoint_za_deg = -10000.00
-    closest_gridpoint_az_deg = -10000.00
-    for row in rows:
-       azim_deg_db = float( row[1] )
-       za_deg_db   = float( row[2] )
-       
-       # CalcDistRADEC( ra1, dec1, ra2, dec2 )
-       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
-       
-       if dist_value_deg < min_angular_distance_deg :
-          min_angular_distance_deg = dist_value_deg
-          closest_gridpoint_za_deg = za_deg_db
-          closest_gridpoint_az_deg = azim_deg_db
-
-    if min_angular_distance_deg > 1000 :
-       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
-       return (None,None,None,None,None,None)
-       
-       
-    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
-
-
-# Change to loop over time range in steps of step      
-    out_uxtime_x = []
-    out_aot_x  = []
-    out_sefd_x = []
-    
-    out_uxtime_y = []
-    out_aot_y  = []
-    out_sefd_y = []
-
     for unixtime in range( ux_start, ux_end, time_step ) :
        lst_hours = unixtime2lst( unixtime )
     
        cur = conn.cursor()
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution )
-       print "DEBUG SQL2 : %s" % (szSQL)
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f and polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution, pol )
+       print "DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL)
        cur.execute( szSQL )
        rows = cur.fetchall()
        
-       # TODO : should only be one row for both polarisations (select the closest in time)
+       if len(rows) > 1 :               
+          # TODO : should only be one row for both polarisations (select the closest in time)
         
        for row in rows:
            if debug_level > 0 : 
@@ -323,6 +282,61 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
            else :
               print "\t\tDB Record ignored due to angular distance too large"
  
+    return (out_uxtime_x, out_aot_x, out_sefd_x)
+
+# get sensitivity vs. time :
+def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
+                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+        
+    global debug_level
+    
+                             
+    # connect to the database :                             
+    dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
+    conn = create_connection_sqlite3( dbname_file )
+  
+    # get requested data :
+    cur = conn.cursor()
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    print "DEBUG SQL2 : %s" % (szSQL)
+    cur.execute( szSQL )
+    rows = cur.fetchall()
+    
+# TODO : needs to be done per polarisation to easily identify best_row_id and use it - otherwise to complicted. Create a function     
+    
+    # find closest pointing direction at any LST (WARNING : no cos and sin in SQLITE3 ):
+    min_angular_distance_deg = 1e6
+    closest_gridpoint_za_deg = -10000.00
+    closest_gridpoint_az_deg = -10000.00
+    for row in rows:
+       azim_deg_db = float( row[1] )
+       za_deg_db   = float( row[2] )
+       
+       # CalcDistRADEC( ra1, dec1, ra2, dec2 )
+       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
+       
+       if dist_value_deg < min_angular_distance_deg :
+          min_angular_distance_deg = dist_value_deg
+          closest_gridpoint_za_deg = za_deg_db
+          closest_gridpoint_az_deg = azim_deg_db
+
+    if min_angular_distance_deg > 1000 :
+       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
+       return (None,None,None,None,None,None)
+       
+       
+    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
+
+
+# Change to loop over time range in steps of step      
+    (out_uxtime_x, out_aot_x, out_sefd_x) = get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol='X', time_step=time_step,
+                                                                                  station=station, db_base_name=db_base_name, db_path=db_path, 
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
+
+    (out_uxtime_y, out_aot_y, out_sefd_y) = get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol='Y', time_step=time_step,
+                                                                                  station=station, db_base_name=db_base_name, db_path=db_path, 
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
 
     return ( numpy.array(out_uxtime_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_uxtime_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
