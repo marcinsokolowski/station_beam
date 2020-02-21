@@ -36,11 +36,24 @@ from optparse import OptionParser
 # plotting :
 from pylab import *
 import numpy
+import math
 import matplotlib.pyplot as plt
 
 # local packages :
 import beam_tools
 import fits_beam
+
+# time operations :
+from astropy.coordinates import SkyCoord, EarthLocation
+from astropy.time import Time
+from datetime import datetime
+MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height=377.8)
+# unixtime -> string -> gps :
+#   t_ux=datetime.utcfromtimestamp(1582274015).strftime('%Y-%m-%d %H:%M:%S')
+#   t_now = Time( t_ux, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
+#   t_now.gps
+#   t_now.unix
+# 
 
 debug_level = 0 
 
@@ -68,10 +81,26 @@ def create_connection_sqlite3( db_file ):
  
     return conn
 
+def calc_anglular_distance_degrees( azim1_deg, za1_deg, azim2_deg , za2_deg ) :
+    azim1_rad = azim1_deg * (math.pi/180.00)
+    elev1_rad = ( 90.00 - za1_deg ) * (math.pi/180.00)
+
+    azim2_rad = azim2_deg * (math.pi/180.00)
+    elev2_rad = ( 90.00 - za2_deg ) * (math.pi/180.00)
+
+    cos_value = math.sin(elev1_rad)*math.sin(elev2_rad) + math.cos(elev1_rad)*math.cos(elev2_rad)*math.cos( azim1_rad - azim2_rad )
+    dist_value_deg = math.acos( cos_value )*(180.00/math.pi)
+    
+    return dist_value_deg
+
+
 # get sensitivity vs. frequency for given pointing direction [degrees] and lst [hours]:
 def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00 ) :
+        
+    global debug_level
+    
                              
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
@@ -98,7 +127,30 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     print "DEBUG SQL2 : %s" % (szSQL)
     cur.execute( szSQL )
     rows = cur.fetchall()
- 
+    
+    # find closest pointing direction (WARNING : no cos and sin in SQLITE3 ):
+    min_angular_distance_deg = 1e6
+    closest_gridpoint_za_deg = -10000.00
+    closest_gridpoint_az_deg = -10000.00
+    for row in rows:
+       azim_deg_db = float( row[1] )
+       za_deg_db   = float( row[2] )
+       
+       # CalcDistRADEC( ra1, dec1, ra2, dec2 )
+       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
+       
+       if dist_value_deg < min_angular_distance_deg :
+          min_angular_distance_deg = dist_value_deg
+          closest_gridpoint_za_deg = za_deg_db
+          closest_gridpoint_az_deg = azim_deg_db
+
+    if min_angular_distance_deg > 1000 :
+       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
+       return (None,None,None,None,None,None)
+       
+       
+    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
+     
     out_freq_x = []
     out_aot_x  = []
     out_sefd_x = []
@@ -108,7 +160,8 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     out_sefd_y = []
         
     for row in rows:
-        print(row)
+        if debug_level > 0 : 
+           print(row)
         
         id = int( row[0] )
         azim_deg_db = float( row[1] )
@@ -128,18 +181,25 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
         creator     = row[14]
         code_version = row[15]
         
-        print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
+        ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
+              
+        print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg)
         
-        if pol == "X" :
-           out_freq_x.append( freq_mhz )
-           out_aot_x.append( aot )
-           out_sefd_x.append( sefd ) 
-        elif pol == "Y" :
-           out_freq_y.append( freq_mhz )
-           out_aot_y.append( aot )
-           out_sefd_y.append( sefd )            
+        
+        
+        if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
+            if pol == "X" :
+               out_freq_x.append( freq_mhz )
+               out_aot_x.append( aot )
+               out_sefd_x.append( sefd ) 
+            elif pol == "Y" :
+               out_freq_y.append( freq_mhz )
+               out_aot_y.append( aot )
+               out_sefd_y.append( sefd )            
+            else :
+               print "ERROR : unknown polarisation = %s" % (pol)
         else :
-           print "ERROR : unknown polarisation = %s" % (pol)
+           print "\t\tDB Record ignored due to angular distance too large"
  
 
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
@@ -408,12 +468,27 @@ def parse_options(idx):
    parser.add_option('--ux_start','--unixtime_start',dest="unixtime_start",default=None, help="Start time in unixtime [default %default]",metavar="float",type="float")
    parser.add_option('--ux_end','--unixtime_end',dest="unixtime_end",default=None, help="End time in unixtime [default %default]",metavar="float",type="float")
 
+   # specify UT range :
+   parser.add_option('--ut_start','--utc_start','--start_utc',dest="ut_start",default=None, help="Start time in UTC [default %default]")
+   parser.add_option('--ut_end','--utc_end','--end_utc',dest="ut_end",default=None, help="End time in UTC [default %default]")
 
    # output file :
    parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
+   
+   # unix time range has priority over UTC string range :
+   if options.ut_start is not None and options.ut_end is not None :
+      t_start_utc = Time( options.ut_start, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
+      t_end_utc   = Time( options.ut_end, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
+      
+      if options.unixtime_start is None :
+         options.unixtime_start = t_start_utc.unix
+
+      if options.unixtime_end is None :
+         options.unixtime_end = t_end_utc.unix
+         
    
    print "###############################################################"
    print "PARAMATERS : "
@@ -436,6 +511,10 @@ def parse_options(idx):
       print "Unix time range            = %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
    else :
       print "Unix time range not specified"
+   if options.ut_start is not None and options.ut_end is not None :
+      print "UTC time range = %s - %s" % (options.ut_start,options.ut_end)
+   else :
+      print "UTC time range not specified"
    print "###############################################################"
 
    return (options, args)
