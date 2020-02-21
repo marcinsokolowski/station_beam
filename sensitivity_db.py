@@ -1,7 +1,11 @@
 # SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
 # example commands :
 #    python ./sensitivity_db.py --azim_deg=0 --za_deg=0 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot 
+#    python ./sensitivity_db.py --azim_deg=0 --za_deg=30 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot
 #    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
+#       cat nimbus5/za30-60deg/1262476817_az0_za30_eda_sensitivity_YY.txt
+#       cat comparison_AAVS2_EDA2/EDA2/Galaxy_transit/1262487044_az0_za30_eda_sensitivity_YY.txt
+#       cat comparison_AAVS2_EDA2/EDA2/Galaxy_nadir/1262530097_az0_za30_eda_sensitivity_XX.txt
 # 
 #   Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
