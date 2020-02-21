@@ -29,6 +29,9 @@ from primarybeammap_local import *
 import errno
 import tpm_mapping
 
+# receiver temperature module :
+import station_trcv
+
 def mkdir_p(path):
    try:
       os.makedirs(path)
@@ -152,6 +155,7 @@ def main():
     parser.add_option('--use_trcv',action="store_true",dest="use_trcv",default=False,help="Use T_rcv [default %s]")
     parser.add_option('--T_rcv','--t_rcv',dest='T_rcv',default=0.00,help="Receiver noise [default %]",type=float)
     parser.add_option('--rcv_noise_coupling',dest='rcv_noise_coupling',default=0.00,help="Receiver noise coupling [default %]",type=float)
+    parser.add_option('--trcv_type',dest='trcv_type',default=None,help="Source of T_rcv possible values = lightcurve201612 (default), lightcurve_20160703_cubic, lightcurve_20160703_polfit, budi, data_vs_model_201612, trcv_angelica_data_vs_time, trcv_angelica_data_vs_time_powerlawfit, trcv_from_skymodel_with_err, trcv_aavs2, trcv_aavs2_vs_za_deg, trcv_eda2, trcv_eda1")
  
 
     # only include a sub-array (list of tpm-s is more for the AAVS1 but also EDA-2 ):
@@ -179,6 +183,11 @@ def main():
     zpos_list = None
     (options, args) = parser.parse_args()
     datetimestring=options.datetimestring
+    
+    if options.trcv_type is not None :
+       if not options.use_trcv :
+          options.use_trcv = True
+          print "WARNING : forcing receiver temperature flag use_trcv to True because trcv_type = %s (!= None)" % (options.trcv_type)
 
     set_sun( options.add_sun, options.sun_ra, options.sun_dec, scale_size=options.sun_scale_size )
 
@@ -201,6 +210,7 @@ def main():
     print "Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg] , size scaled by x %.4f " % (options.add_sun,options.sun_ra,options.sun_dec,options.sun_scale_size)
     print "Beamoforming errors RMS(gain) = %.4f dB , RMS(phase) = %.4f degree" % (options.gain_sigma_db,options.gain_sigma_ph)
     print "Use T_rcv   = %s" % (options.use_trcv)
+    print "T_rcv type  = %s" % (options.trcv_type)
     print "Receiver noise = %.2f [K]" % (options.T_rcv)
     print "Receiver noise coupling = %.2f" % (options.rcv_noise_coupling)
     print "TPM list     = %s -> %s" % (options.tpm_list,tpm_list)
@@ -303,7 +313,13 @@ def main():
         print "\tys = %s" % (ypos_list)
         print
         print "\tzs = %s" % (zpos_list)
-            
+             
+    # calculate receiver temperature :
+    T_rcv = options.T_rcv
+    if options.trcv_type is not None :
+       T_rcv = station_trcv.trcv_multi( frequency/1e6 , options.trcv_type )
+       print "Receiver temperature T_rcv( %.2f MHz, type=%s ) = %.4f [Kelvin]" % ((frequency/1e6),type,T_rcv)
+       
 
     beams = None
     for uxtime in range(options.unixtime_start,options.unixtime_start+options.interval,options.step) :
@@ -315,7 +331,7 @@ def main():
            (beamsky_sum_XX,beam_sum_XX,Tant_XX,beam_dOMEGA_sum_XX,beamsky_sum_YY,beam_sum_YY,Tant_YY,beam_dOMEGA_sum_YY,beams) = make_primarybeammap( gps, delays, freq, beams=beams, model=model, plottype=plottype, extension=extension, resolution=options.size, directory=options.dir, out_filename=options.out_filename,
                                        pointing_za_deg=options.pointing_za_deg, pointing_az_deg=options.pointing_az_deg, gain_sigma_ph_160mhz=options.gain_sigma_ph, gain_sigma_dB=options.gain_sigma_db,
                                        radio_image=options.radio_image,
-                                       T_rcv=options.T_rcv, rcv_noise_coupling=options.rcv_noise_coupling, use_trcv=options.use_trcv, xpos=xpos_list, ypos=ypos_list, zpos=zpos_list,
+                                       T_rcv=T_rcv, rcv_noise_coupling=options.rcv_noise_coupling, use_trcv=options.use_trcv, xpos=xpos_list, ypos=ypos_list, zpos=zpos_list,
                                        feko_file=options.feko_file, interpolate=options.interpolate, interpolate_to_nearest=options.interpolate_to_nearest, pol_list_string=options.pols,
                                        use_beam_fits=options.use_beam_fits, station_name=options.station_name )
                                        
