@@ -8,6 +8,7 @@ def parse_options(idx):
    parser = OptionParser(usage=usage,version=1.00)
    parser.add_option('-c','--channel','--ch',dest="channel",default=4, help="Channel to dump (value <0 - means mean of all channels) [default %default]",metavar="int",type="int")
    parser.add_option('-p','--pol',dest="polarisation",default=0, help="Polarisation [default %default]",metavar="int",type="int")
+   parser.add_option('-o','--outfilebase','--out_file_base','--out_file_basename',dest="out_file_basename",default="power_vs_time_ch%d_%s.txt", help="Output file name template [default %default]")
    (options, args) = parser.parse_args(sys.argv[idx:])
 
    return (options, args)
@@ -39,7 +40,7 @@ print "Data.shape = %d x %d" % (data.shape[0],data.shape[1])
 
 n_timesteps=times.shape[0]
 
-outfile_name = "power_vs_time_ch%d_%s.txt" % (channel,pol_name)
+outfile_name = options.out_file_basename % (channel,pol_name)
 out_f = open( outfile_name , "w" )
 for t in range(0,n_timesteps) :
    # mean = ( data[t][0] + data[t][1] + data[t][2]  + data[t][3]  + data[t][4]  + data[t][5]  + data[t][6]  + data[t][7] ) / 8
