@@ -22,7 +22,7 @@ python $beam_scripts_path/hdf5fits_station_beam.py ${station_file} --pol=1 --out
 ls ${tag}_power_vs_time_ch*.txt > list
 
 mkdir -p images/
-root -b -q "plotNfiles_vs_time_scaling.C(\"list\",-1,1,-1,-1)"
+root -b -q "plotNfiles_vs_time_scaling.C(\"list\",-1,1,-1,1.00)"
 
 # root -l "plot_vs_time.C(\"power_vs_time_ch${channel}.txt\",-1e6,1e6,NULL,0,1000)"
 
