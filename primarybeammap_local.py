@@ -438,7 +438,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
 
         # add receiver temperature :
         if use_trcv :
-           print "T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K)" % (Tant,Tant_XX,Tant_YY)
+           print "T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K), T_rcv = %.2f" % (Tant,Tant_XX,Tant_YY,T_rcv)
            Tant_XX = Tant_XX + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling        
            Tant_YY = Tant_YY + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling
            Tant = Tant + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling
