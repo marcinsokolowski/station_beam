@@ -1,5 +1,7 @@
 # SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
 # example commands :
+#  1/ A/T vs. frequency at a particular pointing direction :
+# 
 #    python ./sensitivity_db.py --azim_deg=0 --za_deg=0 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot 
 #    python ./sensitivity_db.py --azim_deg=0 --za_deg=30 --lst=15.4 --out_file="Azim0_Za0_Lst15.4hours" --do_plot
 #    Verify results against files in templates/ Azim0_Za0_Lst15.4hours_X.txt and Azim0_Za0_Lst15.4hours_Y.txt
@@ -7,9 +9,12 @@
 #       cat comparison_AAVS2_EDA2/EDA2/Galaxy_transit/1262487044_az0_za30_eda_sensitivity_YY.txt
 #       cat comparison_AAVS2_EDA2/EDA2/Galaxy_nadir/1262530097_az0_za30_eda_sensitivity_XX.txt
 # 
-#   Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
+#  2/ Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
-#  
+# 
+#  3/ A/T vs. time at a particular pointing direction and frequency at zenith 
+#     python ./sensitivity_db.py --freq_mhz=154.88 --unixtime_start=1582597729  --interval=86400 --azim_deg=0 --za_deg=0 --do_plot
+# 
 #    Sensitivity map :
 #   https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
 # import sensitivity_db
@@ -42,6 +47,7 @@ from pylab import *
 import numpy
 import math
 import matplotlib.pyplot as plt
+import matplotlib.dates as md  # to convert unix time to date on X-axis 
 
 # local packages :
 import beam_tools
@@ -224,81 +230,17 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
 
-
     out_uxtime = []
     out_aot    = []
     out_sefd   = []
-    
-    for unixtime in range( ux_start, ux_end, time_step ) :
-       lst_hours = unixtime2lst( unixtime )
-    
-       cur = conn.cursor()
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f and polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution, pol )
-       print "DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL)
-       cur.execute( szSQL )
-       rows = cur.fetchall()
-       
-       if len(rows) > 1 :               
-          # TODO : should only be one row for both polarisations (select the closest in time)
-        
-       for row in rows:
-           if debug_level > 0 : 
-              print(row)
-        
-           id = int( row[0] )
-           azim_deg_db = float( row[1] )
-           za_deg_db   = float( row[2] )
-           freq_mhz    = float( row[3] )
-           pol         = row[4]
-           lst_db      = float( row[5] )
-           unixtime    = float( row[6] )
-           gpstime     = float( row[7] )
-           aot         = float( row[8] )
-           sefd        = (2*1380.00)/aot
-           a_eff       = float( row[9] )
-           t_rcv       = float( row[10] )
-           t_ant       = float( row[11] )
-           array_type  = int( row[12] )
-           timestamp   = row[13]
-           creator     = row[14]
-           code_version = row[15]
-        
-           ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
-              
-           print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg)
-                
-        
-           if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
-               if pol == "X" :
-                  out_uxtime_x.append( unixtime )
-                  out_aot_x.append( aot )
-                  out_sefd_x.append( sefd ) 
-               elif pol == "Y" :
-                  out_uxtime_y.append( unixtime )
-                  out_aot_y.append( aot )
-                  out_sefd_y.append( sefd )            
-               else :
-                  print "ERROR : unknown polarisation = %s" % (pol)
-           else :
-              print "\t\tDB Record ignored due to angular distance too large"
- 
-    return (out_uxtime_x, out_aot_x, out_sefd_x)
 
-# get sensitivity vs. time :
-def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
-                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
-        
-    global debug_level
-    
-                             
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
   
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol )
     print "DEBUG SQL2 : %s" % (szSQL)
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -306,7 +248,7 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
 # TODO : needs to be done per polarisation to easily identify best_row_id and use it - otherwise to complicted. Create a function     
     
     # find closest pointing direction at any LST (WARNING : no cos and sin in SQLITE3 ):
-    min_angular_distance_deg = 1e6
+    min_angular_distance_deg = db_ang_res_deg
     closest_gridpoint_za_deg = -10000.00
     closest_gridpoint_az_deg = -10000.00
     for row in rows:
@@ -328,6 +270,81 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
        
     print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
 
+
+    
+    for unixtime in range( int(ux_start), int(ux_end)+1, time_step ) :
+       lst_hours = unixtime2lst( unixtime )
+    
+       cur = conn.cursor()       
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f and polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution, pol )
+       if debug_level >= 2 :
+          print "DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL)
+       cur.execute( szSQL )
+       rows = cur.fetchall()
+       
+       min_lst_distance = db_lst_resolution
+       best_rec_id = -1
+       if len(rows) > 1 :               
+          # TODO : should only be one row for both polarisations (select the closest in time)
+           for row in rows :
+              id = int( row[0] )
+              azim_deg_db = float( row[1] )
+              za_deg_db   = float( row[2] )
+              freq_mhz    = float( row[3] )
+              pol         = row[4]
+              lst_db      = float( row[5] )
+              
+              if math.fabs( lst_db - lst_hours ) < min_lst_distance :
+                 min_lst_distance = math.fabs( lst_db - lst_hours )
+                 best_rec_id = id
+                 
+       if debug_level >= 2 or min_lst_distance < db_lst_resolution :
+          print "DEBUG : closest in time is min_lst_diff = %.4f [h] (id = %d)" % (min_lst_distance,best_rec_id)
+
+        
+       for row in rows :
+           if debug_level > 0 : 
+              print(row)
+        
+           id = int( row[0] )
+           azim_deg_db = float( row[1] )
+           za_deg_db   = float( row[2] )
+           freq_mhz    = float( row[3] )
+           pol         = row[4]
+           lst_db      = float( row[5] )
+           unixtime    = float( row[6] )
+           gpstime     = float( row[7] )
+           aot         = float( row[8] )
+           sefd        = (2*1380.00)/aot
+           a_eff       = float( row[9] )
+           t_rcv       = float( row[10] )
+           t_ant       = float( row[11] )
+           array_type  = int( row[12] )
+           timestamp   = row[13]
+           creator     = row[14]
+           code_version = row[15]
+           
+           print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg)
+                
+           if best_rec_id < 0 or id == best_rec_id : 
+              ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
+        
+              if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
+                  out_uxtime.append( unixtime )
+                  out_aot.append( aot )
+                  out_sefd.append( sefd ) 
+              else :
+                 print "\t\tDB Record ignored due to angular distance too large"
+ 
+    return (out_uxtime, out_aot, out_sefd)
+
+# get sensitivity vs. time :
+def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
+                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+        
+    global debug_level
+                                 
 
 # Change to loop over time range in steps of step      
     (out_uxtime_x, out_aot_x, out_sefd_x) = get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol='X', time_step=time_step,
@@ -537,6 +554,56 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 
 
 
+def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start, unixtime_end, azim_deg, za_deg, freq_mhz,
+                              output_file_base=None, point_x='go', point_y='rx',
+                              min_ylimit=0.00, max_ylimit=2.00 ) :
+                     
+   # conversion of unix time to UTC :                               
+   x_utc = []
+   y_utc = []
+   for ux in uxtime_x :
+      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+      x_utc.append( utc )
+   for ux in uxtime_y :
+      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+      y_utc.append( utc )
+   
+   plt.figure()
+   if uxtime_x is not None and aot_x is not None :
+      ax_x =  plt.plot( x_utc, aot_x, point_x )
+#      ax_x.set_ylim(( min_ylimit,  max_ylimit ))
+   
+   if uxtime_y is not None and aot_y is not None :
+      ax_y = plt.plot( y_utc, aot_y, point_y )
+#      ax_y.set_ylim(( min_ylimit,  max_ylimit ))
+
+   # legend :
+   if uxtime_x is not None and aot_x is not None and uxtime_y is not None and aot_y is not None :
+      plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+   else :
+      if uxtime_x is not None and aot_x is not None :
+         plt.legend(('X polarisation'), loc='upper right')
+      else :
+         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[uxtime_y, uxtime_y])
+   
+   plt.xlabel('Time [UTC]')
+   plt.ylabel('Sensitivity A/T [m^2/K]')
+   plt.gcf().autofmt_xdate()
+#   ax=plt.gca()
+#   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
+#   xfmt = md.DateFormatter('%H:%M:%S')
+#   ax.xaxis.set_major_formatter(xfmt)
+#   ax.set_ylim(( min_ylimit,  max_ylimit ))
+   plt.ylim(( min_ylimit,  max_ylimit ))  
+   
+   plt.grid()
+   
+   if output_file_base is not None :
+      outfile = ( "%s.png" % (output_file_base) )
+      plt.savefig( outfile )
+   
+   plt.show()
+   
 
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
 
@@ -651,6 +718,7 @@ def parse_options(idx):
    # specify Unix time range :
    parser.add_option('--ux_start','--unixtime_start',dest="unixtime_start",default=None, help="Start time in unixtime [default %default]",metavar="float",type="float")
    parser.add_option('--ux_end','--unixtime_end',dest="unixtime_end",default=None, help="End time in unixtime [default %default]",metavar="float",type="float")
+   parser.add_option('--ux_interval','--unixtime_interval','--interval',dest="unixtime_interval",default=86400, help="Interval in unixtime [default %default]",metavar="float",type="float")   
 
    # specify UT range :
    parser.add_option('--ut_start','--utc_start','--start_utc',dest="ut_start",default=None, help="Start time in UTC [default %default]")
@@ -678,7 +746,13 @@ def parse_options(idx):
 
          if options.unixtime_end is None :
             options.unixtime_end = t_end_utc.unix
-         
+
+   if options.unixtime_start is not None and (options.unixtime_end is None and options.unixtime_interval is not None) :
+      options.unixtime_end = options.unixtime_start + options.unixtime_interval
+      
+   if options.unixtime_start is not None and  options.unixtime_end is not None :
+      if options.unixtime_interval is None :
+         options.unixtime_interval = ( options.unixtime_end - options.unixtime_start )
    
    print "###############################################################"
    print "PARAMATERS : "
@@ -688,7 +762,8 @@ def parse_options(idx):
       print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
    else :
       print "Pointing direction not specified"
-   print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
+   if options.lst_hours is not None :     
+      print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
    if options.freq_mhz is not None :
       print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
    else :
@@ -698,11 +773,11 @@ def parse_options(idx):
    else :
       print "LST range not specified"
    if options.unixtime_start is not None and options.unixtime_end is not None :
-      print "Unix time range            = %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+      print "Unix time range            = %.2f - %.2f ( interval = %.2f seconds )" % (options.unixtime_start,options.unixtime_end,options.unixtime_interval)
    else :
       print "Unix time range not specified"
    if options.ut_start is not None and options.ut_end is not None :
-      print "UTC time range = %s - %s" % (options.ut_start,options.ut_end)
+      print "UTC time range = %s - %s ( interval = %.2f seconds )" % (options.ut_start,options.ut_end,options.unixtime_interval)
    else :
       print "UTC time range not specified"
    print "###############################################################"
@@ -778,6 +853,9 @@ if __name__ == "__main__":
               print "\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
               (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, time_step=options.step_seconds, station=options.station_name )
 
+              if options.do_plot :
+                 out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
+                 plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base )
               
               
            else :
