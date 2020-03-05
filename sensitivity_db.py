@@ -492,12 +492,16 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     rows = cur.fetchall()
     min_lst_distance = None
     for row in rows:
-       min_lst_distance = float( row[0] )
-    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+       if row[0] is not None :
+          min_lst_distance = float( row[0] )
+       else :
+          print "ERROR : not data close to frequency = %.2f MHz and lst = %.2f h in the database" % (freq_mhz,lst_hours)
     
     if min_lst_distance is None :
-       print "ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
-       return (None,None,None,None,None,None)
+       print "ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz)
+       return (None,None,None,None,None,None,None,None)
+
+    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
 
     # select closest FREQUENCY :
     cur = conn.cursor()
@@ -513,7 +517,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     
     if min_freq_distance is None :
        print "ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours)
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
@@ -559,7 +563,9 @@ def get_sensitivity_map( freq_mhz, lst_hours,
         unixtime    = float( row[6] )
         gpstime     = float( row[7] )
         aot         = float( row[8] )
-        sefd        = (2*1380.00)/aot
+        sefd        = numpy.NaN
+        if aot > 0 :
+            sefd        = (2*1380.00)/aot
         a_eff       = float( row[9] )
         t_rcv       = float( row[10] )
         t_ant       = float( row[11] )
@@ -960,6 +966,7 @@ if __name__ == "__main__":
 
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
+       print "(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ..."
        (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
@@ -975,6 +982,8 @@ if __name__ == "__main__":
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
+       print "LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere" 
+       
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
        (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
        
