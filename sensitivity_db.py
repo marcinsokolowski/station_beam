@@ -129,7 +129,15 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     rows = cur.fetchall()
     min_lst_distance = None
     for row in rows:
-       min_lst_distance = float( row[0] )
+       if row[0] is not None :
+          min_lst_distance = float( row[0] )
+       else :
+          print "ERROR : not data close to lst = %.2f h at (az,za) = (%.4f,%.4f) [deg] in the database" % (lst_hours,az_deg,za_deg)
+
+    if min_lst_distance is None :
+       print "ERROR no records in the database exist closer than %.4f hours in LST at (az,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
+       return (None,None,None,None,None,None)
+
     print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
     
     if min_lst_distance is None :
