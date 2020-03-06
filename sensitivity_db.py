@@ -11,6 +11,7 @@
 # 
 #  2/ Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
+#     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4 --save_text
 # 
 #  3/ A/T vs. time :
 #     a/ A/T vs. unix time / UTC at a particular pointing direction and frequency at zenith 
@@ -791,7 +792,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    plt.show()
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
 
    azim_rad = azim_deg*(numpy.pi/180.0)
@@ -827,7 +828,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
    fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_fitsname_base + "_za_deg.fits" )
          
    # save txt file :
-   if False : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
+   if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
       out_txt_filename = out_fitsname_base + ".txt"
       out_txt_f = open( out_txt_filename , "w" )
       line = "# AZIM[deg] ZA[deg] A/T[m^2/K]\n"
@@ -843,6 +844,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
                out_txt_f.write( line )
      
       out_txt_f.close()
+      
+      print "Sensitivity map saved to text file %s" % (out_txt_filename)
    
    return (lut,sensitivity)
  
@@ -887,6 +890,8 @@ def parse_options(idx):
 
    # output file :
    parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
+   parser.add_option('--save_text','--save_text_file','--text',action="store_true",dest="save_text_file",default=False, help="Save text file - for some options is always enabled, but for all-sky sensitivity map it's not [default %]")   
+   
  
 
    (options, args) = parser.parse_args(sys.argv[idx:])
@@ -999,10 +1004,10 @@ if __name__ == "__main__":
            if options.do_plot :
               # out_fitsname_base
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_X" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base)
+              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file )
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base)
+              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file )
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
         print "Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
