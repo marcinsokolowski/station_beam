@@ -792,7 +792,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    plt.show()
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00 ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
 
    azim_rad = azim_deg*(numpy.pi/180.0)
@@ -846,6 +846,43 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       out_txt_f.close()
       
       print "Sensitivity map saved to text file %s" % (out_txt_filename)
+
+   if do_plot :
+      # see /home/msok/ska/aavs/aavs0.5/trunk/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_local.py
+      figsize=8
+      fig=plt.figure(figsize=(figsize,0.6*figsize),dpi=300)
+      axis('on')
+      ax1=fig.add_subplot(1,1,1,polar=False)
+    
+      axis('off')
+      ax2=fig.add_subplot(1,1,1,polar=True, frameon=False)
+      ax2.set_theta_zero_location("N")
+      ax2.set_theta_direction(-1)
+      ax2.patch.set_alpha(0.0)
+      ax2.tick_params(color='0.5', labelcolor='0.5')
+      for spine in ax2.spines.values():
+          spine.set_edgecolor('0.5')
+      ax2.grid(which='major', color='0.5') 
+    
+      #Beamsky example:
+      vmax = 1.00
+      im=ax1.imshow( sensitivity , interpolation='none', vmax=vmax )
+
+      #Add colorbar on own axis
+      cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+      cbar=fig.colorbar(im, cax=cbar_ax)
+      cbar.set_label("A/T [m^2/K]")
+ 
+      title = "Sensitivity map at frequencu = %.2f MHz at lst = %.2f [h]" % (freq_mhz,lst_h)
+      ax1.set_title( title )
+      pngfile = out_fitsname_base + ".png"
+      fig.savefig( pngfile )
+      print "Saved file %s" % (pngfile)
+      plt.show()
+      
+      
+
+
    
    return (lut,sensitivity)
  
@@ -1004,10 +1041,10 @@ if __name__ == "__main__":
            if options.do_plot :
               # out_fitsname_base
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_X" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file )
+              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours )
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file )
+              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours )
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
         print "Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
