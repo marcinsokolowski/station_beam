@@ -102,19 +102,27 @@ do
       do
           echo "   (az,za) = ($az,$za) [deg]"          
           index=0
-          for freq_cc in `echo $freq_cc_list`
-          do
-              echo "        freq_cc = $freq_cc"
-              header_options=""
-              if [[ $index -gt 0 ]]; then
-                 header_options="--no-header"
-              fi              
-
-              echo "python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}"
-              python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}
           
-              index=$(($index+1))
-          done
+          if [[ -s ${gps}_az${az}_za${za}_${out_basename}_XX.txt && -s ${gps}_az${az}_za${za}_${out_basename}_YY.txt ]]; then
+             echo "Files ${gps}_az${az}_za${za}_${out_basename}_XX.txt and ${gps}_az${az}_za${za}_${out_basename}_YY.txt already exist -> skipped"
+          else                                        
+             echo "Processing all frequencies for (az,za) = ($az,$za) [deg] , started at :"
+             date
+          
+             for freq_cc in `echo $freq_cc_list`
+             do
+                 echo "        freq_cc = $freq_cc"
+                 header_options=""
+                 if [[ $index -gt 0 ]]; then
+                    header_options="--no-header"
+                 fi              
+
+                 echo "python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}"
+                 python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}
+          
+                 index=$(($index+1))
+             done
+          fi
           az=$(($az+$az_step))
       done   
       za=$(($za+$za_step))
