@@ -124,6 +124,11 @@ do
              done
           fi
           az=$(($az+$az_step))
+          
+          if [[ $za == 0 ]]; then
+             echo "INFO : za = $za -> only az=0 calculated -> setting az := $max_az"
+             az=${max_az}
+          fi
       done   
       za=$(($za+$za_step))
    done
