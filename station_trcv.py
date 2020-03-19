@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import math
+import numpy
 from scipy.interpolate import interp1d
 
 # see ~/Desktop/EDA/loogbook/Cath/Budi_trcv and ~/Desktop/EDA/loogbook/Cath/eda_aeff_cath.odt
