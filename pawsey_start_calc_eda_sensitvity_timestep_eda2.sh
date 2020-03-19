@@ -1,6 +1,21 @@
 #!/bin/bash -l
 
-start_ux=$1
+install_path=~/github/station_beam
+export PATH=${install_path}:$PATH
+
+# LOAD MODULES :
+module use /group/mwa/software/modulefiles
+module use /group/mwa/software/modulefiles
+module load MWA_Tools/mwa-sci
+
+
+
+start_ux=1578441600
+if [[ -n "$1" && "$1" != "-" ]]; then
+   start_ux=$1  
+fi
+
+
 param_file="parameters.txt"
 station=EDA2
 path="/astro/mwaops/msok/eda2/simulations/${station}"
@@ -27,7 +42,6 @@ cat ${param_file}
 echo "----------------------------------------"
 
 
-module use /group/mwa/software/modulefiles
 pwd
 
 za=0
@@ -37,8 +51,8 @@ za_step=5
 while [[ $za -le ${za_end} ]]; 
 do
    date
-   echo "calc_eda_sensitvity_timestep.sh $start_ux $za"
-   calc_eda_sensitvity_timestep.sh $start_ux $za
+   echo "sbatch -M zeus ${install_path}/calc_eda_sensitvity_timestep_za.sh $start_ux $za"
+   sbatch -M zeus ${install_path}/calc_eda_sensitvity_timestep_za.sh $start_ux $za
 
    echo "sleep 10"
    sleep 10   

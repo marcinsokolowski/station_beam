@@ -13,6 +13,13 @@
 cores=1
 run="srun --nodes=1 -c $cores --export=all"
 
+# load modules :
+module use /group/mwa/software/modulefiles
+module use /group/mwa/software/modulefiles
+module load MWA_Tools/mwa-sci
+module load pawseytools
+module load python/2.7.14
+
 
 start_ux=$1
 za_deg=$2

@@ -77,6 +77,8 @@ if [[ -n "${7}" && "${7}" != "-" ]]; then
    max_az=${7}
 fi
 
+python_path=`which python`
+# python_path=/pawsey/cle60up07/apps/gcc/4.8.5/python/2.7.14/bin/python
 
 echo "########################################"
 echo "PARAMETERS:"
@@ -90,6 +92,7 @@ echo "use_beamf_errors  = $use_beamf_errors"
 echo "beamf_err_options = $beamf_err_options"
 echo "az_step           = $az_step"
 echo "max_az            = $max_az"
+echo "python_path       = $python_path"
 echo "########################################"
 
 
@@ -124,8 +127,8 @@ do
            if [[ $index -gt 0 ]]; then
               header_options="--no-header"
            fi              
-           echo "python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}"
-           python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}
+           echo "$python_path $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}"
+           $python_path $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}
        
            index=$(($index+1))
        done
