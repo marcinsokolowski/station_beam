@@ -98,7 +98,7 @@ do
    while [[ $za -le ${za_end} ]]; 
    do
       az=0
-      while [[ $az -le ${max_az} ]]; 
+      while [[ $az -lt ${max_az} ]]; 
       do
           echo "   (az,za) = ($az,$za) [deg]"          
           index=0
