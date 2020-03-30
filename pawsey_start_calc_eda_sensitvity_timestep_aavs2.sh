@@ -36,7 +36,7 @@ fi
 
 
 param_file="parameters.txt"
-station=EDA2
+station=AAVS2
 path="/astro/mwaops/msok/eda2/simulations/${station}"
 
 mkdir -p ${path}
@@ -73,11 +73,9 @@ do
    echo "sbatch -M zeus ${install_path}/calc_eda_sensitvity_timestep_za.sh $start_ux $za"
    sbatch -M zeus ${install_path}/calc_eda_sensitvity_timestep_za.sh $start_ux $za
 
-   echo "sleep 10"
-   sleep 10   
+   echo "sleep 2"
+   sleep 2
    
-exit;   
-         
    za=$(($za+$za_step))
 done
 

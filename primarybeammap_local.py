@@ -25,8 +25,8 @@ import logging
 import matplotlib
 if not 'matplotlib.backends' in sys.modules:
     matplotlib.use('agg')
-#import matplotlib.pyplot as pylab
-import pylab
+import matplotlib.pyplot as pylab
+# import pylab
 from scipy.interpolate import RegularGridInterpolator
 
 import astropy

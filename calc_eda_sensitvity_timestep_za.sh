@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Cotter the data
+#SBATCH --account=mwaops
+#SBATCH --time=12:00:00
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=8
+#SBATCH --mem=64gb
+#SBATCH --output=/astro/mwaops/msok/log/sensitivity/calc_sensitivity.o%j
+#SBATCH --error=/astro/mwaops/msok/log/sensitivity/calc_sensitivity.e%j
+#SBATCH --export=NONE
+
+cores=1
+run="srun --nodes=1 -c $cores --export=all"
+
+export PATH=/home/msok/github/station_beam:$PATH
+
 # script for PAWSEY style , reads parameters from file parameters.txt in format :
 # start_ux = 1578441600
 
@@ -13,68 +28,77 @@
 #   last_ux=`cat last_processed_ux.txt`
 #fi
 
+# LOAD MODULES :
+# module use /group/mwa/software/modulefiles
+# module load MWA_Tools/mwa-sci
+# module load astropy
+# load modules :
+module use /group/mwa/software/modulefiles
+# module load MWA_Tools/mwa-sci
+# module load pawseytools
+# module load python/2.7.14
+# module load astropy
+module load numpy/1.13.3
+module load funcsigs/1.0.2
+module load setuptools/38.2.1
+module load pytest/3.3.0
+module load py/1.5.2
+module load astropy/v2.0.6
+module load ephem
+module load scipy
+module load matplotlib
+
+# echo "Modules avail:"
+# module avail
+# echo
+# echo "Modules list:"
+# module list
+
+
 param_file="parameters.txt"
 
 start_ux=1578441600
-out_basename=eda_sensitivity
-options=""
-freq_cc_list="39 46 54 62 69 70 78 85 93 101 109 117 121 125 132 140 145 148 156 164 169 171 179 187 195 203 210 218 226 234 242 250 257 265 273"
-use_beamf_errors=0
-beamf_err_options=""
-za=0
-az_step=5 # 1 gave no change !
-max_az=360
-
-pwd
-date
-#if [[ -s ${param_file} ]]; then
-#   start_ux=`cat parameters.txt | grep start_ux | awk '{print $3;}'`
-#   out_basename=`cat parameters.txt | grep out_basename | awk '{print $3;}'`
-#   options=`cat parameters.txt | grep options | awk 'BEGIN{out="";}{i=index($0,"=");print substr($0,i+1);}'`
-#   freq_cc_list=`cat parameters.txt | grep freq_cc_list | awk 'BEGIN{out="";}{i=index($0,"=");print substr($0,i+1);}'`
-##   use_beamf_errors=`cat parameters.txt | grep use_beamf_errors | awk 'BEGIN{out="";}{i=index($0,"=");print substr($0,i+1);}'`
-##   beamf_err_options=`cat parameters.txt | grep beamf_err_options | awk 'BEGIN{out="";}{i=index($0,"=");print substr($0,i+1);}'`
-#   za_param=`cat parameters.txt | grep za_param | awk '{print $3;}'`
-#   az_step=`cat parameters.txt | grep az_step | awk '{print $3;}'`
-##   za_step=`cat parameters.txt | grep za_step | awk '{print $3;}'`
-#   max_az=`cat parameters.txt | grep max_za | awk '{print $3;}'`
-#else
-#   echo "WARNING : parameter file $param_file not found !"
-#   exit;
-#fi
-
 if [[ -n "$1" && "$1" != "-" ]]; then
    start_ux=$1
 fi
 
-out_basename=eda_sensitivity
+za=0
 if [[ -n "$2" && "$2" != "-" ]]; then
-   out_basename=$2
+   za=$2
+fi
+
+out_basename=eda_sensitivity
+if [[ -n "$3" && "$3" != "-" ]]; then
+   out_basename=$3
 fi
 
 # options="--trcv_budi"
-options=""
-if [[ -n "$3" && "$3" != "-" ]]; then
-   options="$3"
+options="--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2"
+if [[ -n "$4" && "$4" != "-" ]]; then
+   options="$4"
 fi
 
 freq_cc_list="39 46 54 62 69 70 78 85 93 101 109 117 121 125 132 140 145 148 156 164 169 171 179 187 195 203 210 218 226 234 242 250 257 265 273"
-if [[ -n "$4" && "$4" != "-" ]]; then
-   freq_cc_list=$4
-fi
-
-# beamf_err_options="--gain_sigma_db=0.7 --gain_sigma_ph=8"
 if [[ -n "$5" && "$5" != "-" ]]; then
-   use_beamf_errors=1
-   beamf_err_options="$5"
+   freq_cc_list=$5
 fi
 
+use_beamf_errors=0
+beamf_err_options=""
+# beamf_err_options="--gain_sigma_db=0.7 --gain_sigma_ph=8"
 if [[ -n "$6" && "$6" != "-" ]]; then
-   az_step=$6
+   use_beamf_errors=1
+   beamf_err_options="$6"
 fi
 
-if [[ -n "${7}" && "${7}" != "-" ]]; then
-   max_az=${7}
+az_step=5
+if [[ -n "$7" && "$7" != "-" ]]; then
+   az_step=$7
+fi
+
+max_az=360
+if [[ -n "${8}" && "${8}" != "-" ]]; then
+   max_az=${8}
 fi
 
 python_path=`which python`
@@ -84,7 +108,7 @@ echo "########################################"
 echo "PARAMETERS:"
 echo "########################################"
 echo "start_ux          = $start_ux"
-echo "za                = $za_param"
+echo "za                = $za"
 echo "out_basename      = $out_basename"
 echo "options           = $options"
 echo "freq_cc_list      = $freq_cc_list"
@@ -100,13 +124,15 @@ eda_sensitivity_path=`which eda_sensitivity.py`
 
 # rm -f ${out_basename}_XX.txt ${out_basename}_YY.txt
 
-gps=`ux2gps! $ux`
-lst=`ux2sid $ux | awk '{print $8;}'` 
-dtm=`ux2ut! $ux`
+ux=$start_ux
+gps=`/home/msok/github/station_beam/ux2gps! $ux`
+lst=`/home/msok/mwa_soft/bin/ux2sid $ux | awk '{print $8;}'` 
+dtm=`/home/msok/github/station_beam/ux2ut! $ux`
 echo "------------------ ux = $ux -> gps = $gps -> lst = $lst [h] -> $dtm UTC ------------------"
 obs_list=obs_list_${gps}.txt
 
-za=${za_param}
+za=${za}
+echo "za = $za"
 
 az=0
 while [[ $az -lt ${max_az} ]]; 

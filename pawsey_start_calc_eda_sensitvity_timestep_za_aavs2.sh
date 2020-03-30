@@ -41,7 +41,7 @@ start_ux=$1
 za_deg=$2
 
 param_file="parameters.txt"
-station=EDA2
+station=AAVS2
 path="/astro/mwaops/msok/eda2/simulations/${station}"
 
 mkdir -p ${path}
@@ -67,6 +67,6 @@ cat ${param_file}
 echo "----------------------------------------"
 
 pwd
-echo "$run calc_eda_sensitvity_timestep_za.sh $start_ux eda_sensitivity \"--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2\" > ${start_ux}.out"
-$run calc_eda_sensitvity_timestep_za.sh $start_ux eda_sensitivity "--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2" > ${start_ux}.out 
+echo "$run calc_eda_sensitvity_timestep_za.sh $start_ux aavs2_sensitivity "--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt" > ${start_ux}.out "
+$run calc_eda_sensitvity_timestep_za.sh $start_ux aavs2_sensitivity "--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt" > ${start_ux}.out 
 

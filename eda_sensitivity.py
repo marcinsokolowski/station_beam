@@ -10,21 +10,27 @@ This is the script interface to the functions and modules defined in MWA_Tools/s
 """
 
 # import pdb
-# TEMPORARY ???
-from astropy.utils.iers import conf
-conf.auto_max_age = None
+# TEMPORARY ??? fails in pawsey 
+try :
+   from astropy.utils.iers import conf
+   conf.auto_max_age = None
+except :
+   print "Not working : from astropy.utils.iers import conf"  
+   
 
 
 import sys
-import pyfits,numpy,math
-import os,time
+import numpy
+import math
+import os
+import time
 from optparse import OptionParser
 import ephem
 import logging
-import matplotlib
-if not 'matplotlib.backends' in sys.modules:
-    matplotlib.use('agg')
-import matplotlib.pyplot as pylab
+# import matplotlib
+#if not 'matplotlib.backends' in sys.modules:
+#    matplotlib.use('agg')
+#import matplotlib.pyplot as pylab
 from primarybeammap_local import *
 import errno
 from scipy.interpolate import interp1d
