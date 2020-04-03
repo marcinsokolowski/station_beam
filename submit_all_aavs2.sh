@@ -1,11 +1,19 @@
 #!/bin/bash
 
-za=0
-
 
 # ./pawsey_start_calc_eda_sensitvity_timestep_eda2.sh 1578441600
 ux=1578441600
-end_ux=$(($ux+86400))
+if [[ -n "$1" && "$1" != "-" ]]; then
+   ux=$1
+fi
+
+interval=86400
+if [[ -n "$2" && "$2" != "-" ]]; then
+   interval=$2
+fi
+
+
+end_ux=$(($ux+$interval))
 ux_step=1800
 
 while [[ $ux -le $end_ux ]];
