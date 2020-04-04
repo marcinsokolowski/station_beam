@@ -61,7 +61,7 @@ def parse_options(idx):
 
    parser.add_option('--x_axis_title',dest="x_axis_title",default="Local time", help="X-axis title [default %default]")
    parser.add_option('--y_axis_title',dest="y_axis_title",default=None, help="Y-axis title [default %default]")
-   parser.add_option('--delay_unit',dest="delay_unit",default="[m]", help="Delay units [default %default]")
+   parser.add_option('--power_unit',dest="power_unit",default="[?]", help="Delay units [default %default]")
 
    parser.add_option('--y_min',dest="y_min",default=None, help="Lower limit on the Y-axis [default %default]",type="float")
    parser.add_option('--y_max',dest="y_max",default=None, help="Upper limit on the Y-axis [default %default]",type="float")
@@ -88,7 +88,7 @@ def plotfile( filename,
               unixtime = False,
               x_axis_title = 'Local time',
               y_axis_title = None,
-              delay_unit   = '[m]',
+              power_unit   = '[?]',
               y_min_ext    = None,
               y_max_ext    = None,
               multiplier   = None,
@@ -100,7 +100,7 @@ def plotfile( filename,
             ) :
               
    if y_axis_title is None :
-       y_axis_title = ( "Delay %s" % delay_unit ) 
+       y_axis_title = ( "Power %s" % power_unit ) 
                      
    pngfile=filename.replace('.txt', '.png' )
    tile_id=filename.replace('.txt','')
@@ -158,7 +158,7 @@ def plotfile( filename,
 #      print("Fitted delay X pol = %.2f" % (B_x))
 
       # X-pol :
-#      desc_x="Fitted X-pol delay = %.2f %s" % (B_x,delay_unit)
+#      desc_x="Fitted X-pol delay = %.2f %s" % (B_x,power_unit)
 #      if not publication :
 #         plt.text((x_min), y_max-(y_max-y_min)*0.05, desc_x, fontsize=15, color='blue')   
 #      x_delay_last=x_delay_m[-1]
@@ -184,6 +184,7 @@ def plotfile( filename,
    mkdir_p(outdir)
    pngfile=outdir + "/" + pngfile
    plt.savefig(pngfile)   
+   print("Saved file %s" % (pngfile))
    
    if do_gui :
       print("showed ?")
@@ -198,7 +199,7 @@ def plot_mean_stddev( filename,
               unixtime = False,
               x_axis_title = 'Antenna Index',
               y_axis_title = None,
-              delay_unit   = '[m]',
+              power_unit   = '[?]',
               y_min_ext    = None,
               y_max_ext    = None,
               multiplier   = None,
@@ -213,7 +214,7 @@ def plot_mean_stddev( filename,
    
                  
    if y_axis_title is None :
-       y_axis_title = ( "Delay %s" % delay_unit ) 
+       y_axis_title = ( "Delay %s" % power_unit ) 
                      
    pngfile=filename.replace('.txt', '.png' )
    tile_id=filename.replace('.txt','')
@@ -318,6 +319,7 @@ def plot_mean_stddev( filename,
    mkdir_p(outdir)
    pngfile=outdir + "/" + pngfile
    plt.savefig( pngfile , dpi=80 )   
+   print("Saved file %s" % (pngfile))
 
    
    if do_gui :
@@ -342,7 +344,7 @@ def main() :
                 unixtime     = options.unixtime,
                 x_axis_title = options.x_axis_title,
                 y_axis_title = options.y_axis_title,
-                delay_unit   = options.delay_unit,
+                power_unit   = options.power_unit,
                 y_min_ext    = options.y_min,
                 y_max_ext    = options.y_max,
                 multiplier   = options.multiplier,
