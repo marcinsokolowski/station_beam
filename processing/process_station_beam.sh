@@ -22,6 +22,10 @@ if [[ -n "$4" && "$4" != "-" ]]; then
 fi
 
 beam_scripts_path=~/github/station_beam/processing/
+if [[ -n "$5" && "$5" != "-" ]]; then
+   beam_scripts_path=$5
+fi
+
 
 echo "python $beam_scripts_path/hdf5fits_station_beam.py ${station_file} --pol=0 --out_file_basename=\"${tag}_power_vs_time_ch%d_%s.txt\" --last_n_seconds=${last_n_seconds} > x.out 2>&1"
 python $beam_scripts_path/hdf5fits_station_beam.py ${station_file} --pol=0 --out_file_basename="${tag}_power_vs_time_ch%d_%s.txt" --last_n_seconds=${last_n_seconds} > x.out 2>&1
