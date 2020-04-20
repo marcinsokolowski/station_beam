@@ -1,0 +1,7 @@
+#!/bin/bash
+
+source /home/msok/env/python3/bin/activate
+export PATH=/opt/caastro/ext/anaconda3/bin/:$PATH
+
+# cd /home/msok/github/station_beam/django/skalow_station_sensitivity
+python manage.py runserver
