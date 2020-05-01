@@ -8,7 +8,9 @@
 
 export PATH="/opt/anaconda2/bin:$PATH"
 
-start_date=20200409_170000
+path=`pwd`
+start_date=`basename $path`
+# start_date=20200409_170000
 n_days=1
 pointing_az_deg=0.00
 pointing_za_deg=0.00
