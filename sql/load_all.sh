@@ -23,7 +23,7 @@ fi
 
 cd ${data_dir}/
 rm -f all.sql
-for txtfile in `ls 1*.txt`
+for txtfile in `find . -name "1*.txt"`
 do
    sqlfile=${txtfile%%txt}sql
  
