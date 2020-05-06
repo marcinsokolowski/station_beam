@@ -13,6 +13,8 @@
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4 --save_text
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=2.00 --do_plot
+#     Galactic transit : python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=17.76 --do_plot
+#     Galsctic nadir   : python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=5.73 --do_plot
 # 
 #  3/ A/T vs. time :
 #     a/ A/T vs. unix time / UTC at a particular pointing direction and frequency at zenith 
@@ -140,6 +142,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
        return (None,None,None,None,None,None)
 
     print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    min_lst_distance = min_lst_distance + 0.01
     
     if min_lst_distance is None :
        print "ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
@@ -512,6 +515,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
        return (None,None,None,None,None,None,None,None)
 
     print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    min_lst_distance = min_lst_distance + 0.01
 
     # select closest FREQUENCY :
     cur = conn.cursor()
