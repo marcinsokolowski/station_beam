@@ -12,6 +12,7 @@
 #  2/ Create map of sensitivity for lst=15.4 hours and freq = 154.88 MHz :
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4
 #     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=15.4 --save_text
+#     python ./sensitivity_db.py --freq_mhz=154.88 --lst_hours=2.00 --do_plot
 # 
 #  3/ A/T vs. time :
 #     a/ A/T vs. unix time / UTC at a particular pointing direction and frequency at zenith 
@@ -800,7 +801,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    plt.show()
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00 ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown" ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
 
    azim_rad = azim_deg*(numpy.pi/180.0)
@@ -881,8 +882,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       cbar=fig.colorbar(im, cax=cbar_ax)
       cbar.set_label("A/T [m^2/K]")
  
-      title = "Sensitivity map at frequencu = %.2f MHz at lst = %.2f [h]" % (freq_mhz,lst_h)
-      ax1.set_title( title )
+      title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
+      ax1.set_title( title , fontsize=8 )
       pngfile = out_fitsname_base + ".png"
       fig.savefig( pngfile )
       print "Saved file %s" % (pngfile)
@@ -1049,10 +1050,10 @@ if __name__ == "__main__":
            if options.do_plot :
               # out_fitsname_base
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_X" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours )
+              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="X" )
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours )
+              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y" )
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
         print "Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
