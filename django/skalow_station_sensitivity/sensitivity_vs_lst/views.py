@@ -8,7 +8,7 @@ def blog_list(request):
       'blog_list':post
    }
    
-   return render(request,"sensitivity_vs_lst/blog_list.html",context)
+   return render(request,"sensitivity_vs_lst/index.html",context)
 
 
 def hello_world(request):
