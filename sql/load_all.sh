@@ -20,6 +20,12 @@ if [[ -n "$4" && "$4" != "-" ]]; then
    station_beam_dir=$4
 fi
 
+do_load=0
+if [[ -n "$5" && "$5" != "-" ]]; then
+   do_load=$5
+fi
+
+
 
 cd ${data_dir}/
 rm -f all.sql
@@ -35,10 +41,15 @@ do
 done
 
 
-date
-echo "sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql"
-sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql 
-date
+if [[ $do_load -gt 0 ]]; then
+   date
+   echo "sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql"
+   sqlite3 ${station_beam_dir}/sql/ska_station_sensitivity_${station_name}.db <  all.sql 
+   date
+else
+   date
+   echo "WARNING : loading to the database is not required"
+fi   
    
 # for txtfile in `ls 1*.txt`
 #do
