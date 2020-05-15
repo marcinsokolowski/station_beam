@@ -8,6 +8,7 @@ make_primarybeammap()
 This is the script interface to the functions and modules defined in MWA_Tools/src/primarybeamap.py
 
 """
+from __future__ import print_function
 
 # import pdb
 # TEMPORARY ??? fails in pawsey 
@@ -15,7 +16,7 @@ try :
    from astropy.utils.iers import conf
    conf.auto_max_age = None
 except :
-   print "Not working : from astropy.utils.iers import conf"  
+   print("Not working : from astropy.utils.iers import conf")  
    
 
 
@@ -211,29 +212,29 @@ def main():
     ant_count = None
     if options.antenna_locations is not None :
        (xs,ys,zs,ant_count) = read_antenna_list( options.antenna_locations , overwrite=True )
-       print "Read %d antenna positions from file %s ( starting with (%.2f,%.2f,%.2f) and ending with (%.2f,%.2f,%.2f))" % (ant_count,options.antenna_locations,xs[0],ys[0],zs[0],xs[ant_count-1],ys[ant_count-1],zs[ant_count-1])
+       print("Read %d antenna positions from file %s ( starting with (%.2f,%.2f,%.2f) and ending with (%.2f,%.2f,%.2f))" % (ant_count,options.antenna_locations,xs[0],ys[0],zs[0],xs[ant_count-1],ys[ant_count-1],zs[ant_count-1]))
     
     
-    print "##################################################"
-    print "PARAMETERS:"
-    print "##################################################"
-    print "channels  = %s" % (options.channel)
-    print "Trcv type = %s" % (options.trcv_type)
-    print "Trcv      = %.2f K" % (options.t_rcv)
-    print "Trcv_low  = %.2f K (below %.2f MHz)" % (options.t_rcv_low,options.t_rcv_low_limit)
-    print "Extra T_rcv = %.2f K" % (options.extra_trcv)
-    print "Output file = %s (mode = %s)" % (options.out_filename,options.outfile_mode)
-    print "Use S11   = %s"   % options.use_s11
-    print "Dipole type = %s" % options.dipole_type
-    print "Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg]" % (options.add_sun,options.sun_ra,options.sun_dec)
-    print "Shifted antenna index = %d , shift = (%.2f,%.2f) [m]" % (options.offset_ant_idx,options.offset_ant_dx,options.offset_ant_dy)
-    print "Print header = %s" % (options.print_header)
-    print "Header       = %s" % (options.header)
+    print("##################################################")
+    print("PARAMETERS:")
+    print("##################################################")
+    print("channels  = %s" % (options.channel))
+    print("Trcv type = %s" % (options.trcv_type))
+    print("Trcv      = %.2f K" % (options.t_rcv))
+    print("Trcv_low  = %.2f K (below %.2f MHz)" % (options.t_rcv_low,options.t_rcv_low_limit))
+    print("Extra T_rcv = %.2f K" % (options.extra_trcv))
+    print("Output file = %s (mode = %s)" % (options.out_filename,options.outfile_mode))
+    print("Use S11   = %s"   % options.use_s11)
+    print("Dipole type = %s" % options.dipole_type)
+    print("Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg]" % (options.add_sun,options.sun_ra,options.sun_dec))
+    print("Shifted antenna index = %d , shift = (%.2f,%.2f) [m]" % (options.offset_ant_idx,options.offset_ant_dx,options.offset_ant_dy))
+    print("Print header = %s" % (options.print_header))
+    print("Header       = %s" % (options.header))
     if options.antenna_locations is not None :
-       print "External antenna position file %s (read %d ants)" % (options.antenna_locations,ant_count)
+       print("External antenna position file %s (read %d ants)" % (options.antenna_locations,ant_count))
     else :
-       print "WARNING : antenna position file not provided -> using default antenna locations (for EDA1)"
-    print "##################################################"
+       print("WARNING : antenna position file not provided -> using default antenna locations (for EDA1)")
+    print("##################################################")
     
     if options.dir is not None:
        mkdir_p(options.dir)
@@ -314,7 +315,7 @@ def main():
     out_file=open(options.out_filename,"w")
     out_file.close()
 
-    print "frequency = %s" % (frequency)
+    print("frequency = %s" % (frequency))
 
     outfile_sens_XX = options.out_sensitivity_file + "_XX.txt"
     outfile_sens_YY = options.out_sensitivity_file + "_YY.txt"
@@ -352,16 +353,16 @@ def main():
 #             +0.00000000000000055485231182041931661150443032917814*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz
         
         if options.trcv_type=="budi" : # or options.trcv_budi :
-           print "Using Trcv_BUDI"
+           print("Using Trcv_BUDI")
            T_rcv = station_trcv.trcv_budi( freq_mhz )
         elif options.trcv_type=="data_vs_model_201612" : # or options.trcv_fit_data_vs_mode :
-           print "Using Trcv trcv_fit_data_vs_mode (201612)"           
+           print("Using Trcv trcv_fit_data_vs_mode (201612)")           
            T_rcv = station_trcv.trcv_fit_data_vs_mode( freq_mhz )
         elif options.trcv_type=="lightcurve_20160703_cubic" : # or options.trcv_fit_lightcurve_20160703_cubic :
-           print "Using Trcv trcv_fit_lightcurve_20160703_cubic"
+           print("Using Trcv trcv_fit_lightcurve_20160703_cubic")
            T_rcv = station_trcv.trcv_fit_lightcurve_20160703_cubic( freq_mhz )
         elif options.trcv_type=="lightcurve_20160703_polfit" :
-           print "Using Trcv trcv_fit_lightcurve_20160703_polfit"
+           print("Using Trcv trcv_fit_lightcurve_20160703_polfit")
            T_rcv = station_trcv.trcv_fit_lightcurve_20160703_polfit( freq_mhz )
         elif options.trcv_type=="trcv_angelica_data_vs_time" :
            T_rcv = station_trcv.trcv_angelica_data_vs_time( freq_mhz )
@@ -372,10 +373,10 @@ def main():
         elif options.trcv_type=="trcv_from_skymodel_with_err" :
            T_rcv = station_trcv.trcv_from_skymodel_with_err( freq_mhz )
         elif options.trcv_type=="trcv_aavs2" :
-           print "INFO : Calling trcv_aavs2"
+           print("INFO : Calling trcv_aavs2")
            T_rcv = station_trcv.trcv_aavs2( freq_mhz )
         elif options.trcv_type=="trcv_aavs2_vs_za_deg" :
-           print "INFO : Calling trcv_aavs2_vs_za_deg"
+           print("INFO : Calling trcv_aavs2_vs_za_deg")
            T_rcv = station_trcv.trcv_aavs2( freq_mhz, za_deg=options.pointing_za_deg )
         elif options.trcv_type=="trcv_eda2" :
            T_rcv = station_trcv.trcv_eda2( freq_mhz )
@@ -384,18 +385,18 @@ def main():
 
         # has to be last to overwrite with consant value 
         if options.t_rcv > 1 : # if set external value use it :
-           print "Using t_rcv = %.2f K at freq_mhz = %.2f MHz" % (options.t_rcv,freq_mhz)
+           print("Using t_rcv = %.2f K at freq_mhz = %.2f MHz" % (options.t_rcv,freq_mhz))
            T_rcv = options.t_rcv          
            
         if options.t_rcv_low > 1 and freq_mhz<options.t_rcv_low_limit :
-           print "Using t_rcv_low = %.2f K (freq_mhz = %.2f MHz < %.2f MHz)" % (options.t_rcv_low,freq_mhz,options.t_rcv_low_limit)
+           print("Using t_rcv_low = %.2f K (freq_mhz = %.2f MHz < %.2f MHz)" % (options.t_rcv_low,freq_mhz,options.t_rcv_low_limit))
            T_rcv = options.t_rcv_low
 
-        print "Frequency = %.2f [MHz] -> T_rcv = %.2f K -> %.2f K (+%.2fK)" % (freq_mhz,T_rcv,(T_rcv + options.extra_trcv),options.extra_trcv)        
+        print("Frequency = %.2f [MHz] -> T_rcv = %.2f K -> %.2f K (+%.2fK)" % (freq_mhz,T_rcv,(T_rcv + options.extra_trcv),options.extra_trcv))        
         T_rcv = T_rcv + options.extra_trcv
         
         if options.print_trcv_only :
-           print "Only printing T_rcv"
+           print("Only printing T_rcv")
            continue
                 
         (beamsky_sum_XX,beam_sum_XX,Tant_XX,beam_dOMEGA_sum_XX,beamsky_sum_YY,beam_sum_YY,Tant_YY,beam_dOMEGA_sum_YY,beams) = make_primarybeammap( gps, delays, freq, model=model, plottype=plottype, 
@@ -424,7 +425,7 @@ def main():
         gain_YY = beams['YY']/(beam_dOMEGA_sum_YY/(4.00*math.pi))
         
         
-        print "gain_XX = %.8f / (%.8f/(4PI)) , gain_YY = %.8f / (%.8f/(4PI))" % (beams['XX'],beam_dOMEGA_sum_XX,beams['YY'],beam_dOMEGA_sum_YY)
+        print("gain_XX = %.8f / (%.8f/(4PI)) , gain_YY = %.8f / (%.8f/(4PI))" % (beams['XX'],beam_dOMEGA_sum_XX,beams['YY'],beam_dOMEGA_sum_YY))
         
         ant_efficiency=1.00
         aeff_XX = (7161.97/(freq_mhz*freq_mhz))*(gain_XX*ant_efficiency)
@@ -443,10 +444,10 @@ def main():
         sens_XX = (aeff_XX) / ( T_sys_XX )
         sens_YY = (aeff_YY) / ( T_sys_YY )
         
-        print "%.2f Hz :" % (freq)        
-        print "Corr factor (%.2f MHz) = %.4f" % (freq_mhz,corr)
-        print "\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv)
-        print "\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv)
+        print("%.2f Hz :" % (freq))        
+        print("Corr factor (%.2f MHz) = %.4f" % (freq_mhz,corr))
+        print("\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv))
+        print("\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv))
         
         out_line_XX="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_XX,T_sys_XX,aeff_XX,T_rcv,Tant_XX,corr)
         out_line_YY="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_YY,T_sys_YY,aeff_YY,T_rcv,Tant_YY,corr)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 # SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
 # example commands :
 #  1/ A/T vs. frequency at a particular pointing direction :
@@ -127,7 +128,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     # select closest LST :
     cur = conn.cursor()
     szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
-    print "DEBUG SQL1 : %s" % (szSQL)
+    print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     min_lst_distance = None
@@ -135,23 +136,23 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
        if row[0] is not None :
           min_lst_distance = float( row[0] )
        else :
-          print "ERROR : not data close to lst = %.2f h at (az,za) = (%.4f,%.4f) [deg] in the database" % (lst_hours,az_deg,za_deg)
+          print("ERROR : not data close to lst = %.2f h at (az,za) = (%.4f,%.4f) [deg] in the database" % (lst_hours,az_deg,za_deg))
 
     if min_lst_distance is None :
-       print "ERROR no records in the database exist closer than %.4f hours in LST at (az,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
+       print("ERROR no records in the database exist closer than %.4f hours in LST at (az,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg))
        return (None,None,None,None,None,None)
 
-    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    print("Best LST in database is closer than %.8f [hours]" % (min_lst_distance))
     min_lst_distance = min_lst_distance + 0.01
     
     if min_lst_distance is None :
-       print "ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg)
+       print("ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg))
        return (None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
-    print "DEBUG SQL2 : %s" % (szSQL)
+    print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     
@@ -172,11 +173,11 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
           closest_gridpoint_az_deg = azim_deg_db
 
     if min_angular_distance_deg > 1000 :
-       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
+       print("ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg))
        return (None,None,None,None,None,None)
        
        
-    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
+    print("Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg))
      
     out_freq_x = []
     out_aot_x  = []
@@ -210,7 +211,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
         
         ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
               
-        print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg)
+        print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg))
         
         
         
@@ -224,9 +225,9 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
                out_aot_y.append( aot )
                out_sefd_y.append( sefd )            
             else :
-               print "ERROR : unknown polarisation = %s" % (pol)
+               print("ERROR : unknown polarisation = %s" % (pol))
         else :
-           print "\t\tDB Record ignored due to angular distance too large"
+           print("\t\tDB Record ignored due to angular distance too large")
  
 
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
@@ -258,7 +259,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
     # get requested data :
     cur = conn.cursor()
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol )
-    print "DEBUG SQL2 : %s" % (szSQL)
+    print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     
@@ -281,11 +282,11 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
           closest_gridpoint_az_deg = azim_deg_db
 
     if min_angular_distance_deg > 1000 :
-       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
+       print("ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg))
        return (None,None,None,None,None,None)
        
        
-    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
+    print("Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg))
 
 
     
@@ -295,7 +296,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        cur = conn.cursor()       
        szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f and polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution, pol )
        if debug_level >= 2 :
-          print "DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL)
+          print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
        cur.execute( szSQL )
        rows = cur.fetchall()
        
@@ -316,7 +317,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
                  best_rec_id = id
                  
        if debug_level >= 2 or min_lst_distance < db_lst_resolution :
-          print "DEBUG : closest in time is min_lst_diff = %.4f [h] (id = %d)" % (min_lst_distance,best_rec_id)
+          print("DEBUG : closest in time is min_lst_diff = %.4f [h] (id = %d)" % (min_lst_distance,best_rec_id))
 
         
        for row in rows :
@@ -341,7 +342,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
            creator     = row[14]
            code_version = row[15]
            
-           print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg)
+           print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
            if best_rec_id < 0 or id == best_rec_id : 
               ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
@@ -351,7 +352,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
                   out_aot.append( aot )
                   out_sefd.append( sefd ) 
               else :
-                 print "\t\tDB Record ignored due to angular distance too large"
+                 print("\t\tDB Record ignored due to angular distance too large")
  
     return (out_uxtime, out_aot, out_sefd)
 
@@ -371,7 +372,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
     # get requested data :
     cur = conn.cursor()
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol, lst_start, lst_end )
-    print "DEBUG SQL2 : %s" % (szSQL)
+    print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     
@@ -394,18 +395,18 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
           closest_gridpoint_az_deg = azim_deg_db
 
     if min_angular_distance_deg > 1000 :
-       print "ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg)
+       print("ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg))
        return (None,None,None,None,None,None)
        
        
-    print "Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg)
+    print("Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg))
 
 
     
     cur = conn.cursor()       
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f ORDER BY LST ASC" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol, lst_start, lst_end )
     if debug_level >= 2 :
-       print "DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL)
+       print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
        
@@ -431,7 +432,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
         creator     = row[14]
         code_version = row[15]
            
-        print "TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg)
+        print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
         ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
         
@@ -440,7 +441,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
             out_aot.append( aot )
             out_sefd.append( sefd ) 
         else :
-            print "\t\tDB Record ignored due to angular distance too large"
+            print("\t\tDB Record ignored due to angular distance too large")
  
     return (out_lst, out_aot, out_sefd)
 
@@ -500,7 +501,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     # select closest LST :
     cur = conn.cursor()
     szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (lst_hours,lst_hours,db_lst_resolution, freq_mhz, db_freq_resolution_mhz )
-    print "DEBUG SQL_best_lst : %s" % (szSQL)
+    print("DEBUG SQL_best_lst : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     min_lst_distance = None
@@ -508,35 +509,35 @@ def get_sensitivity_map( freq_mhz, lst_hours,
        if row[0] is not None :
           min_lst_distance = float( row[0] )
        else :
-          print "ERROR : not data close to frequency = %.2f MHz and lst = %.2f h in the database" % (freq_mhz,lst_hours)
+          print("ERROR : not data close to frequency = %.2f MHz and lst = %.2f h in the database" % (freq_mhz,lst_hours))
     
     if min_lst_distance is None :
-       print "ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz)
+       print("ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz))
        return (None,None,None,None,None,None,None,None)
 
-    print "Best LST in database is closer than %.8f [hours]" % (min_lst_distance)
+    print("Best LST in database is closer than %.8f [hours]" % (min_lst_distance))
     min_lst_distance = min_lst_distance + 0.01
 
     # select closest FREQUENCY :
     cur = conn.cursor()
     szSQL = "SELECT MIN(ABS(frequency_mhz-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (freq_mhz, lst_hours, min_lst_distance, freq_mhz, db_freq_resolution_mhz )
-    print "DEBUG SQL_best_freq : %s" % (szSQL)
+    print("DEBUG SQL_best_freq : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
     min_freq_distance = None
     for row in rows:
        print(row)
        min_freq_distance = float( row[0] )
-    print "Best FREQ in database is closer than %.8f [MHz]" % (min_freq_distance)
+    print("Best FREQ in database is closer than %.8f [MHz]" % (min_freq_distance))
     
     if min_freq_distance is None :
-       print "ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours)
+       print("ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours))
        return (None,None,None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
     szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<=%.8f AND ABS(frequency_mhz-%.4f)<=%.8f ORDER BY za_deg, azim_deg ASC" %  (lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1) )
-    print "DEBUG SQL_main : %s" % (szSQL)
+    print("DEBUG SQL_main : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
  
@@ -589,7 +590,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
         code_version = row[15]
         
         if debug_level >= 2 :
-           print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
+           print("TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz))
         
         line = "%.4f %.4f %.8f\n" % (azim_deg_db,za_deg_db,aot)
         
@@ -610,7 +611,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
            if out_txt_y_f is not None : 
                out_txt_y_f.write( line )                      
         else :
-           print "ERROR : unknown polarisation = %s" % (pol)
+           print("ERROR : unknown polarisation = %s" % (pol))
  
     if out_txt_x_f is not None :
        out_txt_x_f.close()
@@ -669,7 +670,7 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
         creator     = row[14]
         code_version = row[15]
         
-        print "TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz)
+        print("TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz))
         
         if pol == "X" :
            out_lst_x.append( lst_db )
@@ -680,7 +681,7 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
            out_aot_y.append( aot )
            out_sefd_y.append( sefd )            
         else :
-           print "ERROR : unknown polarisation = %s" % (pol)
+           print("ERROR : unknown polarisation = %s" % (pol))
  
 
     return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
@@ -858,7 +859,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
      
       out_txt_f.close()
       
-      print "Sensitivity map saved to text file %s" % (out_txt_filename)
+      print("Sensitivity map saved to text file %s" % (out_txt_filename))
 
    if do_plot :
       # see /home/msok/ska/aavs/aavs0.5/trunk/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_local.py
@@ -890,7 +891,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       ax1.set_title( title , fontsize=8 )
       pngfile = out_fitsname_base + ".png"
       fig.savefig( pngfile )
-      print "Saved file %s" % (pngfile)
+      print("Saved file %s" % (pngfile))
       plt.show()
       
       
@@ -967,33 +968,33 @@ def parse_options(idx):
       if options.unixtime_interval is None :
          options.unixtime_interval = ( options.unixtime_end - options.unixtime_start )
    
-   print "###############################################################"
-   print "PARAMATERS : "
-   print "###############################################################"
-   print "Do plotting                = %s" % (options.do_plot)
+   print("###############################################################")
+   print("PARAMATERS : ")
+   print("###############################################################")
+   print("Do plotting                = %s" % (options.do_plot))
    if options.azim_deg is not None and options.za_deg is not None : 
-      print "Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+      print("Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
    else :
-      print "Pointing direction not specified"
+      print("Pointing direction not specified")
    if options.lst_hours is not None :     
-      print "Specified LST time         = %.4f [deg]" % (options.lst_hours)
+      print("Specified LST time         = %.4f [deg]" % (options.lst_hours))
    if options.freq_mhz is not None :
-      print "Frequency                  = %.4f [MHz]" % (options.freq_mhz)
+      print("Frequency                  = %.4f [MHz]" % (options.freq_mhz))
    else :
-      print "Frequency                  = None" 
+      print("Frequency                  = None") 
    if options.lst_start_hours is not None and options.lst_end_hours is not None :      
-      print "LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours)
+      print("LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours))
    else :
-      print "LST range not specified"
+      print("LST range not specified")
    if options.unixtime_start is not None and options.unixtime_end is not None :
-      print "Unix time range            = %.2f - %.2f ( interval = %.2f seconds )" % (options.unixtime_start,options.unixtime_end,options.unixtime_interval)
+      print("Unix time range            = %.2f - %.2f ( interval = %.2f seconds )" % (options.unixtime_start,options.unixtime_end,options.unixtime_interval))
    else :
-      print "Unix time range not specified"
+      print("Unix time range not specified")
    if options.ut_start is not None and options.ut_end is not None :
-      print "UTC time range = %s - %s ( interval = %.2f seconds )" % (options.ut_start,options.ut_end,options.unixtime_interval)
+      print("UTC time range = %s - %s ( interval = %.2f seconds )" % (options.ut_start,options.ut_end,options.unixtime_interval))
    else :
-      print "UTC time range not specified"
-   print "###############################################################"
+      print("UTC time range not specified")
+   print("###############################################################")
 
    return (options, args)
 
@@ -1021,7 +1022,7 @@ if __name__ == "__main__":
 
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
-       print "(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ..."
+       print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
        (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
@@ -1037,7 +1038,7 @@ if __name__ == "__main__":
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
-       print "LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere" 
+       print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
        (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
@@ -1060,13 +1061,13 @@ if __name__ == "__main__":
               plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y" )
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
-        print "Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end)
+        print("Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end))
 
         if options.freq_mhz is not None :
-           print "\tPlotting for specific frequency = %.2f MHz" % (options.freq_mhz)
+           print("\tPlotting for specific frequency = %.2f MHz" % (options.freq_mhz))
            
            if options.azim_deg is not None and options.za_deg is not None :
-              print "\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+              print("\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
               (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, time_step=options.step_seconds, station=options.station_name )
 
               if options.do_plot :
@@ -1075,18 +1076,18 @@ if __name__ == "__main__":
               
               
            else :
-              print "\tPlotting full sky maps in time - NOT YET IMPLEMENTED"  
+              print("\tPlotting full sky maps in time - NOT YET IMPLEMENTED")  
         else :
-           print "\tPlotting for range of frequencies (NOT YET IMPLEMENTED)"
+           print("\tPlotting for range of frequencies (NOT YET IMPLEMENTED)")
 
     elif options.lst_start_hours is not None and options.lst_end_hours is not None :
-       print "SENS_vs_LST : Plotting sensitivity for a specified LST %.2f - %.2f" % (options.lst_start_hours,options.lst_end_hours)
+       print("SENS_vs_LST : Plotting sensitivity for a specified LST %.2f - %.2f" % (options.lst_start_hours,options.lst_end_hours))
        
        if options.freq_mhz is not None :
-           print "\tSENS_vs_LST : Plotting for specific frequency = %.2f MHz" % (options.freq_mhz)
+           print("\tSENS_vs_LST : Plotting for specific frequency = %.2f MHz" % (options.freq_mhz))
            
            if options.azim_deg is not None and options.za_deg is not None :
-              print "\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg)
+              print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
               (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, time_step=options.step_seconds, station=options.station_name )
 
               if options.do_plot :
@@ -1095,9 +1096,9 @@ if __name__ == "__main__":
               
               
            else :
-              print "\tPlotting full sky maps in time - NOT YET IMPLEMENTED"  
+              print("\tPlotting full sky maps in time - NOT YET IMPLEMENTED")  
        else :
-           print "\tPlotting for range of frequencies (NOT YET IMPLEMENTED)"
+           print("\tPlotting for range of frequencies (NOT YET IMPLEMENTED)")
        
        
     # TODO :

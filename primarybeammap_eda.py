@@ -8,6 +8,7 @@ make_primarybeammap()
 This is the script interface to the functions and modules defined in MWA_Tools/src/primarybeamap.py
 
 """
+from __future__ import print_function
 import pdb
 
 # from mwapy import ephem_utils
@@ -50,7 +51,7 @@ def read_antenna_list( filename, start_column=0 ):
    count = 0
    for line in data : 
        words = line.split() # was ' ' , but when none is provided -> all white-space characters are ok !
-       print "DEBUG : words = %s (len = %d)" % (words,len(words))
+       print("DEBUG : words = %s (len = %d)" % (words,len(words)))
        
        if line[0] == '#' :
           continue
@@ -69,7 +70,7 @@ def read_antenna_list( filename, start_column=0 ):
 
    file.close()
    
-   print "Read %d / %d / %d of x, y, z positions from file %s" % (len(x_arr),len(y_arr),len(z_arr),filename)
+   print("Read %d / %d / %d of x, y, z positions from file %s" % (len(x_arr),len(y_arr),len(z_arr),filename))
            
    return (x_arr,y_arr,z_arr,count)         
 
@@ -187,7 +188,7 @@ def main():
     if options.trcv_type is not None :
        if not options.use_trcv :
           options.use_trcv = True
-          print "WARNING : forcing receiver temperature flag use_trcv to True because trcv_type = %s (!= None)" % (options.trcv_type)
+          print("WARNING : forcing receiver temperature flag use_trcv to True because trcv_type = %s (!= None)" % (options.trcv_type))
 
     set_sun( options.add_sun, options.sun_ra, options.sun_dec, scale_size=options.sun_scale_size )
 
@@ -197,34 +198,34 @@ def main():
         
         eda_station = tpm_mapping.Station()
         (xpos_list,ypos_list) = eda_station.get_xy_pos( tpm_list[0] )
-        print "Antenna positions :"
-        print "\txs = %s" % (xpos_list)
-        print "\tys = %s" % (ypos_list)
+        print("Antenna positions :")
+        print("\txs = %s" % (xpos_list))
+        print("\tys = %s" % (ypos_list))
         
 
     
-    print "##################################################"
-    print "PARAMETERS:"
-    print "##################################################"
-    print "Interval    = %d [sec]" % (options.interval)
-    print "Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg] , size scaled by x %.4f " % (options.add_sun,options.sun_ra,options.sun_dec,options.sun_scale_size)
-    print "Beamoforming errors RMS(gain) = %.4f dB , RMS(phase) = %.4f degree" % (options.gain_sigma_db,options.gain_sigma_ph)
-    print "Use T_rcv   = %s" % (options.use_trcv)
-    print "T_rcv type  = %s" % (options.trcv_type)
-    print "Receiver noise = %.2f [K]" % (options.T_rcv)
-    print "Receiver noise coupling = %.2f" % (options.rcv_noise_coupling)
-    print "TPM list     = %s -> %s" % (options.tpm_list,tpm_list)
+    print("##################################################")
+    print("PARAMETERS:")
+    print("##################################################")
+    print("Interval    = %d [sec]" % (options.interval))
+    print("Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg] , size scaled by x %.4f " % (options.add_sun,options.sun_ra,options.sun_dec,options.sun_scale_size))
+    print("Beamoforming errors RMS(gain) = %.4f dB , RMS(phase) = %.4f degree" % (options.gain_sigma_db,options.gain_sigma_ph))
+    print("Use T_rcv   = %s" % (options.use_trcv))
+    print("T_rcv type  = %s" % (options.trcv_type))
+    print("Receiver noise = %.2f [K]" % (options.T_rcv))
+    print("Receiver noise coupling = %.2f" % (options.rcv_noise_coupling))
+    print("TPM list     = %s -> %s" % (options.tpm_list,tpm_list))
     if options.tpm_list is not None :
-        print"\txs = %s" % (xpos_list)
-        print"\tys = %s" % (ypos_list)
-    print "Antenna list = %s" % (options.antenna_list)
-    print "Antenna list file = %s" % (options.antenna_list_file)
-    print "Antenna list start column = %d" % (options.antlist_start_column)
-    print "FEKO file         = %s" % (options.feko_file)
-    print "Sky image resolution = %d x %d" % (options.size,options.size)
-    print "Interpolate       = %s (to nearest = %s)" % (options.interpolate,options.interpolate_to_nearest)
-    print "Polarisations     = %s" % (options.pols)
-    print "##################################################"
+        print("\txs = %s" % (xpos_list))
+        print("\tys = %s" % (ypos_list))
+    print("Antenna list = %s" % (options.antenna_list))
+    print("Antenna list file = %s" % (options.antenna_list_file))
+    print("Antenna list start column = %d" % (options.antlist_start_column))
+    print("FEKO file         = %s" % (options.feko_file))
+    print("Sky image resolution = %d x %d" % (options.size,options.size))
+    print("Interpolate       = %s (to nearest = %s)" % (options.interpolate,options.interpolate_to_nearest))
+    print("Polarisations     = %s" % (options.pols))
+    print("##################################################")
             
     
     if options.dir is not None:
@@ -304,30 +305,30 @@ def main():
     out_file.close()
 
     if options.antenna_list_file is not None :
-        print "Reading antenna positions from file : %s" % (options.antenna_list_file)
+        print("Reading antenna positions from file : %s" % (options.antenna_list_file))
         
         (xpos_list,ypos_list,zpos_list,ant_count) = read_antenna_list( options.antenna_list_file, start_column=options.antlist_start_column )
-        print "Read %d antennas from file %s, list of antennas:" % (ant_count,options.antenna_list_file)        
-        print "\txs = %s" % (xpos_list)
-        print
-        print "\tys = %s" % (ypos_list)
-        print
-        print "\tzs = %s" % (zpos_list)
+        print("Read %d antennas from file %s, list of antennas:" % (ant_count,options.antenna_list_file))        
+        print("\txs = %s" % (xpos_list))
+        print()
+        print("\tys = %s" % (ypos_list))
+        print()
+        print("\tzs = %s" % (zpos_list))
              
     # calculate receiver temperature :
     T_rcv = options.T_rcv
     if options.trcv_type is not None :
        T_rcv = station_trcv.trcv_multi( frequency/1e6 , options.trcv_type )
-       print "Receiver temperature T_rcv( %.2f MHz, type=%s ) = %.4f [Kelvin]" % ((frequency/1e6),options.trcv_type,T_rcv)
+       print("Receiver temperature T_rcv( %.2f MHz, type=%s ) = %.4f [Kelvin]" % ((frequency/1e6),options.trcv_type,T_rcv))
        
 
     beams = None
     for uxtime in range(options.unixtime_start,options.unixtime_start+options.interval,options.step) :
         gps = uxtime - 315964800
-        print "unixtime = %d -> gpstime = %d" % (uxtime,gps)
+        print("unixtime = %d -> gpstime = %d" % (uxtime,gps))
         
         for freq in frequency:
-           print 'frequency', freq
+           print('frequency', freq)
            (beamsky_sum_XX,beam_sum_XX,Tant_XX,beam_dOMEGA_sum_XX,beamsky_sum_YY,beam_sum_YY,Tant_YY,beam_dOMEGA_sum_YY,beams) = make_primarybeammap( gps, delays, freq, beams=beams, model=model, plottype=plottype, extension=extension, resolution=options.size, directory=options.dir, out_filename=options.out_filename,
                                        pointing_za_deg=options.pointing_za_deg, pointing_az_deg=options.pointing_az_deg, gain_sigma_ph_160mhz=options.gain_sigma_ph, gain_sigma_dB=options.gain_sigma_db,
                                        radio_image=options.radio_image,

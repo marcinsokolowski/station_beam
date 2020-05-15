@@ -1,3 +1,4 @@
+from __future__ import print_function
 # from pylab import *
 import pdb
 
@@ -22,7 +23,7 @@ def save_fits( data , out_fits_name ) :
    hdulist = pyfits.HDUList([hdu])
    hdulist.writeto( out_fits_name , clobber=True )
 
-   print "Saved fits file %s" % (out_fits_name)   
+   print("Saved fits file %s" % (out_fits_name))   
 
 # dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
 # x_pixel = ( npix/2 - dist_za*numpy.sin( azim_deg*(math.pi/180.00) ) ) 
@@ -45,7 +46,7 @@ def find_value_fast( az, za, x_start, y_start, map_az, map_za, map_beam, radius=
    sin_dec1 = math.sin(dec1)
    cos_dec1 = math.cos(dec1)
    
-   print "\tfind_value_fast : around (%d,%d) in range (%d,%d) - (%d,%d)" % ( x_start,y_start, max(x_start-radius,0),max(y_start-radius,0),min(x_start+radius,x_size),min(y_start+radius,y_size))
+   print("\tfind_value_fast : around (%d,%d) in range (%d,%d) - (%d,%d)" % ( x_start,y_start, max(x_start-radius,0),max(y_start-radius,0),min(x_start+radius,x_size),min(y_start+radius,y_size)))
    best_x = -1
    best_y = -1
 
@@ -60,7 +61,7 @@ def find_value_fast( az, za, x_start, y_start, map_az, map_za, map_beam, radius=
              ang_distance = math.acos( cos_value )
 
              if verb :
-                print "\t(%d,%d) -> ang_distance = %.4f [arcsec]" % (x,y,ang_distance*(180.00/math.pi)*3600)
+                print("\t(%d,%d) -> ang_distance = %.4f [arcsec]" % (x,y,ang_distance*(180.00/math.pi)*3600))
 
              if ang_distance < min_distance :
                 min_distance = ang_distance 
@@ -70,9 +71,9 @@ def find_value_fast( az, za, x_start, y_start, map_az, map_za, map_beam, radius=
 
 
                 if verb :
-                   print "New minimum at (%d,%d) - distance = %.2f [arcsec] , beam_value = %.2f" % (x,y,min_distance*(180.00/math.pi)*3600,beam_value)
+                   print("New minimum at (%d,%d) - distance = %.2f [arcsec] , beam_value = %.2f" % (x,y,min_distance*(180.00/math.pi)*3600,beam_value))
 
-   print "\tfind_value_fast : best (x,y) = (%d,%d) , min_distance = %.2f [arcsec]" % (best_x,best_y,min_distance*(180.00/math.pi)*3600)
+   print("\tfind_value_fast : best (x,y) = (%d,%d) , min_distance = %.2f [arcsec]" % (best_x,best_y,min_distance*(180.00/math.pi)*3600))
 
    return (beam_value,min_distance*(180.00/math.pi)*3600)
    
@@ -109,9 +110,9 @@ def find_value( az, za, map_az, map_za, map_beam, verb=False ) :
                best_y = y
             
                if verb :
-                  print "New minimum at (%d,%d) - distance = %.2f [arcsec] , beam_value = %.2f" % (x,y,min_distance*(180.00/math.pi)*3600,beam_value)
+                  print("New minimum at (%d,%d) - distance = %.2f [arcsec] , beam_value = %.2f" % (x,y,min_distance*(180.00/math.pi)*3600,beam_value))
 
-   print "\tfind_value : best (x,y) = (%d,%d) , min_distance = %.2f [arcsec]" % (best_x,best_y,min_distance*(180.00/math.pi)*3600)
+   print("\tfind_value : best (x,y) = (%d,%d) , min_distance = %.2f [arcsec]" % (best_x,best_y,min_distance*(180.00/math.pi)*3600))
 
    return (beam_value,min_distance*(180.00/math.pi)*3600)
             
@@ -121,20 +122,20 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
    x_size = beam[0].header['NAXIS1']  
    y_size = beam[0].header['NAXIS2']
    npix = x_size 
-   print "Read file %s with size (%d,%d)" % (fits_file,x_size,y_size)
+   print("Read file %s with size (%d,%d)" % (fits_file,x_size,y_size))
    
    (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True )
    (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True )
    
-   print "Test orientation azim SIN :"
-   print "         %.2f            " % (az_sin[npix-1,npix/2])                  # WARNING data[y,x] !!!
-   print "%.2f                 %.2f" % (az_sin[npix/2,0],az_sin[npix/2,npix-1]) # WARNING data[y,x] !!!   
-   print "         %.2f            " % (az_sin[0,npix/2])                       # WARNING data[y,x] !!! 
+   print("Test orientation azim SIN :")
+   print("         %.2f            " % (az_sin[npix-1,npix/2]))                  # WARNING data[y,x] !!!
+   print("%.2f                 %.2f" % (az_sin[npix/2,0],az_sin[npix/2,npix-1])) # WARNING data[y,x] !!!   
+   print("         %.2f            " % (az_sin[0,npix/2]))                       # WARNING data[y,x] !!! 
 
-   print "Test orientation xy SIN :"
-   print "         (%d,%d)            "   % (x_zea[npix/2,npix-1],y_zea[npix/2,npix-1])
-   print "(%d,%d)                (%d,%d)" % (x_zea[0,npix/2],y_zea[0,npix/2],x_zea[npix-1,npix/2],y_zea[npix-1,npix/2])
-   print "         (%d,%d)            "   % (x_zea[npix/2,0],y_zea[npix/2,0])
+   print("Test orientation xy SIN :")
+   print("         (%d,%d)            "   % (x_zea[npix/2,npix-1],y_zea[npix/2,npix-1]))
+   print("(%d,%d)                (%d,%d)" % (x_zea[0,npix/2],y_zea[0,npix/2],x_zea[npix-1,npix/2],y_zea[npix-1,npix/2]))
+   print("         (%d,%d)            "   % (x_zea[npix/2,0],y_zea[npix/2,0]))
    
 #   dist_za_sin = numpy.sin( za_sin )*(npix/2)
 #   x_pixel = ( npix/2 - dist_za_sin*numpy.sin( az_sin ) ) 
@@ -154,7 +155,7 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
    for y in range(0,y_size,step):
       # print "i = %d" % (i)
       for x in range(0,x_size): 
-         print "TEST (x,y) = (%d,%d)" % (x,y)
+         print("TEST (x,y) = (%d,%d)" % (x,y))
          az_zea_ij = az_zea[y,x] # this order of x,y is ok (see makeAZZA)
          za_zea_ij = za_zea[y,x] # this order of x,y is ok (see makeAZZA)
 #         radius_zea = math.sqrt(1.00-math.cos(za_zea_ij))
@@ -176,7 +177,7 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
 # ??? WHY ZEA (x_zea,y_zea) = (%d,%d) is still other way around ???
          
              if do_test :     
-                 print "\t(%d,%d) : ZEA (x_zea,y_zea) = (%d,%d) , (az,za) = (%.2f,%.2f) [deg] -> SIN : (x_sin,y_sin) = (%d,%d)" % (x,y,x_zea_ij,y_zea_ij,az_zea_ij,za_zea_ij,int(x_sin_ij),int(y_sin_ij))
+                 print("\t(%d,%d) : ZEA (x_zea,y_zea) = (%d,%d) , (az,za) = (%.2f,%.2f) [deg] -> SIN : (x_sin,y_sin) = (%d,%d)" % (x,y,x_zea_ij,y_zea_ij,az_zea_ij,za_zea_ij,int(x_sin_ij),int(y_sin_ij)))
 
              # find given (az,za) from ZEA map in SIN map and return beam value (in SIN mapping) :
              beam_value = numpy.NaN
@@ -185,7 +186,7 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
                 (beam_value_fast, min_distance_arcsec_fast ) = find_value_fast( az_zea_ij, za_zea_ij, int(x_sin_ij), int(y_sin_ij), az_sin, za_sin, beam[0].data, radius=radius )
              
                 if math.fabs(beam_value-beam_value_fast) > 0.00001 :
-                   print "\n\n\t!!!! ERROR in code at (x,y) = (%d,%d) %.6f != %.6f !!!!\n\n" % (x,y,beam_value,beam_value_fast)
+                   print("\n\n\t!!!! ERROR in code at (x,y) = (%d,%d) %.6f != %.6f !!!!\n\n" % (x,y,beam_value,beam_value_fast))
              else :
                 # final function :
                 (beam_value, min_distance_arcsec_fast ) = find_value_fast( az_zea_ij, za_zea_ij, int(x_sin_ij), int(y_sin_ij), az_sin, za_sin, beam[0].data, radius=radius )
@@ -216,17 +217,17 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
    
       
    if current_fits_filename is None or current_fits_beam is None or beam_file_name != current_fits_filename :
-      print "Reading fits file %s ..." % (beam_file_name)
+      print("Reading fits file %s ..." % (beam_file_name))
            
       current_fits_beam = pyfits.open( beam_file_name )
       x_size = current_fits_beam[0].header['NAXIS1']  
       y_size = current_fits_beam[0].header['NAXIS2']
 
-      print 
-      print '# \tRead fits file %s of size %d x %d' % (beam_file_name,x_size,y_size)
+      print() 
+      print('# \tRead fits file %s of size %d x %d' % (beam_file_name,x_size,y_size))
       current_fits_filename = beam_file_name
    else :
-      print "Fits file name = %s is the same as previous %s -> not updating cache" % (beam_file_name,current_fits_filename)
+      print("Fits file name = %s is the same as previous %s -> not updating cache" % (beam_file_name,current_fits_filename))
       
       
 #   x_size = current_fits_beam[0].header['NAXIS1']  
@@ -241,7 +242,7 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
 def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/") :
-   print "requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1])
+   print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path )
    
@@ -251,7 +252,7 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
    npix = x_size
    x_center = x_size / 2
    y_center = y_size / 2 
-   print 'INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center)   
+   print('INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center))   
 
    # assuming that ds9 shows :   
    #       NORTH
@@ -282,11 +283,11 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
    dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
    x_pixel = ( npix/2 + dist_za*numpy.cos( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
    y_pixel = ( npix/2 + dist_za*numpy.sin( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
-   print "x_pixel : count = %d" % (len(x_pixel))
+   print("x_pixel : count = %d" % (len(x_pixel)))
 
    # single pixel :
    beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
-   print "Beam( %.4f deg, %.4f deg ) = %.8f at pixel (%d,%d)" % (azim_deg,za_deg,beam_value,x_pixel,y_pixel)
+   print("Beam( %.4f deg, %.4f deg ) = %.8f at pixel (%d,%d)" % (azim_deg,za_deg,beam_value,x_pixel,y_pixel))
    return (beam_value)
 
 
@@ -357,18 +358,18 @@ def makeAZZA(npix=256,projection='ZEA'):
     if projection == 'SIN' :
         za[t]  =  numpy.arcsin(d[t])
         dOMEGA = numpy.cos(za)*math.pi*2.00/n_total
-        print 'Using slant orthographic projection'
+        print('Using slant orthographic projection')
     elif projection == 'ZEA': # https://casa.nrao.edu/aips2_docs/memos/107/node2.html#SECTION00022200000000000000
                             # https://asdf-standard.readthedocs.io/en/stable/schemas/stsci.edu/asdf/transform/zenithal_equal_area-1.0.0.html
         d     = d*2**0.5; #ZEA requires R to extend beyond 1.
         za[t] = 2*numpy.arcsin(d[t]/2.0) # = 2*arcsin( d * (sqrt(2)/2) ) = 2 * arcsin( d / sqrt(2) )
-        print 'Using zenithal equal area projection'
+        print('Using zenithal equal area projection')
     else :
         raise Exception("Unknown projection %s" % (projection))
 
     az     = numpy.arctan2(y,x)
     dOMEGA_sum = dOMEGA.sum()
-    print "DEBUG : dOMEGA_sum = %.8f" % (dOMEGA_sum)
+    print("DEBUG : dOMEGA_sum = %.8f" % (dOMEGA_sum))
     
     return (az,za,n_total,dOMEGA)
 
@@ -390,7 +391,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
    azim_deg = azim_rad*(180.00/math.pi)
    za_deg   = za_rad*(180.00/math.pi)
 
-   print "requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1])
+   print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path )
       
@@ -399,7 +400,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
    npix = x_size
    x_center = x_size / 2
    y_center = y_size / 2 
-   print 'INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center)   
+   print('INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center))   
    
    # assuming that ds9 shows :   
    #       NORTH
@@ -463,7 +464,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
       else :
          raise Exception("(azim,za) map has to be either the same size as beam fits files (%d,%d) or (1,1) - (%d,%d) is not allowed" % (x_size,y_size,azim_deg.shape[0],azim_deg.shape[1]))
    
-   print "x_pixel : count = %d, npix=%d -> reshape_x_size = %d" % (len(x_pixel),npix,reshape_x_size)
+   print("x_pixel : count = %d, npix=%d -> reshape_x_size = %d" % (len(x_pixel),npix,reshape_x_size))
  
    beam_values = numpy.zeros( azim_deg.shape )
       
@@ -476,7 +477,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
    if len(azim_deg) > 1 :
        if use_beam_as_is : 
           if beam_values.shape[0] != current_fits_beam[0].data.shape[0] or beam_values.shape[1] != current_fits_beam[0].data.shape[1] :
-             print "ERROR in code shapes do not match (%d != %d or %d != %d)" % (beam_values.shape[0],current_fits_beam[0].data.shape[0],beam_values.shape[1],current_fits_beam[0].data.shape[1])
+             print("ERROR in code shapes do not match (%d != %d or %d != %d)" % (beam_values.shape[0],current_fits_beam[0].data.shape[0],beam_values.shape[1],current_fits_beam[0].data.shape[1]))
              return (None,None,None,None)
          
           beam_values = numpy.sqrt( current_fits_beam[0].data )
@@ -494,7 +495,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                         if x_int < beam_values.shape[0] and y_int < beam_values.shape[1] :
                            beam_values[x_int,y_int] = numpy.sqrt( current_fits_beam[0].data[x_int,y_int] )
                         else :
-                           print "WARNING : skipped pixel (x_int,y_int) = (%d,%d)" % (x_int,y_int)
+                           print("WARNING : skipped pixel (x_int,y_int) = (%d,%d)" % (x_int,y_int))
    else :
        x_pixel_int = int(x_pixel)
        y_pixel_int = int(y_pixel)
@@ -566,6 +567,6 @@ if __name__ == "__main__":
       step = int( sys.argv[2] )
   
       
-   print "Remapping fits_file = %s in steps of %d" % (fits_name,step)
+   print("Remapping fits_file = %s in steps of %d" % (fits_name,step))
    remap_beam( fits_name , step=step, do_test=False, radius=20 )
    

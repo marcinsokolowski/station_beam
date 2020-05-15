@@ -2,6 +2,7 @@
 """Tools for transforming and plotting a primary beam generated with beam_full_EE.py.
 Tim Colegate, updated from Randall Wayth's mwa_tile.py.
 """
+from __future__ import print_function
 
 import pdb
 
@@ -130,7 +131,7 @@ def makeAZZA_dOMEGA(npix=256,projection='SIN'):
     az=2*math.pi-az #Change to clockwise from top (when origin is in top-left)
     
     dOMEGA_sum = dOMEGA.sum()
-    print "DEBUG : dOMEGA_sum = %.8f" % (dOMEGA_sum)
+    print("DEBUG : dOMEGA_sum = %.8f" % (dOMEGA_sum))
 
     return (az,za,n_total,dOMEGA)
 

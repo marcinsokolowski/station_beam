@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 import math
 import numpy
@@ -23,7 +24,7 @@ def trcv_budi( freq_mhz ):
              +0.00000000000000000000000000000000000000000147452601 * 1*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz \
              -0.00000000000000000000000000000000000000000001736900 * 1*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz
 
-   print "INFO : using Budi's data for T_rcv ( %.2f MHz) = %.2f" % (freq_mhz,t_lna)
+   print("INFO : using Budi's data for T_rcv ( %.2f MHz) = %.2f" % (freq_mhz,t_lna))
 
    return t_lna   
 
@@ -97,7 +98,7 @@ def trcv_from_skymodel_with_err( freq_mhz , use_cubic=False ): # default was pow
 #   if freq_mhz > 160 :
 #      return 50
 
-   print "INFO : using trcv_from_skymodel_with_err"
+   print("INFO : using trcv_from_skymodel_with_err")
 
    if use_cubic :
       x=[55.0,65.0,75.0,85.0,95.0,105.0,115.0,125.0,135.0,145.0,155.0,165.0,175.0,185.0,195.0,205.0]
@@ -146,7 +147,7 @@ def trcv_aavs2( freq_mhz , use_cubic=True, za_deg=None ): # default was power la
       using_cubic = True
 
    if za_deg is not None :
-      print "za_deg is not None:"
+      print("za_deg is not None:")
       trcv_vs_za_fit_params={}
       trcv_vs_za_fit_params[80]  = numpy.array( [ 44.37610000 , 0.01785778 , 0.00073852 ] )
       trcv_vs_za_fit_params[110] = numpy.array( [ 39.43860000 , 0.02064556 , 0.00000393 ] )
@@ -173,16 +174,16 @@ def trcv_aavs2( freq_mhz , use_cubic=True, za_deg=None ): # default was power la
             fit_params = trcv_vs_za_fit_params[best_freq]            
             trcv_vs_za = fit_params[0] + fit_params[1]*za_deg + fit_params[2]*(za_deg**2)
             
-            print "INFO : calculated trcv_aavs(%.2f MHz at za = %.2f [deg]) = %.2f [K] (vs. normal = %.2f [K]) , used fit coefficients %.4f, %.4f , %.4f" %  (freq_mhz,za_deg,trcv_vs_za,trcv,fit_params[0],fit_params[1],fit_params[2])
+            print("INFO : calculated trcv_aavs(%.2f MHz at za = %.2f [deg]) = %.2f [K] (vs. normal = %.2f [K]) , used fit coefficients %.4f, %.4f , %.4f" %  (freq_mhz,za_deg,trcv_vs_za,trcv,fit_params[0],fit_params[1],fit_params[2]))
             trcv = trcv_vs_za                           
          else :
-            print "WARNING : best_freq not found for %.2f MHz -> do not using ZA dependence" % (freq_mhz)
+            print("WARNING : best_freq not found for %.2f MHz -> do not using ZA dependence" % (freq_mhz))
       else :
-         print "WARNING : frequency %.2f MHz outside the range of known ZA dependence (80-350 MHz) -> do not using ZA dependence" % (freq_mhz)
+         print("WARNING : frequency %.2f MHz outside the range of known ZA dependence (80-350 MHz) -> do not using ZA dependence" % (freq_mhz))
    else:
-      print "WARNING : za_deg is None - using T_rcv(freq) only not as a function of pointing ZA[deg]"
+      print("WARNING : za_deg is None - using T_rcv(freq) only not as a function of pointing ZA[deg]")
 
-   print "INFO : using trcv_aavs2( %.2f MHz) = %.2f [K] (cubic = %s)" % (freq_mhz,trcv,using_cubic)
+   print("INFO : using trcv_aavs2( %.2f MHz) = %.2f [K] (cubic = %s)" % (freq_mhz,trcv,using_cubic))
       
    
    return trcv
@@ -190,7 +191,7 @@ def trcv_aavs2( freq_mhz , use_cubic=True, za_deg=None ): # default was power la
 # EDA2 : 
 # see /home/msok/Desktop/EDA2/logbook/20200128_EDA2_receiver_temperature.odt
 def trcv_eda2( freq_mhz , use_cubic=False ): # default was power law fit but I wanted to be able to use cubic fit too 
-   print "INFO : using trcv_eda2 (same as EDA-1 + receiver temperature of the FEM in the SmartBox"
+   print("INFO : using trcv_eda2 (same as EDA-1 + receiver temperature of the FEM in the SmartBox")
 
    x=[ 40, 50, 60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300,310,320,330,340,350 ]
    y=[ 13517.9, 13517.9,11947.6,11202.1,10830.2,10539,10205.4,10015.1,9683.08,9575.04,9396.75,9193.21,9046.74,8947.86,8820.11,8807.01,8596.01,8451,8367.9,8316.72,8230.98,8134.13,8023.28,7987.7,7761.26,7889.29,7796.44,7724.62,7741.32,7572.9,7504.12,7483.41 ]
@@ -204,7 +205,7 @@ def trcv_eda2( freq_mhz , use_cubic=False ): # default was power law fit but I w
    # at the moment return the same as for EDA-1 (or EDA-2)
    trcv_eda_lna = trcv_from_skymodel_with_err( freq_mhz , use_cubic )
    trcv_out = trcv_eda_lna + trcv_fem
-   print "INFO : using trcv_eda2( %.2f MHz) = %.2f + %.2f  = %.2f [K]" % (freq_mhz,trcv_eda_lna,trcv_fem,trcv_out)
+   print("INFO : using trcv_eda2( %.2f MHz) = %.2f + %.2f  = %.2f [K]" % (freq_mhz,trcv_eda_lna,trcv_fem,trcv_out))
    
    return trcv_out
 
@@ -213,7 +214,7 @@ def trcv_eda2( freq_mhz , use_cubic=False ): # default was power law fit but I w
 def trcv_eda1( freq_mhz , use_cubic=False ): # default was power law fit but I wanted to be able to use cubic fit too
    trcv_out = trcv_from_skymodel_with_err( freq_mhz , use_cubic )
    
-   print "INFO : using trcv_eda1( %.2f MHz) = %.2f [K]" % (freq_mhz,trcv_out)
+   print("INFO : using trcv_eda1( %.2f MHz) = %.2f [K]" % (freq_mhz,trcv_out))
    
    return trcv_out
 
@@ -257,7 +258,7 @@ def trcv_multi( freq_mhz , type, use_cubic=False ):
    elif type.lower() == "aavs2" or type.lower() == "trcv_aavs2" :
       t_rcv = trcv_aavs2( freq_mhz, use_cubic=use_cubic )       
    else :
-      print "ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type)
+      print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
       exit(-1)
       # t_rcv = trcv_from_skymodel_with_err_cubic( freq_mhz )
 
@@ -274,7 +275,7 @@ if __name__ == "__main__":
        type=sys.argv[2]
 
     t_rcv = trcv_multi( freq_mhz , type, False )
-    print "%s : T_rcv (%.2f MHz) = %.2f [K]" % (type,freq_mhz,t_rcv)
+    print("%s : T_rcv (%.2f MHz) = %.2f [K]" % (type,freq_mhz,t_rcv))
        
        
     

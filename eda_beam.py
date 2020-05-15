@@ -2,6 +2,7 @@
 """Tools for calculating the complex voltage response and power pattern of the EDA with MWA dipoles
 Randall Wayth & Kim Steele. June 2016.
 """
+from __future__ import print_function
 # import pdb
 
 import numpy,logging
@@ -42,7 +43,7 @@ def read_antenna_list( filename,
    count = 0
    for line in data : 
        words = line.split() # was ' ' , but when none is provided -> all white-space characters are ok !
-       print "DEBUG : words = %s (len = %d)" % (words,len(words))
+       print("DEBUG : words = %s (len = %d)" % (words,len(words)))
 
        if line[0] == '#' :
           continue
@@ -61,10 +62,10 @@ def read_antenna_list( filename,
 
    file.close()
 
-   print "Read %d / %d / %d of x, y, z positions from file %s" % (len(x_arr),len(y_arr),len(z_arr),filename)
+   print("Read %d / %d / %d of x, y, z positions from file %s" % (len(x_arr),len(y_arr),len(z_arr),filename))
    
    if overwrite :
-      print "Overwritting %d antenna positions with a list from file %s" % (count,filename)
+      print("Overwritting %d antenna positions with a list from file %s" % (count,filename))
       global xs
       global ys
       global n_dipoles_eda 
@@ -220,7 +221,7 @@ class Dipole:
         (beam_values_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "X", station_name=self.station_name )
         (beam_values_y,current_fits_beam_y,y_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "Y", station_name=self.station_name )
         
-        print "DEBUG : fits_beam.get_fits_beam_multi returned beam_x = %.4f , beam_y = %.4f for pixel (%.1f,%.1f) at (az,za) = (%.4f,%.4f) - please verify" % (beam_values_x[0,0],beam_values_y[0,0],x_pixel_x[0,0],y_pixel_x[0,0],az[0,0],za[0,0])
+        print("DEBUG : fits_beam.get_fits_beam_multi returned beam_x = %.4f , beam_y = %.4f for pixel (%.1f,%.1f) at (az,za) = (%.4f,%.4f) - please verify" % (beam_values_x[0,0],beam_values_y[0,0],x_pixel_x[0,0],y_pixel_x[0,0],az[0,0],za[0,0]))
 
         result = numpy.empty((za.shape+(2,2)),dtype=numpy.complex64)
         
@@ -346,7 +347,7 @@ class ApertureArray:
         
         if xpos is not None and ypos is not None :
             n_dipoles_eda = len( xpos )
-            print "ApertureArray.__init__ set n_dipoles_eda = %d" % (n_dipoles_eda)
+            print("ApertureArray.__init__ set n_dipoles_eda = %d" % (n_dipoles_eda))
         
         if xpos is None :
            xpos = xs
@@ -354,9 +355,9 @@ class ApertureArray:
         if ypos is None :
            ypos = ys                   
                    
-        print "ApertureArray.__init__ initialising with positions :"
-        print "\txs = %s" % (xpos)
-        print "\tys = %s" % (ypos)      
+        print("ApertureArray.__init__ initialising with positions :")
+        print("\txs = %s" % (xpos))
+        print("\tys = %s" % (ypos))      
         
         if dipoles == None:
             d = Dipole(type='short')
@@ -368,7 +369,7 @@ class ApertureArray:
             self.zpos = self.xpos*0.0
         else:
             self.zpos = numpy.array(zpos)
-            print "DEBUG : Initialised array with zpos != None : \n%s" % (self.zpos)
+            print("DEBUG : Initialised array with zpos != None : \n%s" % (self.zpos))
 
     def getPortCurrents(self,freq=155e6,delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)):
         """
@@ -465,19 +466,19 @@ class ApertureArray:
         of points to calculate the response for.
         Result is an array like az/za with [2][2] on the end for the Jones.
         """
-        print "delays = %s , size(delays) = %d, shape(delays) = %s, n_dipoles_eda = %d" % (delays,numpy.size(delays),delays.shape,n_dipoles_eda)        
+        print("delays = %s , size(delays) = %d, shape(delays) = %s, n_dipoles_eda = %d" % (delays,numpy.size(delays),delays.shape,n_dipoles_eda))        
 #        assert delays == None or numpy.size(delays)==2*n_dipoles_eda, "Expecting 512 delays, got %r" % str(numpy.size(delays))
         assert delays is None or (numpy.size(delays[0])==n_dipoles_eda and numpy.size(delays[1])==n_dipoles_eda), "Expecting 2 x %d delays, got %s" % ((n_dipoles_eda),delays.shape )
-        print "Number of delays = %d" % numpy.size(delays)
-        print "delays = %s" % (delays)
-        print "n_dipoles_eda = %d" % (n_dipoles_eda)               
+        print("Number of delays = %d" % numpy.size(delays))
+        print("delays = %s" % (delays))
+        print("n_dipoles_eda = %d" % (n_dipoles_eda))               
 
         # assert delays == None or numpy.size(delays)==2*n_dipoles_eda, "Expecting 512 delays, got %r" % str(numpy.size(delays))
-        print "Number of delays = %d" % numpy.size(delays)
+        print("Number of delays = %d" % numpy.size(delays))
         
         if delays is None:
             delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)
-        print "Number of delays = %d" % numpy.size(delays)
+        print("Number of delays = %d" % numpy.size(delays))
             
         (ax,ay) = self.getArrayFactor(az,za,freq,delays)
         # get the zenith response to normalise to:
@@ -504,14 +505,14 @@ class ApertureArray:
         p_z = numpy.cos(za)
         unit_vec = numpy.array([p_x,p_y,p_z])
         baselines = numpy.array([self.xpos,self.ypos,self.zpos])
-        print "DEBUG : getIdealDelays : using z = %s" % (self.zpos)
+        print("DEBUG : getIdealDelays : using z = %s" % (self.zpos))
         delays = numpy.dot(unit_vec,baselines)
 #        print "Ideal delays in nanoseconds = %s" % ((delays/vel_light)*1e9)
 
         delays_ns = ((delays/vel_light)*1e9)
-        print "Ideal delays in nanoseconds :"
+        print("Ideal delays in nanoseconds :")
         for ant in range(0,len(delays)) :
-           print "Ant_index_%03d : %.4f [ns]" % (ant,delays_ns[ant])
+           print("Ant_index_%03d : %.4f [ns]" % (ant,delays_ns[ant]))
            
         return delays
 
@@ -847,7 +848,7 @@ def save_feko_file( za_map, az_map, vis, freq, out_filename="feko.txt" ) :
 
     az_file_name="az.fits"
     pyfits.writeto(az_file_name,az_map,clobber=True)        
-    print "saved ???"
+    print("saved ???")
 
 
 def exportToFITS(j,freq,za,lst_hours,za_map=None,az_map=None,save_feko=False):
@@ -891,13 +892,13 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
     global g_freq
     
     if freq != g_freq :
-       print "init_tiles(%.2f,%.2f): frequency change %.2f -> %.2f" % (gain_sigma_dB,gain_sigma_ph_160mhz,g_freq,freq)
+       print("init_tiles(%.2f,%.2f): frequency change %.2f -> %.2f" % (gain_sigma_dB,gain_sigma_ph_160mhz,g_freq,freq))
        logger.debug("init_tiles(%.2f,%.2f): frequency change %.2f -> %.2f" % (gain_sigma_dB,gain_sigma_ph_160mhz,g_freq,freq))
        tiles_initialised = False
 
     if not tiles_initialised :
        logger.debug("init_tiles(%.2f,%.2f): initialising objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
-       print "init_tiles(%.2f,%.2f): initialising objects" % (gain_sigma_dB,gain_sigma_ph_160mhz)
+       print("init_tiles(%.2f,%.2f): initialising objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
        d = Dipole(type=type,station_name=station_name)
        d_ideal = Dipole(type=type,station_name=station_name)
        if doplots:
@@ -930,7 +931,7 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
        tiles_initialised = True
        g_freq = freq
     else :
-       print "init_tiles(%.2f,%.2f) : Already called - just returning old objects" % (gain_sigma_dB,gain_sigma_ph_160mhz)
+       print("init_tiles(%.2f,%.2f) : Already called - just returning old objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
        logger.debug("init_tiles(%.2f,%.2f) : Already called - just returning old objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
        
     return (d,d_ideal,dipoles,dipoles_ideal,tile,tile_ideal)       
@@ -981,7 +982,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
 #    tile = ApertureArray(dipoles=dipoles)
 #    tile_ideal = ApertureArray(dipoles=dipoles_ideal)
 
-    print "pointing_az_deg = %.8f , pointing_za_deg = %.8f" % (pointing_az_deg,pointing_za_deg)
+    print("pointing_az_deg = %.8f , pointing_za_deg = %.8f" % (pointing_az_deg,pointing_za_deg))
     delays_0_75_ideal = tile.getIdealDelays( float(pointing_az_deg)*(numpy.pi/180.00) , float(pointing_za_deg)*(numpy.pi/180.00) )/DQ
 
     # systematic error in delays :
@@ -1000,7 +1001,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
 #    val_max=numpy.amax(val_finite)
     val_max=numpy.nanmax(val)
     if val.shape[0]>1 and val.shape[1]>1 :
-       print "VALUE : %.8f %.8f %.8f" % (freq,val_max,val[resolution/2,resolution/2])                
+       print("VALUE : %.8f %.8f %.8f" % (freq,val_max,val[resolution/2,resolution/2]))                
 
     if doplots:
         for za_delay in za_delays:

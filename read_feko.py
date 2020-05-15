@@ -1,3 +1,4 @@
+from __future__ import print_function
 import beam_tools
 # from pylab import *
 import numpy
@@ -49,7 +50,7 @@ def read_feko_file( feko_file="AAVS1_full_station_160MHz_WithoutTurnedOFF-ANTS.t
     step_theta = theta_unique[1] - theta_unique[0]
     step_phi   = phi_unique[1]   - phi_unique[0]
     
-    print "read_feko_file(%s) : step_theta = %.4f, step_phi = %.4f, beam_values_2d.shape = %s" % (feko_file,step_theta,step_phi,beam_values_2d.shape)
+    print("read_feko_file(%s) : step_theta = %.4f, step_phi = %.4f, beam_values_2d.shape = %s" % (feko_file,step_theta,step_phi,beam_values_2d.shape))
 
     max_value = -1000
     max_t_deg = -1000
@@ -69,23 +70,23 @@ def read_feko_file( feko_file="AAVS1_full_station_160MHz_WithoutTurnedOFF-ANTS.t
            max_t_deg = t_deg
            max_p_deg = p_deg
         
-        print "\t\t%d : (%.4f,%.4f) = %.4f -> theta_idx = %d, phi_idx = %d" % (i,t_deg,p_deg,beam,theta_idx,phi_idx)
+        print("\t\t%d : (%.4f,%.4f) = %.4f -> theta_idx = %d, phi_idx = %d" % (i,t_deg,p_deg,beam,theta_idx,phi_idx))
         
-    print "Max value = %.2f at (theta,phi) = (%.4f,%.4f) [deg] , Angular range : max_phi = %.4f [deg], max_theta = %.4f [deg]" % (max_value,max_t_deg,max_p_deg,max_phi,max_theta)    
+    print("Max value = %.2f at (theta,phi) = (%.4f,%.4f) [deg] , Angular range : max_phi = %.4f [deg], max_theta = %.4f [deg]" % (max_value,max_t_deg,max_p_deg,max_phi,max_theta))    
         
     return (theta_phi,values,data, theta_unique, phi_unique, step_theta, step_phi, theta_mesh, phi_mesh, beam_values_2d)
 
 def find_beam_value( phi_deg, th_deg, step_theta, step_phi, beam_values_2d, interpolate=False, interpolation_radius=2, theta_map=None, phi_map=None, interpolate_to_nearest=False ) :
    if step_theta == 0 or step_phi == 0 :
-      print "ERROR : step_theta = %.4f , step_phi = %.4f" % (step_theta,step_phi)
+      print("ERROR : step_theta = %.4f , step_phi = %.4f" % (step_theta,step_phi))
       return -10000
 
    if numpy.isnan(th_deg) :
-      print "ERROR : th_deg = %.4f" % (th_deg)
+      print("ERROR : th_deg = %.4f" % (th_deg))
       return -10000
 
    if numpy.isnan(phi_deg) :
-      print "ERROR : phi_deg = %.4f" % (phi_deg)
+      print("ERROR : phi_deg = %.4f" % (phi_deg))
       return -10000
 
    th_index  = int( round( th_deg / step_theta ) )
@@ -93,12 +94,12 @@ def find_beam_value( phi_deg, th_deg, step_theta, step_phi, beam_values_2d, inte
    
    if phi_index >= beam_values_2d.shape[0] :
       if phi_deg > max_phi and math.fabs( phi_deg - 360.00 ) < 0.0000001 :
-         print "DEBUG : phi_deg=%.2f > max_phi = %.2f [deg] -> phi_deg := phi_index := 0" % (phi_deg,max_phi)
+         print("DEBUG : phi_deg=%.2f > max_phi = %.2f [deg] -> phi_deg := phi_index := 0" % (phi_deg,max_phi))
          phi_deg = 0.00
          phi_index = 0
          
       if phi_index == 360 and beam_values_2d.shape[0] == 360 :
-         print "DEBUG : phi_deg=%.2f , phi_index=%d , max_phi = %.2f [deg] -> phi_deg := phi_index := 0" % (phi_deg,phi_index,max_phi)
+         print("DEBUG : phi_deg=%.2f , phi_index=%d , max_phi = %.2f [deg] -> phi_deg := phi_index := 0" % (phi_deg,phi_index,max_phi))
          phi_index = 0
          phi_deg = 0.00
    
@@ -166,17 +167,17 @@ def find_beam_value( phi_deg, th_deg, step_theta, step_phi, beam_values_2d, inte
               
           
           else :
-              print "ERROR : cannot use interpolation of beam as theta and phi maps are not provided (=None)"       
+              print("ERROR : cannot use interpolation of beam as theta and phi maps are not provided (=None)")       
            
        
        if read_feko_debug_level > 0 :
-           print "DEBUG :  find_beam_value( %.4f, %.4f, %.4f, %.4f , beam_values_2d ) : th_index = %d, phi_index = %d, beam = %.8f" % (phi_deg, th_deg, step_theta, step_phi, th_index, phi_index, beam)
+           print("DEBUG :  find_beam_value( %.4f, %.4f, %.4f, %.4f , beam_values_2d ) : th_index = %d, phi_index = %d, beam = %.8f" % (phi_deg, th_deg, step_theta, step_phi, th_index, phi_index, beam))
        
        
        if beam > 1 :
-          print "WARNING : wrong beam value = %.4f at (phi_deg,theta_deg) = (%.4f,%.4f) [deg] , step_phi = %.2f, step_theta = %.2f , phi_index = %d, theta_index = %d" % (beam,phi_deg,th_deg,step_phi,step_theta,phi_index,th_index)
+          print("WARNING : wrong beam value = %.4f at (phi_deg,theta_deg) = (%.4f,%.4f) [deg] , step_phi = %.2f, step_theta = %.2f , phi_index = %d, theta_index = %d" % (beam,phi_deg,th_deg,step_phi,step_theta,phi_index,th_index))
    else :
-       print "ERROR in find_beam_value( %.4f, %.4f, %.4f, %.4f , beam_values_2d ) -> phi_index = %d or th_index = %d outside of range" % (phi_deg, th_deg, step_theta, step_phi, phi_index, th_index)
+       print("ERROR in find_beam_value( %.4f, %.4f, %.4f, %.4f , beam_values_2d ) -> phi_index = %d or th_index = %d outside of range" % (phi_deg, th_deg, step_theta, step_phi, phi_index, th_index))
        beam = -10000       
    
    return beam
@@ -209,7 +210,7 @@ def get_feko_beam( theta, phi, feko_file="AAVS1_full_station_160MHz_WithoutTurne
     
     # fill all beam pixels :           
     for y in range(0,phi.shape[0]) :
-       print "PROGRESS : y = %d / %d" % (y,phi.shape[0])
+       print("PROGRESS : y = %d / %d" % (y,phi.shape[0]))
        
        for x in range(0,phi.shape[1]) :              
           az_deg = phi[x,y]*(180.00/math.pi)
@@ -224,7 +225,7 @@ def get_feko_beam( theta, phi, feko_file="AAVS1_full_station_160MHz_WithoutTurne
           
           if numpy.isnan(th_deg) :
               if read_feko_debug_level > 0 :
-                  print "ERROR at (x,y) = (%d,%d), th_deg = NaN, phi_deg = %.2f [deg]" % (x,y,phi_feko_deg)
+                  print("ERROR at (x,y) = (%d,%d), th_deg = NaN, phi_deg = %.2f [deg]" % (x,y,phi_feko_deg))
               beam[x,y] = 0.00
           else :          
               beam_value = find_beam_value( phi_feko_deg, th_deg, step_theta, step_phi, beam_values_2d, theta_map=theta_mesh, phi_map=phi_mesh, interpolate=interpolate, interpolation_radius=interpolation_radius, interpolate_to_nearest=interpolate_to_nearest )
@@ -244,7 +245,7 @@ def get_feko_beam_slow( theta, phi, feko_file="AAVS1_full_station_160MHz_Without
     theta_deg = theta_phi[:,0]
     phi_deg   = theta_phi[:,1]
     
-    print "Size of theta_deg = %d, phi_deg = %d" % (len(theta_deg),len(phi_deg))
+    print("Size of theta_deg = %d, phi_deg = %d" % (len(theta_deg),len(phi_deg)))
     
     azim_deg = 90.00 - phi_deg
 
@@ -260,7 +261,7 @@ def get_feko_beam_slow( theta, phi, feko_file="AAVS1_full_station_160MHz_Without
 
     # fill all beam pixels :           
     for y in range(0,phi.shape[0]) :
-       print "y = %d / %d" % (y,phi.shape[0])
+       print("y = %d / %d" % (y,phi.shape[0]))
        for x in range(0,phi.shape[1]) :              
           az_rad = phi[x,y]
           th_rad = theta[x,y]

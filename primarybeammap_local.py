@@ -7,6 +7,7 @@ make_primarybeammap()
 
 
 """
+from __future__ import print_function
 # from mwapy import ephem_utils
 # import primary_beam 
 import beam_tools
@@ -77,7 +78,7 @@ def set_sun( add_sun_param, sun_ra_param, sun_dec_param, scale_size=1.00 ) :
    sun_radius_arcsec = sun_radius_arcsec * scale_size
    sun_radius_deg = sun_radius_arcsec / 3600.00
    
-   print "Sun parameters (ra,dec) = (%.4f,%.4f) , radius = %.2f [arcsec]" % (sun_ra,sun_dec,sun_radius_arcsec)
+   print("Sun parameters (ra,dec) = (%.4f,%.4f) , radius = %.2f [arcsec]" % (sun_ra,sun_dec,sun_radius_arcsec))
 
 def shift_antenna( ant_idx, dx=0, dy=0 ) :
    eda_beam.shift_antenna( ant_idx=ant_idx, dx=dx, dy=dy )   
@@ -106,7 +107,7 @@ def get_azza_arrays_fov(gridsize=361,fov=180.0):
     dsqu = (c**2+r**2)*(myfov)**2
     p = (dsqu<(1.0+EPS))
     za_grid[p]=numpy.arcsin(dsqu[p]**0.5)
-    print 'Using standard orthographic projection'
+    print('Using standard orthographic projection')
     az_grid=numpy.arctan2(c,r)
     mask[p] = 1.0 #set mask 
     p = dsqu>=(1.0+EPS)
@@ -169,7 +170,7 @@ za_grid - grid of ZAs onto which we map sky
     """
     #Get az, ZA grid transformed to equatorial coords
     grid2eq=horz2eq(az_grid, za_grid, gps, epoch=epoch)
-    print 'grid2eq',grid2eq['RA'].shape
+    print('grid2eq',grid2eq['RA'].shape)
    
 
     #Set up interp function using sky map
@@ -181,14 +182,14 @@ za_grid - grid of ZAs onto which we map sky
     #https://github.com/scipy/scipy/issues/3703
     
     #interpolate map onto az,ZA grid
-    print np.min(grid2eq['dec']), np.max(grid2eq['dec'])
-    print np.min(grid2eq['RA']), np.max(grid2eq['RA'])
+    print(np.min(grid2eq['dec']), np.max(grid2eq['dec']))
+    print(np.min(grid2eq['RA']), np.max(grid2eq['RA']))
     #Convert to RA=-180 - 180 format (same as Haslam)
     #We do it this way so RA values are always increasing for RegularGridInterpolator
     grid2eq['RA'][grid2eq['RA']>180]=grid2eq['RA'][grid2eq['RA']>180]-360
     
-    print np.min(grid2eq['dec']), np.max(grid2eq['dec'])
-    print np.min(grid2eq['RA']), np.max(grid2eq['RA'])
+    print(np.min(grid2eq['dec']), np.max(grid2eq['dec']))
+    print(np.min(grid2eq['RA']), np.max(grid2eq['RA']))
     my_map=my_interp_fn(np.dstack([grid2eq['dec'], grid2eq['RA']]))
 #    print "np.vstack([grid2eq['dec'], grid2eq['RA']])",np.vstack([grid2eq['dec'], grid2eq['RA']]).shape
 #    print "np.hstack([grid2eq['dec'], grid2eq['RA']])",np.hstack([grid2eq['dec'], grid2eq['RA']]).shape
@@ -196,8 +197,8 @@ za_grid - grid of ZAs onto which we map sky
 
     # test adding sun
     if add_sun : 
-       print "Adding sun at (ra,dec)=(%.4f,%.4f) [deg]" % (sun_ra,sun_dec)
-       print "dec shape = %d x %d" % (grid2eq['dec'].shape[0],grid2eq['dec'].shape[1])
+       print("Adding sun at (ra,dec)=(%.4f,%.4f) [deg]" % (sun_ra,sun_dec))
+       print("dec shape = %d x %d" % (grid2eq['dec'].shape[0],grid2eq['dec'].shape[1]))
        for dy in range(0,grid2eq['dec'].shape[1]):
           for dx in range(0,grid2eq['dec'].shape[0]):
              dec_px=grid2eq['dec'][dx,dy]
@@ -206,7 +207,7 @@ za_grid - grid of ZAs onto which we map sky
              dist_arcsec = ang_dist(ra_px,dec_px,sun_ra,sun_dec)*(180.00/math.pi)*3600.00
              if dist_arcsec < sun_radius_arcsec :
                 my_map[dx,dy] = sun_T_b
-                print "Sun detected"
+                print("Sun detected")
        
     
     
@@ -245,7 +246,7 @@ time - GPS time"""
     global g_printed_info
 
     if not g_printed_info :
-       print "horz2eq ( epoch = %s )" % (epoch)
+       print("horz2eq ( epoch = %s )" % (epoch))
        g_printed_info = True
 
 
@@ -266,7 +267,7 @@ time - GPS time"""
        return {'RA':coords.icrs.ra.deg,'dec':coords.icrs.dec.deg}
 
 
-    print "ERROR : unknown epoch = %s" % (epoch)
+    print("ERROR : unknown epoch = %s" % (epoch))
     
     return {None,None}
 
@@ -284,7 +285,7 @@ dec - dec in degrees"""
     
     if file_haslam is None :
        logger.info("Loading 408 MHz map from %s..." % radio_image_touse)
-       print "Loading 408 MHz map from %s..." % radio_image_touse
+       print("Loading 408 MHz map from %s..." % radio_image_touse)
        #radio_image_touse='/data/das4/packages/MWA_Tools/mwapy/pb/radio408.RaDec.fits' 
        #radio_image_touse=radio_image
        if not os.path.exists(radio_image_touse):
@@ -298,7 +299,7 @@ dec - dec in degrees"""
            return None
     else : 
        logger.info("File %s already opened (re-using)\n" % (radio_image_touse))
-       print "File %s already opened (re-using)" % (radio_image_touse) 
+       print("File %s already opened (re-using)" % (radio_image_touse)) 
         
     skymap=file_haslam[0].data[0]/10.0 #Haslam map is in 10xK
     skymap=skymap*(freq/408.0e6)**scaling #Scale to frequency
@@ -327,7 +328,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
                         use_beam_fits=False, station_name="EDA" ): 
     """
     """                
-    print "Output beam file resolution = %d , output directory = %s" % (resolution,directory)
+    print("Output beam file resolution = %d , output directory = %s" % (resolution,directory))
 #    (az_grid, za_grid) = beam_tools.makeAZZA(resolution,'ZEA') #Get grids in radians
     za_grid = None
     az_grid = None
@@ -354,17 +355,17 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
         beams={}
 
         if feko_file is not None : 
-            print "INFO : beams = None and feko_file = %s -> reading beam from FEKO file -> may take a while ..." % (feko_file)
+            print("INFO : beams = None and feko_file = %s -> reading beam from FEKO file -> may take a while ..." % (feko_file))
             beams['XX'] = read_feko.get_feko_beam( theta, phi, feko_file=feko_file, interpolate=interpolate, interpolate_to_nearest=interpolate_to_nearest )
             beams['YY'] = beams['XX'].copy()
         else :
-            print "INFO : beams = None and feko_file = None -> generating normal EDA beam"
+            print("INFO : beams = None and feko_file = None -> generating normal EDA beam")
             beams['XX'],beams['YY']=eda_beam.get_eda_beam( theta, phi, resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
                                                            pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
                                                            gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
                                                            use_beam_fits=use_beam_fits, station_name=station_name )
     else :
-        print "INFO : beams != None -> using externally provided beam"
+        print("INFO : beams != None -> using externally provided beam")
                                                                  
 #    pols=['XX','YY']
     pols=pol_list_string.split(",") # pols=['XX']
@@ -391,7 +392,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
     dec_map = my_map['dec']
     
     if max_beam_value_xx >= 0 and max_beam_value_yy >= 0 :
-       print "Maximum beam value %.8f is at (xx,yy) = (%d,%d) -> (az,za) = (%.4f,%.4f) , T_sky = %.2f [K]" % (max_beam_value,max_beam_value_xx,max_beam_value_yy,phi[max_beam_value_xx,max_beam_value_yy],theta[max_beam_value_xx,max_beam_value_yy],sky_grid[max_beam_value_xx,max_beam_value_yy])
+       print("Maximum beam value %.8f is at (xx,yy) = (%d,%d) -> (az,za) = (%.4f,%.4f) , T_sky = %.2f [K]" % (max_beam_value,max_beam_value_xx,max_beam_value_yy,phi[max_beam_value_xx,max_beam_value_yy],theta[max_beam_value_xx,max_beam_value_yy],sky_grid[max_beam_value_xx,max_beam_value_yy]))
        # ERROR : IndexError: too many indices       print "Maximum beam value %.8f is at (xx,yy) = (%d,%d) -> (az,za) = (%.4f,%.4f) , T_sky = %.2f [K] at (RA,DEC) = (%.4f,%.4f) [deg]" % (max_beam_value,max_beam_value_xx,max_beam_value_yy,phi[max_beam_value_xx,max_beam_value_yy],theta[max_beam_value_xx,max_beam_value_yy],sky_grid[max_beam_value_xx,max_beam_value_yy],ra_map[max_beam_value_xx,max_beam_value_yy],dec_map[max_beam_value_xx,max_beam_value_yy])
        
     
@@ -410,7 +411,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
     out_file=open(out_filename,"a+")
     for pol in pols:
         # Get gridded sky
-        print 'frequency',frequency
+        print('frequency',frequency)
         beam=beams[pol]
         beamsky=beam*sky_grid
         beam_dOMEGA=beam*dOMEGA
@@ -420,9 +421,9 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
         beam_sum=np.nansum(beam)
         Tant=np.nansum(beamsky)/np.nansum(beam)
 
-        print 'sum(beam)',np.nansum(beam)
-        print 'sum(beamsky)',np.nansum(beamsky)                                        
-        print 'Tant=sum(beamsky)/sum(beam)=', Tant
+        print('sum(beam)',np.nansum(beam))
+        print('sum(beamsky)',np.nansum(beamsky))                                        
+        print('Tant=sum(beamsky)/sum(beam)=', Tant)
 
         if pol == 'XX' :
            beamsky_sum_XX = beamsky_sum
@@ -438,12 +439,12 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
 
         # add receiver temperature :
         if use_trcv :
-           print "T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K), T_rcv = %.2f" % (Tant,Tant_XX,Tant_YY,T_rcv)
+           print("T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K), T_rcv = %.2f" % (Tant,Tant_XX,Tant_YY,T_rcv))
            Tant_XX = Tant_XX + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling        
            Tant_YY = Tant_YY + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling
            Tant = Tant + T_rcv*(1.00 + rcv_noise_coupling ) # plus noise with some coupling
 
-           print "After + T_rcv and coupling : T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K )" % (Tant,Tant_XX,Tant_YY)
+           print("After + T_rcv and coupling : T_ant = %.2f K ( T_ant_XX = %.2f K , T_ant_YY = %.2f K )" % (Tant,Tant_XX,Tant_YY))
            
 
         uxtime=gps+315964800
@@ -546,7 +547,7 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
        full_filename=directory + '/' + filename
     try:
         fig.savefig(full_filename+'.'+extension) #transparent=True if we  want transparent png 
-    except RuntimeError,err:
+    except RuntimeError as err:
         logger.error('Error saving figure: %s\n' % err)
         return None
 
@@ -554,7 +555,7 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
     full_filename=filename + '.fits'
     if directory is not None:
        full_filename=directory + '/' + filename + '.fits'
-    print "Filename2 = %s" % filename        
+    print("Filename2 = %s" % filename)        
     try:
         hdu = pyfits.PrimaryHDU()
 #        beamsky(np.isnan(hdu.data))=0.00
@@ -582,8 +583,8 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
                        
         hdulist = pyfits.HDUList([hdu])
         hdulist.writeto(full_filename,clobber=True)        
-        print "Saved output image to file %s" % full_filename
-    except RuntimeError,err:
+        print("Saved output image to file %s" % full_filename)
+    except RuntimeError as err:
         logger.error('Error saving figure: %s\n' % err)
         return None
    
