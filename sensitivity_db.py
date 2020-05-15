@@ -794,14 +794,17 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    
    plt.grid()
    
+   png_image_path = None
    if output_file_base is not None :
-      outfile = ( "%s/%s.png" % ( save_output_path , output_file_base) )
-      plt.savefig( outfile )
-      print("Saved output image to file %s" % (outfile))
+      png_image_path = ( "%s/%s.png" % ( save_output_path , output_file_base) )
+      plt.savefig( png_image_path )
+      print("Saved output image to file %s" % (png_image_path))
 
    if do_show :   
       plt.show()
    
+
+   return (png_image_path)
 
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
 
