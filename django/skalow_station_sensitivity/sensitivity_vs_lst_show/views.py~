@@ -1,0 +1,12 @@
+from django.shortcuts import render
+from .models import Post
+
+
+# Create your views here.
+def sensitivity_vs_lst_show(request):
+   post = Post.objects.all()
+#   context = {
+#      'blog_list':post
+#   }
+   
+   return render(request,"sensitivity_vs_lst_show/index.html")

@@ -1,0 +1,7 @@
+<h1>Out blog list</h1>
+
+<ul>
+   {% for list in blog_list %}
+      <li>{{list}}</li>
+   {% endfor %}
+</ul>
