@@ -33,4 +33,11 @@ def sensitivity_vs_lst_show(request):
    
    (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_lstrange( azimuth_deg, za_deg, frequency_mhz, lst_start=0, lst_end=24, time_step=300, station="EDA2" , db_path=db_path )
 
+   
+   # 
+   sensitivity_db.save_output_path = config.save_output_path
+
+   # create plots :   
+   sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start_hours=0, lst_end_hours=20, azimuth_deg, za_deg, frequency_mhz, output_file_base=None, do_show=False )
+
    return render(request,"sensitivity_vs_lst_show/index.html")

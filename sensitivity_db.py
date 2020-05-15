@@ -76,6 +76,10 @@ MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height
 
 debug_level = 0 
 
+
+# path where images are saved, by default local directory :
+# save_output_path = "./"
+
 # script for quering SQLITE3 or PostgreSQL databases for sensitivity values :
 # HELP : python : https://www.sqlitetutorial.net/sqlite-python/ , https://www.sqlitetutorial.net/sqlite-python/sqlite-python-select/
 #        Plot vs. time : /home/msok/ska/aavs/aavs0.5/trunk/analysis/MWAdas/scripts$ plot_delay.py
@@ -744,8 +748,9 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    
 def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
-                              min_ylimit=0.00, max_ylimit=2.00 ) :
-                     
+                              min_ylimit=0.00, max_ylimit=2.00,
+                              do_show = True, save_output_path="./" ) :
+
    plt.figure()
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( lst_x, aot_x, point_x )
@@ -775,10 +780,11 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    plt.grid()
    
    if output_file_base is not None :
-      outfile = ( "%s.png" % (output_file_base) )
+      outfile = ( "%s/%s.png" % ( save_output_path,output_file_base) )
       plt.savefig( outfile )
-   
-   plt.show()
+
+   if do_show :   
+      plt.show()
    
 
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
