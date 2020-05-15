@@ -780,8 +780,9 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    plt.grid()
    
    if output_file_base is not None :
-      outfile = ( "%s/%s.png" % ( save_output_path,output_file_base) )
+      outfile = ( "%s/%s.png" % ( save_output_path , output_file_base) )
       plt.savefig( outfile )
+      print("Saved output image to file %s" % (outfile))
 
    if do_show :   
       plt.show()
