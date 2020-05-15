@@ -1,5 +1,12 @@
+import sys
+
 from django.shortcuts import render
 from .models import Post
+
+sys.path.append("../")
+import config
+sys.path.append( config. 
+import sensitivity_db
 
 
 # Create your views here.
