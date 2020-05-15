@@ -423,7 +423,10 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
         unixtime    = float( row[6] )
         gpstime     = float( row[7] )
         aot         = float( row[8] )
-        sefd        = (2*1380.00)/aot
+        if aot != 0 :
+           sefd        = (2*1380.00)/aot
+        else :
+           sefd     = 1e20
         a_eff       = float( row[9] )
         t_rcv       = float( row[10] )
         t_ant       = float( row[11] )

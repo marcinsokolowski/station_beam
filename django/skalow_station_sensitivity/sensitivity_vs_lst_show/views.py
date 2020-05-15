@@ -5,7 +5,7 @@ from .models import Post
 
 sys.path.append("../")
 import config
-sys.path.append( config. 
+sys.path.append( config.station_beam_path )
 import sensitivity_db
 
 
@@ -25,7 +25,12 @@ def sensitivity_vs_lst_show(request):
    frequency_mhz = float( params['frequency_mhz'] )
    azimuth_deg   = float( params['azimuth_deg'] )
    elevation_deg = float( params['elevation_deg'] )
+   za_deg = (90.00 - elevation_deg)
+   station = "EDA2"
+   db_path = ( "%s/ska_station_sensitivity_%s.db" % (config.sensitivity_db_path,station)
    
    print("Parameters = %s -> %.4f MHz, (az,el) = (%.4f,%.4f) [deg]" % (params,frequency_mhz,azimuth_deg,elevation_deg))
+   
+   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = sensitivity_db.get_sensitivity_lstrange( azimuth_deg, za_deg, frequency_mhz, lst_start=0, lst_end=24, time_step=300, station="EDA2" , db_path=db_path )
 
    return render(request,"sensitivity_vs_lst_show/index.html")
