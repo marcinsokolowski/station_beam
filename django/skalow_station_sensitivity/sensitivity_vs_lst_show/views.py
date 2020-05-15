@@ -15,6 +15,10 @@ def sensitivity_vs_lst_show(request):
       print("POST !!!")
       params = request.POST
 
-   print("Parameters = %s" % params)      
+   frequency_mhz = float( params['frequency_mhz'] )
+   azimuth_deg   = float( params['azimuth_deg'] )
+   elevation_deg = float( params['elevation_deg'] )
+   
+   print("Parameters = %s -> %.4f MHz, (az,el) = (%.4f,%.4f) [deg]" % (params,frequency_mhz,azimuth_deg,elevation_deg))
 
    return render(request,"sensitivity_vs_lst_show/index.html")
