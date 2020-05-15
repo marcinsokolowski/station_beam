@@ -6,7 +6,14 @@ from .models import Post
 sys.path.append("../")
 import config
 sys.path.append( config.station_beam_path )
+
+# do not require DISPLAY :
+import matplotlib
+if 'matplotlib.backends' not in sys.modules:
+    matplotlib.use('agg')
+
 import sensitivity_db
+
 
 
 # Create your views here.
@@ -35,9 +42,13 @@ def sensitivity_vs_lst_show(request):
 
    
    # 
-   sensitivity_db.save_output_path = config.save_output_path
+   save_output_path = config.save_output_path
 
    # create plots :   
-   sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start_hours=0, lst_end_hours=20, azimuth_deg, za_deg, frequency_mhz, output_file_base=None, do_show=False )
+   print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
+   output_file_base = "%s_sensitivity_lst0-24h_az%.2fdeg_za_%.2fdeg_%.2fMHz" % (station,azimuth_deg,za_deg,frequency_mhz)
+   (png_image_path) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=azimuth_deg, za_deg=za_deg, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path )
+
+   print("DEBUG : plotting image %s" % (png_image_path))
 
    return render(request,"sensitivity_vs_lst_show/index.html")
