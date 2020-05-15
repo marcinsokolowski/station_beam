@@ -14,6 +14,8 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMP = os.path.join(BASE_DIR,'templates')
+STAT = os.path.join(BASE_DIR,'static')
 
 
 # Quick-start development settings - unsuitable for production
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sensitivity_vs_lst',
     'hello_world',
+    'sensitivity_vs_lst_show'
 ]
 
 MIDDLEWARE = [

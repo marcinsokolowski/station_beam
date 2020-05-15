@@ -1,7 +1,9 @@
 import sys
 
-from django.shortcuts import render
+# from django.shortcuts import render
 from .models import Post
+from django.shortcuts import *
+from django.template import RequestContext
 
 sys.path.append("../")
 import config
@@ -12,8 +14,9 @@ import matplotlib
 if 'matplotlib.backends' not in sys.modules:
     matplotlib.use('agg')
 
+# from io import BytesIO
 import sensitivity_db
-
+sensitivity_db.init_web_interface()
 
 
 # Create your views here.
@@ -50,5 +53,15 @@ def sensitivity_vs_lst_show(request):
    (png_image_path) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=azimuth_deg, za_deg=za_deg, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path )
 
    print("DEBUG : plotting image %s" % (png_image_path))
+   
+#   template = loader.get_template('sensitivity_vs_lst_show/index.html')
 
-   return render(request,"sensitivity_vs_lst_show/index.html")
+#   return render_to_response('sensitivity_vs_lst_show/index.html', { 'image': png_image_path }, context_instance=RequestContext(request) )
+   
+#   {'form': form,'obs': observation, 
+#                                                           'setting': setting, 'error': error,
+#                                                           'image': image_path, 'obs_link': obs_link}, 
+#                                                           context_instance=RequestContext(request))
+
+
+   return render(request,"sensitivity_vs_lst_show/index.html" , { 'image': png_image_path } ) # , context_instance=RequestContext(request) )

@@ -90,6 +90,23 @@ debug_level = 0
 #        https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
 
 
+web_interface_initialised = False
+#try:
+##   from io import StringIO
+#   from io import BytesIO
+#except ImportError:
+#   print("WARNING : import ( from io import StringIO ) failed")
+
+web_interface_initialised = False 
+def init_web_interface() :
+   global web_interface_initialised
+
+   if not web_interface_initialised :
+#      import cStringIO 
+#      from io import StringIO
+#      import base64 # Use this in Python 3x
+      web_interface_initialised = True
+
 def create_connection_sqlite3( db_file ):
     """ create a database connection to the SQLite database
         specified by the db_file
@@ -766,6 +783,8 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
                               min_ylimit=0.00, max_ylimit=2.00,
                               do_show = True, save_output_path="./" ) :
 
+   global web_interface_initialised
+   
    plt.figure()
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( lst_x, aot_x, point_x )
@@ -797,8 +816,17 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    png_image_path = None
    if output_file_base is not None :
       png_image_path = ( "%s/%s.png" % ( save_output_path , output_file_base) )
+      
       plt.savefig( png_image_path )
       print("Saved output image to file %s" % (png_image_path))
+      
+#      if web_interface_initialised :
+#         sio = StringIO() # use io.StringIO() in Python 3x
+#         sio = io.StringIO()
+#         sio = BytesIO()
+#         plt.savefig( sio, format="PNG")
+         
+#         return (png_image_path,sio)
 
    if do_show :   
       plt.show()
