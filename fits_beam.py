@@ -558,15 +558,37 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
 
 
 if __name__ == "__main__":
-   fits_name = "EDA_Xpol_ortho_204.fits"
-   if len(sys.argv) > 1:
-      fits_name = sys.argv[1]
+
+   do_remapping = False
    
-   step = 1 
-   if len(sys.argv) > 2:
-      step = int( sys.argv[2] )
+   if do_remapping :
+      fits_name = "EDA_Xpol_ortho_204.fits"
+      if len(sys.argv) > 1:
+         fits_name = sys.argv[1]
+   
+      step = 1 
+      if len(sys.argv) > 2:
+         step = int( sys.argv[2] )
   
       
-   print("Remapping fits_file = %s in steps of %d" % (fits_name,step))
-   remap_beam( fits_name , step=step, do_test=False, radius=20 )
-   
+      print("Remapping fits_file = %s in steps of %d" % (fits_name,step))
+      remap_beam( fits_name , step=step, do_test=False, radius=20 )
+   else :
+      az = 0 
+      za = 0
+      freq_mhz = 160
+      
+      if len(sys.argv) > 1:
+         az = float( sys.argv[1] )
+
+      if len(sys.argv) > 2:
+         za = float( sys.argv[2] )
+
+      if len(sys.argv) > 3:
+         freq_mhz = float( sys.argv[3] )
+
+      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X' )   
+      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y' )   
+      
+      print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
+      
