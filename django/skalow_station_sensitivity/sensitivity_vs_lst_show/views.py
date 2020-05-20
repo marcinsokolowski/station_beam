@@ -20,7 +20,10 @@ if 'matplotlib.backends' not in sys.modules:
 import sensitivity_db
 sensitivity_db.init_web_interface()
 
+# import cStringIO
+from zipfile import ZipFile
 from io import BytesIO
+from io import StringIO
 import io
 import urllib, base64
 
@@ -35,6 +38,7 @@ def mkdir_p(path):
 
 # Create your views here.
 def sensitivity_vs_lst_show(request):
+   zipfile = True
    post = Post.objects.all()
 
    params = None   
@@ -69,7 +73,7 @@ def sensitivity_vs_lst_show(request):
    
    # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
    out_file_name = save_output_path + "/" + output_file_base
-   sensitivity_db.save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_name )   
+   (text_file) = sensitivity_db.save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_name )   
 
 #   print("DEBUG : plotting image %s" % (png_image_path))
    
@@ -82,12 +86,46 @@ def sensitivity_vs_lst_show(request):
 #                                                           'image': image_path, 'obs_link': obs_link}, 
 #                                                           context_instance=RequestContext(request))
 
-
    buf.seek(0)
    string = base64.b64encode(buf.read())
    uri = 'data:image/png;base64,' + urllib.parse.quote(string)
+
+   if zipfile :
+      in_memory = StringIO()
+      zip = ZipFile(in_memory, "w")
+      print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
+      
+#      zipinfo = zip.ZipInfo('helloworld.txt', date_time=time.localtime(time.time()))
+#      zipinfo.create_system = 1
+#      zip.writestr( "test.txt" , StringIO('helloworld').getvalue())
+#      zip.writestr(  StringIO('helloworld').getvalue() , "test.txt" )
+#      zip.writestr( "test.txt" , StringIO('helloworld') )
+      
+#      io.open(text_file) 
+#      zip.writestr( text_file, os.path.basename(text_file) )
+
+#      zip.write( text_file , os.path.basename(text_file) )
+#      zip.write( os.path.basename(png_image_path) , png_image_path )
+#      zip.writestr( "test.jpg" , uri  )
+
+      # flagged_tiles_file = "%d_flagged_tiles.txt" % cal_id
+      # zip.writestr( flagged_tiles_file , flagged_tiles )
+
+      # fix for Linux zip files read in Windows
+      for file in zip.filelist:
+         file.create_system = 0
+
+      zip.close()
+      response = HttpResponse() # mimetype="application/zip")
+      response["Content-Disposition"] = "attachment; filename=%s.zip" % (output_file_base)
+      in_memory.seek(0)
+      response.write(in_memory.read())
+
+      return response
+
+
 #   print("DEBUG string = %s -> %s" % (string,uri))
 #    args = {'form':form, 'text':text, 'image':uri}
    args = { 'image':uri }
-   
+         
    return render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )

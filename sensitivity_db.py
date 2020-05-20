@@ -1097,7 +1097,7 @@ def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_
    out_f.close()
    print("DEBUG : saved sensitivity vs. LST to output file %s" % (outfile))
    
-   return n_lines
+   return (outfile)
 
 
  
