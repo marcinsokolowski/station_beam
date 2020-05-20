@@ -1078,6 +1078,28 @@ def save_output_file( freq, aot, pol, out_file_base ) :
    out_f.close()
    
    return n_lines
+
+def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_base ) :
+   outfile = ( "%s.txt" % (out_file_base) ) 
+   out_f = open( outfile , "w" )
+   
+   header_line = "#  LST[h] A/T_x[m^2/K] SEFD_x A/T_y[m^2/K] SEFD_y\n"
+   out_f.write( header_line )
+   
+   len = lst_x.shape[0]
+   n_lines = 0
+   for i in range(0,len) :
+      line = "%.4f %.6f %.6f %.6f %.6f\n" % (lst_x[i], aot_x[i], sefd_x[i], aot_y[i], sefd_y[i])
+      
+      out_f.write( line )
+      n_lines += 1
+   
+   out_f.close()
+   print("DEBUG : saved sensitivity vs. LST to output file %s" % (outfile))
+   
+   return n_lines
+
+
  
 if __name__ == "__main__":
     (options, args) = parse_options(1)

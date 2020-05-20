@@ -66,8 +66,12 @@ def sensitivity_vs_lst_show(request):
    print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
    output_file_base = "%s_sensitivity_lst0-24h_az%.2fdeg_za_%.2fdeg_%.2fMHz" % (station,azimuth_deg,za_deg,frequency_mhz)
    (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=azimuth_deg, za_deg=za_deg, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path )
+   
+   # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
+   out_file_name = save_output_path + "/" + output_file_base
+   sensitivity_db.save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_name )   
 
-   print("DEBUG : plotting image %s" % (png_image_path))
+#   print("DEBUG : plotting image %s" % (png_image_path))
    
 #   template = loader.get_template('sensitivity_vs_lst_show/index.html')
 
