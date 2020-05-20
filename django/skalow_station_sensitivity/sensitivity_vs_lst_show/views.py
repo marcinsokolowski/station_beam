@@ -39,7 +39,7 @@ def mkdir_p(path):
 
 # Create your views here.
 def sensitivity_vs_lst_show(request):
-   zipfile = False
+   zipfile = True
    post = Post.objects.all()
 
    params = None   
@@ -93,6 +93,7 @@ def sensitivity_vs_lst_show(request):
    uri = 'data:image/png;base64,' + urllib.parse.quote(string)
 
    response = None
+   zip_file_name = None
    if zipfile :
       zip_file_name = save_output_path + "/" + output_file_base + ".zip"
       in_memory = StringIO()
@@ -122,18 +123,20 @@ def sensitivity_vs_lst_show(request):
          file.create_system = 0
 
       zip.close()
-      response = FileResponse(open( zip_file_name , 'rb'))
-#      response = HttpResponse( content_type="application/zip" )
-#      response["Content-Disposition"] = "attachment; filename=%s" % ( output_file_base + ".zip" )
-#      in_memory.seek(0)
-#      response.write(in_memory.read())
+      
+      if False : # working - if needed :
+         response = FileResponse(open( zip_file_name , 'rb'))
+#        response = HttpResponse( content_type="application/zip" )
+#        response["Content-Disposition"] = "attachment; filename=%s" % ( output_file_base + ".zip" )
+#        in_memory.seek(0)
+  #      response.write(in_memory.read())
 
-      return response
+         return response
 
 
 #   print("DEBUG string = %s -> %s" % (string,uri))
 #    args = {'form':form, 'text':text, 'image':uri}
-   args = { 'image':uri }
+   args = { 'image':uri , 'zipfile':zip_file_name }
          
    return render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
