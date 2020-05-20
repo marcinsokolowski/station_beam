@@ -91,11 +91,11 @@ debug_level = 0
 
 
 web_interface_initialised = False
-#try:
+try:
 ##   from io import StringIO
-#   from io import BytesIO
-#except ImportError:
-#   print("WARNING : import ( from io import StringIO ) failed")
+   from io import BytesIO
+except ImportError:
+   print("WARNING : import ( from io import StringIO ) failed")
 
 web_interface_initialised = False 
 def init_web_interface() :
@@ -743,6 +743,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
       y_utc.append( utc )
    
    plt.figure()
+   fig = plt.gcf()
    if uxtime_x is not None and aot_x is not None :
       ax_x =  plt.plot( x_utc, aot_x, point_x )
 #      ax_x.set_ylim(( min_ylimit,  max_ylimit ))
@@ -820,13 +821,18 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
       plt.savefig( png_image_path )
       print("Saved output image to file %s" % (png_image_path))
       
-#      if web_interface_initialised :
+      if web_interface_initialised :
 #         sio = StringIO() # use io.StringIO() in Python 3x
 #         sio = io.StringIO()
-#         sio = BytesIO()
-#         plt.savefig( sio, format="PNG")
+         buf = BytesIO()
+         plt.savefig( buf, format="png")
+#         buf.seek(0)
+#         string = base64.b64encode(buf.read())
          
-#         return (png_image_path,sio)
+#         print("web_interface_initialised = True -> returning image = %s" % (buf))
+
+         # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
+         return (png_image_path,buf)
 
    if do_show :   
       plt.show()
