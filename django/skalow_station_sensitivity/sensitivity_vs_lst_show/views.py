@@ -6,6 +6,7 @@ import errno
 from .models import Post
 from django.shortcuts import *
 from django.template import RequestContext
+from django.http import FileResponse
 
 sys.path.append("../")
 import config
@@ -38,7 +39,7 @@ def mkdir_p(path):
 
 # Create your views here.
 def sensitivity_vs_lst_show(request):
-   zipfile = True
+   zipfile = False
    post = Post.objects.all()
 
    params = None   
@@ -53,6 +54,7 @@ def sensitivity_vs_lst_show(request):
    frequency_mhz = float( params['frequency_mhz'] )
    azimuth_deg   = float( params['azimuth_deg'] )
    elevation_deg = float( params['elevation_deg'] )
+   # zipfile = params['get_zip_file']
    za_deg = (90.00 - elevation_deg)
    station = "EDA2"
    db_path = ( "%s/" % (config.sensitivity_db_path) )
@@ -90,9 +92,13 @@ def sensitivity_vs_lst_show(request):
    string = base64.b64encode(buf.read())
    uri = 'data:image/png;base64,' + urllib.parse.quote(string)
 
+   response = None
    if zipfile :
+      zip_file_name = save_output_path + "/" + output_file_base + ".zip"
       in_memory = StringIO()
-      zip = ZipFile(in_memory, "w")
+#      zip = ZipFile(in_memory, "w")
+      zip = ZipFile( zip_file_name , "w" )
+      print("DEBUG : created zip archive %s" % (zip_file_name))
       print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
       
 #      zipinfo = zip.ZipInfo('helloworld.txt', date_time=time.localtime(time.time()))
@@ -104,8 +110,8 @@ def sensitivity_vs_lst_show(request):
 #      io.open(text_file) 
 #      zip.writestr( text_file, os.path.basename(text_file) )
 
-#      zip.write( text_file , os.path.basename(text_file) )
-#      zip.write( os.path.basename(png_image_path) , png_image_path )
+      zip.write( text_file , os.path.basename(text_file) )
+      zip.write( png_image_path , os.path.basename(png_image_path)  )
 #      zip.writestr( "test.jpg" , uri  )
 
       # flagged_tiles_file = "%d_flagged_tiles.txt" % cal_id
@@ -116,10 +122,11 @@ def sensitivity_vs_lst_show(request):
          file.create_system = 0
 
       zip.close()
-      response = HttpResponse() # mimetype="application/zip")
-      response["Content-Disposition"] = "attachment; filename=%s.zip" % (output_file_base)
-      in_memory.seek(0)
-      response.write(in_memory.read())
+      response = FileResponse(open( zip_file_name , 'rb'))
+#      response = HttpResponse( content_type="application/zip" )
+#      response["Content-Disposition"] = "attachment; filename=%s" % ( output_file_base + ".zip" )
+#      in_memory.seek(0)
+#      response.write(in_memory.read())
 
       return response
 
@@ -129,3 +136,5 @@ def sensitivity_vs_lst_show(request):
    args = { 'image':uri }
          
    return render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
+#   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
+#   return response
