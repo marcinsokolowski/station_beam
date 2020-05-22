@@ -20,4 +20,4 @@ def get_parameters(request):
     else:
         form = ParametersForm()
 
-    return render(request, 'parameters_vs_freq.html', {'form': form})
+    return render(request, 'parameters_map.html', {'form': form})

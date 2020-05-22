@@ -38,7 +38,7 @@ def mkdir_p(path):
 
 
 # Create your views here.
-def sensitivity_vs_freq_show(request):
+def sensitivity_map_show(request):
    zipfile = True
    post = Post.objects.all()
 
@@ -52,35 +52,38 @@ def sensitivity_vs_freq_show(request):
       params = request.POST
 
    lst_hours = float( params['lst_hours'] )
-   azimuth_deg   = float( params['azimuth_deg'] )
-   elevation_deg = float( params['elevation_deg'] )
+   frequency_mhz = float( params['frequency_mhz'] )
    mode          = int( params['mode'] )
    return_zip_file = False
    if mode >= 2 :
        return_zip_file = True
-   za_deg = (90.00 - elevation_deg)
    print("DEBUG : station = %s" % (params['station_name']))
    (station) = params['station_name'] # "EDA2"
    print("DEBUG : station = %s" % (station))
    db_path = ( "%s/" % (config.sensitivity_db_path) )
    
-   print("Parameters = %s -> LST = %.4f [hours], (az,el) = (%.4f,%.4f) [deg] , station = %s, db_path = %s , mode = %d ( return_zip_file = %s)" % (params,lst_hours,azimuth_deg,elevation_deg,station,db_path,mode,return_zip_file))
+   print("Parameters = %s -> LST = %.4f [hours], frequency = %.2f [MHz] , station = %s, db_path = %s , mode = %d ( return_zip_file = %s)" % (params,lst_hours,frequency_mhz,station,db_path,mode,return_zip_file))
    
-# def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
-#                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-#                             db_lst_resolution=0.5, db_ang_res_deg=5.00 ) :
-#    return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
-#             numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )   
-   ( freq_x,aot_x,sefd_x, freq_y,aot_y,sefd_y ) = sensitivity_db.get_sensitivity_azzalst( azimuth_deg, za_deg, lst_hours, station=station, db_path=db_path )
+   out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (lst_hours, frequency_mhz,)
+   ( azim_x , za_x , aot_x , sefd_x , azim_y , za_y , aot_y , sefd_y ) = sensitivity_db.get_sensitivity_map( frequency_mhz, lst_hours, output_file_base=out_fitsname_base, db_path=db_path, 
+                                                                                                             station=station, out_fitsname_base=out_fitsname_base, output_dir=config.save_output_path )
+
+
+#   return render(request,"sensitivity_vs_freq_show/index.html"  )
 
    # 
    save_output_path = config.save_output_path
    mkdir_p( save_output_path )
 
    # create plots :   
-   print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s)" % (save_output_path))
-   output_file_base = "%s_sensitivity_az%.2fdeg_za_%.2fdeg_%.2fhours" % (station,azimuth_deg,za_deg,lst_hours)
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
+   print("DEBUG : calling sensitivity_db.plot_sensitivity_map (saving to %s)" % (save_output_path))
+   output_file_base = out_fitsname_base
+#   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
+#   def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown" ) :
+   ( lut_x , sensitivity_x )  = sensitivity_db.plot_sensitivity_map( azim_x, za_x, aot_x, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="X", out_dir=config.save_output_path )
+   ( lut_y , sensitivity_y )  = sensitivity_db.plot_sensitivity_map( azim_y, za_y, aot_y, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="Y", out_dir=config.save_output_path )
+
+   return render(request,"sensitivity_vs_freq_show/index.html"  )
    
    
    out_file_name = save_output_path + "/" + output_file_base

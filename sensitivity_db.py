@@ -529,7 +529,8 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
 # get sensitivity map for a given LST and freq_mhz
 def get_sensitivity_map( freq_mhz, lst_hours, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00, output_file_base=None ) :
+                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00, output_file_base=None,
+                             out_fitsname_base="sensitivity_map_", output_dir="./" ) :
                        
     global debug_level                        
                              
@@ -593,12 +594,14 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     out_txt_x_f = None
     out_txt_y_f = None
 
-    if output_file_base :
-       out_txt_filename_X = out_fitsname_base + "_X.txt"
-       out_txt_filename_Y = out_fitsname_base + "_Y.txt"
+    if output_file_base is not None :
+       out_txt_filename_X = output_dir + "/" + out_fitsname_base + "_X.txt"
+       out_txt_filename_Y = output_dir + "/" + out_fitsname_base + "_Y.txt"
        
        out_txt_x_f = open( out_txt_filename_X , "w" )
        out_txt_y_f = open( out_txt_filename_Y , "w" )
+       
+       print("DEBUG : saving output text files to %s and %s" % (out_txt_filename_X,out_txt_filename_Y))
        
        line = "# AZIM[deg] ZA[deg] A/T[m^2/K]"
        out_txt_x_f.write( line + "    for X polarisation\n" )
@@ -881,7 +884,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    return( outfile , None )
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown" ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./" ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
 
    azim_rad = azim_deg*(numpy.pi/180.0)
@@ -912,9 +915,9 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
             sensitivity[ i , j ] = aot_value
          
 
-   fits_beam.save_fits( sensitivity , out_fitsname_base + ".fits" )
-   fits_beam.save_fits( az_rad*(180.00/numpy.pi) , out_fitsname_base + "_azim_deg.fits" )
-   fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_fitsname_base + "_za_deg.fits" )
+   fits_beam.save_fits( sensitivity , out_dir + "/" + out_fitsname_base + ".fits" )
+   fits_beam.save_fits( az_rad*(180.00/numpy.pi) , out_dir + "/" + out_fitsname_base + "_azim_deg.fits" )
+   fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_dir + "/" + out_fitsname_base + "_za_deg.fits" )
          
    # save txt file :
    if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
@@ -964,7 +967,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
  
       title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
       ax1.set_title( title , fontsize=8 )
-      pngfile = out_fitsname_base + ".png"
+      pol_str = "_%s" % (pol)
+      pngfile = out_dir + "/" + out_fitsname_base + pol_str + ".png"
       fig.savefig( pngfile )
       print("Saved file %s" % (pngfile))
       plt.show()
