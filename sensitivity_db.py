@@ -594,6 +594,8 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     out_txt_x_f = None
     out_txt_y_f = None
 
+    out_txt_filename_X = None
+    out_txt_filename_Y = None
     if output_file_base is not None :
        out_txt_filename_X = output_dir + "/" + out_fitsname_base + "_X.txt"
        out_txt_filename_Y = output_dir + "/" + out_fitsname_base + "_Y.txt"
@@ -663,7 +665,8 @@ def get_sensitivity_map( freq_mhz, lst_hours,
        
 
     return ( numpy.array(out_azim_x), numpy.array(out_za_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
-             numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+             numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
+             out_txt_filename_X, out_txt_filename_Y )
 
 
 
@@ -886,6 +889,8 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
 
 def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./" ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
+   global web_interface_initialised
+
 
    azim_rad = azim_deg*(numpy.pi/180.0)
    za_rad   = za_deg*(numpy.pi/180.0)
@@ -915,13 +920,19 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
             sensitivity[ i , j ] = aot_value
          
 
-   fits_beam.save_fits( sensitivity , out_dir + "/" + out_fitsname_base + ".fits" )
-   fits_beam.save_fits( az_rad*(180.00/numpy.pi) , out_dir + "/" + out_fitsname_base + "_azim_deg.fits" )
-   fits_beam.save_fits( za_rad*(180.00/numpy.pi) , out_dir + "/" + out_fitsname_base + "_za_deg.fits" )
+   pol_string = "_%s" % (pol)
+   sens_fits_file = out_dir + "/" + out_fitsname_base + pol_string + ".fits"
+   azim_fits_file = out_dir + "/" + out_fitsname_base + pol_string + "_azim_deg.fits"
+   za_fits_file   = out_dir + "/" + out_fitsname_base + pol_string + "_za_deg.fits"
+   
+   fits_beam.save_fits( sensitivity , sens_fits_file )
+   fits_beam.save_fits( az_rad*(180.00/numpy.pi) , azim_fits_file )
+   fits_beam.save_fits( za_rad*(180.00/numpy.pi) , za_fits_file )
          
    # save txt file :
+   out_txt_filename = None
    if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
-      out_txt_filename = out_fitsname_base + ".txt"
+      out_txt_filename = out_dir + "/" + out_fitsname_base + pol_string + ".txt"
       out_txt_f = open( out_txt_filename , "w" )
       line = "# AZIM[deg] ZA[deg] A/T[m^2/K]\n"
       out_txt_f.write( line )
@@ -939,6 +950,9 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       
       print("Sensitivity map saved to text file %s" % (out_txt_filename))
 
+   pngfile = None
+   buf     = None
+   
    if do_plot :
       # see /home/msok/ska/aavs/aavs0.5/trunk/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_local.py
       figsize=8
@@ -974,10 +988,13 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       plt.show()
       
       
-
+      if web_interface_initialised :
+         buf = BytesIO()
+         plt.savefig( buf, format="png")
+         # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
 
    
-   return (lut,sensitivity)
+   return (lut,sensitivity,sens_fits_file,azim_fits_file,za_fits_file,out_txt_filename,pngfile,buf)
  
 
  
@@ -1162,7 +1179,7 @@ if __name__ == "__main__":
        print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
+       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :

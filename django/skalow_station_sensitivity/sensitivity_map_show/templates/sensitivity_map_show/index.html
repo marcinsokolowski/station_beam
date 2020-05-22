@@ -2,14 +2,14 @@
 <html lang="en" dir="ltr">
 <head>
    <meta charset="utf-8">
-   <title>Sensitivity vs frequency [MHz]</title>
+   <title>Sensitivity all-sky map</title>
 </head>
 
 
-<h1>Sensitivity vs frequency for a specified LST = {{ lst }} [hours] </h1>
+<h1>Sensitivity all-sky map at a specified LST = {{ lst }} [hours] and frequency = {{ frequency }} [MHz] </h1>
 
 <!-- works : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django -->
-<img src= {{ image }} /> 
+<img src= {{ image }} width="50" height="50" /> 
 <!--  <a href= {{ zipfile }} >results in zip file</a>  -->
 
 </body>
