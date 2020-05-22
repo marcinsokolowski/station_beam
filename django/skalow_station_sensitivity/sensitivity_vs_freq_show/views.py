@@ -39,7 +39,7 @@ def mkdir_p(path):
 
 # Create your views here.
 def sensitivity_vs_freq_show(request):
-   zipfile = True
+   zipfile = False
    post = Post.objects.all()
 
    params = None   
@@ -57,6 +57,7 @@ def sensitivity_vs_freq_show(request):
    mode          = int( params['mode'] )
    return_zip_file = False
    if mode >= 2 :
+       zipfile = True
        return_zip_file = True
    za_deg = (90.00 - elevation_deg)
    print("DEBUG : station = %s" % (params['station_name']))

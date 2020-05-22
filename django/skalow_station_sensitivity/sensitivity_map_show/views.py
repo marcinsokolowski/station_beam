@@ -114,6 +114,13 @@ def sensitivity_map_show(request):
       zip.write( out_txt_filename_Y , os.path.basename(out_txt_filename_Y) )
       zip.write( pngfile_x , os.path.basename(pngfile_x)  )
       zip.write( pngfile_y , os.path.basename(pngfile_y)  )
+      zip.write( sens_fits_file_x, os.path.basename(sens_fits_file_x) )
+      zip.write( sens_fits_file_y, os.path.basename(sens_fits_file_y) )
+      zip.write( azim_fits_file_x, os.path.basename(azim_fits_file_x) )
+      zip.write( azim_fits_file_y, os.path.basename(azim_fits_file_y) )
+      zip.write( za_fits_file_x, os.path.basename(za_fits_file_x) )
+      zip.write( za_fits_file_y, os.path.basename(za_fits_file_y) )
+      
 
       # fix for Linux zip files read in Windows
       for file in zip.filelist:
