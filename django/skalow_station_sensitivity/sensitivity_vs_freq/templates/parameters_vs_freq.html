@@ -1,0 +1,9 @@
+<h1>Sensitivity vs. frequency at a specified local sidreal time and pointing direction</h1>
+
+<form action="/sensitivity_vs_freq_show" method="post">
+    {% csrf_token %}
+    <table border="1">
+    {{ form }} <!-- linebreaks -->
+    </table>
+    <input type="submit" value="Submit">
+</form>
