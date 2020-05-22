@@ -842,6 +842,8 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
 
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
 
+   global web_interface_initialised
+
    plt.figure()
    if freq_x is not None and aot_x is not None :
       plt.plot( freq_x, aot_x, point_x )
@@ -862,11 +864,22 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    plt.ylabel('Sensitivity A/T [m^2/K]')
    plt.grid()
    
+   outfile = None
    if output_file_base is not None :
       outfile = ( "%s.png" % (output_file_base) )
       plt.savefig( outfile )
+
+      print("Saved output image to file %s" % (outfile))
+      
+      if web_interface_initialised :
+         buf = BytesIO()
+         plt.savefig( buf, format="png")
+         # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
+         return (outfile,buf)
    
    plt.show()
+   
+   return( outfile , None )
 
 def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown" ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
@@ -1083,7 +1096,7 @@ def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_
    outfile = ( "%s.txt" % (out_file_base) ) 
    out_f = open( outfile , "w" )
    
-   header_line = "#  LST[h] A/T_x[m^2/K] SEFD_x A/T_y[m^2/K] SEFD_y\n"
+   header_line = "#  LST[h] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy]\n"
    out_f.write( header_line )
    
    len = lst_x.shape[0]
@@ -1096,6 +1109,26 @@ def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_
    
    out_f.close()
    print("DEBUG : saved sensitivity vs. LST to output file %s" % (outfile))
+   
+   return (outfile)
+
+def save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_file_base ) :
+   outfile = ( "%s.txt" % (out_file_base) ) 
+   out_f = open( outfile , "w" )
+   
+   header_line = "#  FREQ[MHz] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy]\n"
+   out_f.write( header_line )
+   
+   len = freq_x.shape[0]
+   n_lines = 0
+   for i in range(0,len) :
+      line = "%.4f %.6f %.6f %.6f %.6f\n" % (freq_x[i], aot_x[i], sefd_x[i], aot_y[i], sefd_y[i])
+      
+      out_f.write( line )
+      n_lines += 1
+   
+   out_f.close()
+   print("DEBUG : saved sensitivity vs. FREQ to output file %s" % (outfile))
    
    return (outfile)
 

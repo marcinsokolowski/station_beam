@@ -73,8 +73,6 @@ def sensitivity_vs_freq_show(request):
 #             numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )   
    ( freq_x,aot_x,sefd_x, freq_y,aot_y,sefd_y ) = sensitivity_db.get_sensitivity_azzalst( azimuth_deg, za_deg, lst_hours, station=station, db_path=db_path )
 
-#   return render(request,"sensitivity_vs_freq_show/index.html" )
-   
    # 
    save_output_path = config.save_output_path
    mkdir_p( save_output_path )
@@ -82,17 +80,15 @@ def sensitivity_vs_freq_show(request):
    # create plots :   
    print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s)" % (save_output_path))
    output_file_base = "%s_sensitivity_az%.2fdeg_za_%.2fdeg_%.2fhours" % (station,azimuth_deg,za_deg,lst_hours)
-   sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
+   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
    
-   return render(request,"sensitivity_vs_freq_show/index.html" )
    
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=azimuth_deg, za_deg=za_deg, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path )
-   
-   # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
    out_file_name = save_output_path + "/" + output_file_base
-   (text_file) = sensitivity_db.save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_name )   
+   (text_file) = sensitivity_db.save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_file_name )   
 
 
+#   return render(request,"sensitivity_vs_freq_show/index.html" )
+   
    buf.seek(0)
    string = base64.b64encode(buf.read())
    uri = 'data:image/png;base64,' + urllib.parse.quote(string)
@@ -102,26 +98,12 @@ def sensitivity_vs_freq_show(request):
    if zipfile :
       zip_file_name = save_output_path + "/" + output_file_base + ".zip"
       in_memory = StringIO()
-#      zip = ZipFile(in_memory, "w")
       zip = ZipFile( zip_file_name , "w" )
       print("DEBUG : created zip archive %s" % (zip_file_name))
       print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
       
-#      zipinfo = zip.ZipInfo('helloworld.txt', date_time=time.localtime(time.time()))
-#      zipinfo.create_system = 1
-#      zip.writestr( "test.txt" , StringIO('helloworld').getvalue())
-#      zip.writestr(  StringIO('helloworld').getvalue() , "test.txt" )
-#      zip.writestr( "test.txt" , StringIO('helloworld') )
-      
-#      io.open(text_file) 
-#      zip.writestr( text_file, os.path.basename(text_file) )
-
       zip.write( text_file , os.path.basename(text_file) )
       zip.write( png_image_path , os.path.basename(png_image_path)  )
-#      zip.writestr( "test.jpg" , uri  )
-
-      # flagged_tiles_file = "%d_flagged_tiles.txt" % cal_id
-      # zip.writestr( flagged_tiles_file , flagged_tiles )
 
       # fix for Linux zip files read in Windows
       for file in zip.filelist:
@@ -131,17 +113,11 @@ def sensitivity_vs_freq_show(request):
       
       if return_zip_file : # working - if needed :
          response = FileResponse(open( zip_file_name , 'rb'))
-#        response = HttpResponse( content_type="application/zip" )
-#        response["Content-Disposition"] = "attachment; filename=%s" % ( output_file_base + ".zip" )
-#        in_memory.seek(0)
-  #      response.write(in_memory.read())
 
          return response
 
-
-#   print("DEBUG string = %s -> %s" % (string,uri))
-#    args = {'form':form, 'text':text, 'image':uri}
-   args = { 'image':uri , 'zipfile':zip_file_name }
+   lst_hours_str = "%.2f" % (lst_hours)
+   args = { 'image':uri , 'zipfile':zip_file_name, 'lst':lst_hours_str }
    print("DEBUG : mode = %d" % (mode))
          
    return render(request,"sensitivity_vs_freq_show/index.html" , args ) # , context_instance=RequestContext(request) )
