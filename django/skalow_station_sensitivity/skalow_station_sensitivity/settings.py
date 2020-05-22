@@ -42,7 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sensitivity_vs_lst',
     'hello_world',
-    'sensitivity_vs_lst_show'
+    'sensitivity_vs_lst_show',
+    'sensitivity_vs_freq',
+    'sensitivity_vs_freq_show',
+    'sensitivity_map',
+    'sensitivity_map_show'
 ]
 
 MIDDLEWARE = [
