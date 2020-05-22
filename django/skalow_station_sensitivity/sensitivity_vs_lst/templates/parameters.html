@@ -1,5 +1,9 @@
-<form action="/sensitivity_vs_lst_show/" method="post">
+<h1>Sensitivity vs. lst at a specified frequency and pointing direction</h1>
+
+<form action="/sensitivity_vs_lst_show" method="post">
     {% csrf_token %}
-    {{ form }}
+    <table border="1">
+    {{ form }} <!-- linebreaks -->
+    </table>
     <input type="submit" value="Submit">
 </form>
