@@ -117,7 +117,9 @@ def create_connection_sqlite3( db_file ):
     try:
         conn = sqlite3.connect(db_file)
     except sqlite3.Error as e:
-        print(e)
+        print(e)        
+        print("ERROR : could not connect to database %s" % (dbname_file))
+
  
     return conn
 
@@ -145,6 +147,11 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
+    
+    if conn is None :
+       print("ERROR : could not connect to database %s" % (dbname_file))
+       return (None,None,None,None,None,None)
+
   
     # select closest LST :
     cur = conn.cursor()
@@ -276,6 +283,11 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
+    
+    if conn is None :
+       print("ERROR : could not connect to database %s" % (dbname_file))
+       return (None, None, None)
+
   
     # get requested data :
     cur = conn.cursor()
@@ -389,6 +401,10 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
+    
+    if conn is None :
+       print("ERROR : could not connect to database %s" % (dbname_file))
+       return (None,None,None,None,None,None)
 
     # select closest FREQUENCT :
     cur = conn.cursor()
@@ -537,6 +553,11 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
+
+    if conn is None :
+       print("ERROR : could not connect to database %s" % (dbname_file))
+       return (None,None,None,None,None,None,None,None)
+
   
     # select closest LST :
     cur = conn.cursor()
@@ -678,6 +699,11 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
     conn = create_connection_sqlite3( dbname_file )
+   
+    if conn is None :    
+       print("ERROR : could not connect to database %s" % (dbname_file))
+       return (None,None,None,None,None,None)
+
 
 
     # get requested data :
