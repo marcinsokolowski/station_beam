@@ -49,7 +49,7 @@ def blog_list(request):
    return render(request,"sensitivity_vs_lst/index.html",context)
 
 
-def hello_world(request):
-    return render(request, 'sensitivity_vs_lst/hello_world.html', {})
+# def hello_world(request):
+#    return render(request, 'sensitivity_vs_lst/hello_world.html', {})
 
    

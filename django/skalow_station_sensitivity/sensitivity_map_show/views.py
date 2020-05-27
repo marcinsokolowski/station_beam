@@ -56,6 +56,7 @@ def sensitivity_map_show(request):
    mode          = int( params['mode'] )
    return_zip_file = False
    if mode >= 2 :
+       zipfile = True
        return_zip_file = True
    print("DEBUG : station = %s" % (params['station_name']))
    (station) = params['station_name'] # "EDA2"
@@ -108,7 +109,6 @@ def sensitivity_map_show(request):
       in_memory = StringIO()
       zip = ZipFile( zip_file_name , "w" )
       print("DEBUG : created zip archive %s" % (zip_file_name))
-      print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
       
       zip.write( out_txt_filename_X , os.path.basename(out_txt_filename_X) )
       zip.write( out_txt_filename_Y , os.path.basename(out_txt_filename_Y) )
@@ -121,6 +121,7 @@ def sensitivity_map_show(request):
       zip.write( za_fits_file_x, os.path.basename(za_fits_file_x) )
       zip.write( za_fits_file_y, os.path.basename(za_fits_file_y) )
       
+      print("DEBUG : added following files to archive : %s, %s, %s, %s, %s, %s, %s, %s, %s, %s" % (out_txt_filename_X,out_txt_filename_Y,pngfile_x,pngfile_y,sens_fits_file_x,sens_fits_file_y,azim_fits_file_x,azim_fits_file_y,za_fits_file_x,za_fits_file_y))
 
       # fix for Linux zip files read in Windows
       for file in zip.filelist:
