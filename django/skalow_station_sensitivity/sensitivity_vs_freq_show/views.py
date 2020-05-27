@@ -8,9 +8,14 @@ from django.shortcuts import *
 from django.template import RequestContext
 from django.http import FileResponse
 
-sys.path.append("../")
+sys.path.append("../")       # for config
+# sys.path.append("../../../") # for sensitivity_db
 import config
+sys.path.append( config.sensitivity_db_path )
+print("DEBUG : added path %s" % (config.sensitivity_db_path))
 sys.path.append( config.station_beam_path )
+print("DEBUG : added path %s" % (config.station_beam_path))
+
 
 # do not require DISPLAY :
 import matplotlib
