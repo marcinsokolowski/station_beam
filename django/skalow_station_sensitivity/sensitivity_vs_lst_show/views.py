@@ -8,7 +8,8 @@ from django.shortcuts import *
 from django.template import RequestContext
 from django.http import FileResponse
 
-sys.path.append("../")
+sys.path.append("../")       # for config
+sys.path.append("../../../") # for sensitivity_db
 import config
 sys.path.append( config.station_beam_path )
 
