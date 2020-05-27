@@ -14,6 +14,8 @@ sys.path.append("../")       # for config
 import config
 sys.path.append( config.sensitivity_db_path )
 print("DEBUG : added path %s" % (config.sensitivity_db_path))
+sys.path.append( config.station_beam_path )
+print("DEBUG : added path %s" % (config.station_beam_path))
 
 # do not require DISPLAY :
 import matplotlib
