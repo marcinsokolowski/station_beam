@@ -115,6 +115,7 @@ def create_connection_sqlite3( db_file ):
     """
     conn = None
     try:
+        print("Connecting to database %s" % (db_file))
         conn = sqlite3.connect(db_file)
     except sqlite3.Error as e:
         print(e)        
