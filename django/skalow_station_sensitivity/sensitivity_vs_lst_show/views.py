@@ -1,6 +1,7 @@
 import sys
 import os
 import errno
+from string import Template
 
 # from django.shortcuts import render
 from .models import Post
@@ -9,9 +10,12 @@ from django.template import RequestContext
 from django.http import FileResponse
 
 sys.path.append("../")       # for config
-sys.path.append("../../../") # for sensitivity_db
+# sys.path.append("../../../") # for sensitivity_db
 import config
-sys.path.append( config.station_beam_path )
+t = Template( config.station_beam_path )
+sensitivity_db_path=t.substitute(os.environ)
+
+sys.path.append( sensitivity_db_path )
 
 # do not require DISPLAY :
 import matplotlib
