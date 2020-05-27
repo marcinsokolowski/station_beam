@@ -13,6 +13,7 @@ sys.path.append("../")       # for config
 # sys.path.append("../../../") # for sensitivity_db
 import config
 sys.path.append( config.sensitivity_db_path )
+print("DEBUG : added path %s" % (config.sensitivity_db_path))
 
 # do not require DISPLAY :
 import matplotlib
