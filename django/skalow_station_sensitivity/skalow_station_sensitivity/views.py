@@ -2,5 +2,5 @@ from django.http import HttpResponse
 
 
 def index(request):
-    return HttpResponse("Hello, world. Starting ska sensitivity database application")
+    return HttpResponse("Starting ska sensitivity database application")
     

@@ -24,4 +24,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('hello_world.urls')),
     path('', include('sensitivity_vs_lst.urls')),
+    path('', include('sensitivity_vs_lst_show.urls')),
+    path('', include('sensitivity_vs_freq.urls')),
+    path('', include('sensitivity_vs_freq_show.urls')),
+    path('', include('sensitivity_map.urls')),
+    path('', include('sensitivity_map_show.urls')),
 ]
