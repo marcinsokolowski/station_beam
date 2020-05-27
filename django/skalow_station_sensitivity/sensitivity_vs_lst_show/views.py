@@ -12,7 +12,7 @@ from django.http import FileResponse
 sys.path.append("../")       # for config
 # sys.path.append("../../../") # for sensitivity_db
 import config
-sys.path.append( sensitivity_db_path )
+sys.path.append( config.sensitivity_db_path )
 
 # do not require DISPLAY :
 import matplotlib
