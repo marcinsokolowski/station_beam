@@ -119,7 +119,7 @@ def create_connection_sqlite3( db_file ):
         conn = sqlite3.connect(db_file)
     except sqlite3.Error as e:
         print(e)        
-        print("ERROR : could not connect to database %s" % (dbname_file))
+        print("ERROR : could not connect to database %s" % (db_file))
 
  
     return conn
