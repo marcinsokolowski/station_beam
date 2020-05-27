@@ -12,9 +12,6 @@ from django.http import FileResponse
 sys.path.append("../")       # for config
 # sys.path.append("../../../") # for sensitivity_db
 import config
-t = Template( config.station_beam_path )
-sensitivity_db_path=t.substitute(os.environ)
-
 sys.path.append( sensitivity_db_path )
 
 # do not require DISPLAY :
