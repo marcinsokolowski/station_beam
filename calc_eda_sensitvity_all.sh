@@ -72,10 +72,16 @@ if [[ -n "${12}" && "${12}" != "-" ]]; then
    za_end=${12}
 fi
 
+az_start=0
+if [[ -n "${13}" && "${13}" != "-" ]]; then
+   az_start=${13}
+fi
+
 echo "########################################"
 echo "PARAMETERS:"
 echo "########################################"
 echo "za range : $za_start - $za_end [deg]"
+echo "az range : $az_start - $max_az [deg]"
 echo "########################################"
 
 
@@ -97,7 +103,7 @@ do
    za=${za_start}
    while [[ $za -le ${za_end} ]]; 
    do
-      az=0
+      az=${az_start}
       while [[ $az -lt ${max_az} ]]; 
       do
           echo "   (az,za) = ($az,$za) [deg]"          
