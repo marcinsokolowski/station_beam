@@ -11,6 +11,9 @@ import beam_tools
 # import pyfits
 import astropy.io.fits as pyfits
 
+# options :
+from optparse import OptionParser,OptionGroup
+
 current_fits_filename = None
 current_fits_beam     = None 
 azim_map              = None
@@ -210,7 +213,7 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 
    polarisation_string = polarisation[0]
    postfix_full = ""
-   if postfix is not None :
+   if postfix is not None and len(postfix)>0 :
       postfix_full = "_" + postfix 
    beam_file_name_template = "%s/%s/%s/%s_%spol_ortho_%03d%s.fits" % (simulation_path,station_name,postfix.upper(),station_name,polarisation_string,int(frequency_mhz),postfix_full)
    beam_file_name = Template( beam_file_name_template ).substitute(os.environ)
@@ -241,10 +244,10 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
-def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/") :
+def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/", projection="zea" ) :
    print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
 
-   (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path )
+   (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
    
 
    x_size = int( current_fits_beam[0].header['NAXIS1'] )
@@ -280,14 +283,32 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
 
    # see /home/msok/ska/aavs/aavs0.5/trunk/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/eda/beam_tools.py
    # get x,y from azim,za ... - other way around
-   dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
+   
+   
+#   dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
+# 2020-05-30 fix :   
+   dist_za = None 
+   if beam_file_name.upper().find("ZEA") >= 0 :
+      # if files / AZZA map is in ZEA (zenith equal area projection) -> distance from the center has to by calculated in a different way 
+      # possibly still division by sqrt(2.00) is needed here as otherwise will go beyond 1 
+      dist_za = (npix/2)*numpy.sqrt( 2.00*(1.00 - numpy.cos(za_deg*(math.pi/180.00)) )  ) / math.sqrt(2.00)
+   else :
+      # just normal SIN projection :
+      dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
+
+   
    x_pixel = ( npix/2 + dist_za*numpy.cos( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
    y_pixel = ( npix/2 + dist_za*numpy.sin( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
    print("x_pixel : count = %d" % (len(x_pixel)))
 
    # single pixel :
-   beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
-   print("Beam( %.4f deg, %.4f deg ) = %.8f at pixel (%d,%d)" % (azim_deg,za_deg,beam_value,x_pixel,y_pixel))
+#   beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
+   x_int = int( round(x_pixel) )
+   y_int = int( round(y_pixel) )
+   beam_value = current_fits_beam[0].data[ x_int , y_int ] # 2020-05-30 : changed to the same orientation as in get_fits_beam_multi - uses the fact of transposition in python so that the answer is correct !
+                                                                     #              otherwise it seems to have been giving wrong answers !!!
+                                                                     #              no x <-> y swap here to return transposed value (North is on top in ds9) !
+   print("Beam( %.4f deg, %.4f deg ) = %.8f at pixel (%d,%d) , dist_za = %.4f [deg]" % (azim_deg,za_deg,beam_value,x_int,y_int,dist_za))
    return (beam_value)
 
 
@@ -487,20 +508,22 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
               for i in range(0,len(x_pixel)) :
                  for j in range(0,len(y_pixel)):
                     if not numpy.isnan(x_pixel[i,j]) and not numpy.isnan(y_pixel[i,j]) :
-                        x_int = int(x_pixel[i,j])
-                        y_int = int(y_pixel[i,j])
+                        x_int = int( round(x_pixel[i,j]) )
+                        y_int = int( round(y_pixel[i,j]) )
                           
 #                print "(x_int,y_int) = (%d,%d)" % (x_int,y_int)
                 
                         if x_int < beam_values.shape[0] and y_int < beam_values.shape[1] :
-                           beam_values[x_int,y_int] = numpy.sqrt( current_fits_beam[0].data[x_int,y_int] )
+                           beam_values[x_int,y_int] = numpy.sqrt( current_fits_beam[0].data[x_int,y_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
+                                                                                                           # no x <-> y swap here to return transposed value (North is on top in ds9) !
                         else :
                            print("WARNING : skipped pixel (x_int,y_int) = (%d,%d)" % (x_int,y_int))
    else :
-       x_pixel_int = int(x_pixel)
-       y_pixel_int = int(y_pixel)
+       x_pixel_int = int( round(x_pixel) )
+       y_pixel_int = int( round(y_pixel) )
 
-       beam_values[0,0] = numpy.sqrt( current_fits_beam[0].data[x_pixel_int,y_pixel_int] )
+       beam_values[0,0] = numpy.sqrt( current_fits_beam[0].data[x_pixel_int,y_pixel_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
+                                                                                           # no x <-> y swap here to return transposed value (North is on top in ds9) !
 
 #  test save :
    if debug : 
@@ -556,12 +579,114 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
       
    return (beam_values,current_fits_beam,x_pixel.astype(int),y_pixel.astype(int))
 
+def beam_correct_flux( dt_arr, tm_arr, az_arr, el_arr, ra_arr, dec_arr, flux_arr, cnt, frequency_mhz, outfile="out.txt", pol="X", projection="zea" ) :
+   print("beam_correct_flux :")
+   
+   out_f = open( outfile , "w" )
+   line = ("# DATE TIME AZ[deg] EL[deg] RA[deg] DEC[deg] Flux[Jy] Beam_%s FluxCorr[Jy]\n" % (pol))
+   out_f.write( line )
+   for i in range(0,cnt) :
+      dt = dt_arr[i]
+      tm = tm_arr[i]
+      az = az_arr[i]
+      el = el_arr[i]
+      za = 90.00 - el
+      ra = ra_arr[i]
+      dec = dec_arr[i]
+      flux = flux_arr[i]
+      
+      beam_pol = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , frequency_mhz=frequency_mhz, polarisation=pol, projection=projection )
+      flux_corr = flux / beam_pol
+      
+      line = "%s %s %.14f %.14f %.14f %.14f %.14f %.4f %.14f\n" % (dt,tm,az,el,ra,dec,flux,beam_pol,flux_corr)
+      out_f.write( line )
+
+      
+   out_f.close()
+
+def read_time_azh_file( filename ) :
+# format : date; time; azimuth; elevation; right ascension; declination; and peak flux density
+   print("read_data(%s) ..." % (filename))
+   file=open(filename,'r')
+
+   # reads the entire file into a list of strings variable data :
+   data=file.readlines()
+   # print data
+
+   # initialisation of empty lists :
+   dt=[]
+   tm=[]
+   az=[]
+   el=[]
+   ra=[]
+   dec=[]
+   flux=[]
+   cnt=0
+   for line in data : 
+      words = line.split(' ')
+
+      if line[0] == '#' or line[0]=='\n' or len(line) <= 0 or len(words)<4 :
+         continue
+      
+#      print "line = %s , words = %d" % (line,len(words))
+
+      if line[0] != "#" :
+#         print line[:-1]
+# format : 2020-01-31 04:26:28.9 152.32707214144972 42.232977712074245 1.26869122140846 -62.705127298233535 142.89981842041016     
+         dt1=words[0+0]
+         tm1=words[1+0]
+         az1=float(words[2+0])
+         el1=float(words[3+0])
+         ra1=float(words[4+0])
+         dec1=float(words[5+0])
+         f=float(words[6+0])
+
+         # format : date; time; azimuth; elevation; right ascension; declination; and peak flux density
+         dt.append(dt1)
+         tm.append(tm1)
+         az.append(az1)
+         el.append(el1)
+         ra.append(ra1)
+         dec.append(dec1)
+         flux.append(f)
+         
+         cnt += 1
+         
+
+   print("Read %d lines from file %s" % (cnt,filename))
+
+   return (dt,tm,az,el,ra,dec,flux,cnt)
+
+
+def parse_options(idx=0):
+   usage="Usage: %prog [options]\n"
+   usage+='\tAccesses SKA-Low dipole files to get beam values\n'
+   parser = OptionParser(usage=usage,version=1.00)
+   parser.add_option('-r','--remap','--do_remapping','--remapping',dest="do_remapping",default=False,action="store_true", help="Re-mapping [default %default]",metavar="STRING")
+   parser.add_option('-p','--pol','--polarisation',dest="polarisation",default=None, help="Polarisation [default %default]")
+   parser.add_option('-a','--azim','--az','--az_deg',dest="azim_deg",default=0, help="Azimuth [deg]",type="float")
+   parser.add_option('-z','--zenith_angle','--za','--za_deg',dest="za_deg",default=0, help="Zenith angle [deg]",type="float")
+   parser.add_option('-f','--freq_mhz','--frequency_mhz','--frequency',dest="frequency_mhz",default=160, help="Frequency [MHz]",type="float")
+   parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
+   parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")
+   
+   (options, args) = parser.parse_args(sys.argv[idx:])
+
+   return (options, args)
+
+
 
 if __name__ == "__main__":
 
-   do_remapping = False
+   (options, args) = parse_options()
    
-   if do_remapping :
+   print("######################################################")
+   print("PARAMETERS :")
+   print("######################################################")
+   print("Projection = %s" % (options.projection))
+   print("######################################################")
+
+   if options.do_remapping :
       fits_name = "EDA_Xpol_ortho_204.fits"
       if len(sys.argv) > 1:
          fits_name = sys.argv[1]
@@ -573,22 +698,24 @@ if __name__ == "__main__":
       
       print("Remapping fits_file = %s in steps of %d" % (fits_name,step))
       remap_beam( fits_name , step=step, do_test=False, radius=20 )
+   elif options.time_azh_file is not None :
+      print("Reading file %s ..." % (options.time_azh_file))
+      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file )
+      outfile=options.time_azh_file.replace(".txt","_BeamCorr.txt")
+      beam_correct_flux( dt, tm, az, el, ra, dec, flux, cnt, frequency_mhz=options.frequency_mhz, outfile=outfile, pol=options.polarisation, projection=options.projection )
    else :
-      az = 0 
-      za = 0
-      freq_mhz = 160
+      az = options.azim_deg
+      za = options.za_deg
+      freq_mhz = options.frequency_mhz
       
-      if len(sys.argv) > 1:
-         az = float( sys.argv[1] )
-
-      if len(sys.argv) > 2:
-         za = float( sys.argv[2] )
-
-      if len(sys.argv) > 3:
-         freq_mhz = float( sys.argv[3] )
-
       beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X' )   
       beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y' )   
-      
       print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
+      
+      beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' )
+      beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' )
+      print("DEBUG2: BEAM_X = %.4f , BEAM_Y = %.4f ( SQUARED = %.4f , %.4f )" % (beam_x_2[0][0],beam_y_2[0][0],(beam_x_2[0][0])**2,(beam_y_2[0][0])**2))
+
+      
+      
       
