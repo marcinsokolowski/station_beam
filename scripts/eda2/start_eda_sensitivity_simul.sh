@@ -5,6 +5,11 @@ if [[ -n "$1" && "$1" != "-" ]]; then
    channel=$1
 fi
 
+interval=86400
+if [[ -n "$2" && "$2" != "-" ]]; then
+   interval=$2
+fi
+
 path=`pwd`
 dir_path=`dirname $path`
 
@@ -15,8 +20,8 @@ mwa_coarse_channel=`echo $channel | awk '{mwa_cc=$1*((400.00/512.00)/1.28);print
 
 export PATH=~/github/station_beam/:/opt/anaconda2/bin:$PATH
 
-echo "nohup calc_eda_sensitvity_all.sh $ux_start 86400 - \"--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2\" $mwa_coarse_channel - 300 400 400 > out 2>&1 &"
-nohup calc_eda_sensitvity_all.sh $ux_start 86400 - "--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2" $mwa_coarse_channel - 300 400 400 > out 2>&1 &
+echo "nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - \"--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2\" $mwa_coarse_channel - 300 400 400 > out 2>&1 &"
+nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - "--use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2" $mwa_coarse_channel - 300 400 400 > out 2>&1 &
 
 
 # ~/github/station_beam/tools/merge_sensitivity_loop.sh
