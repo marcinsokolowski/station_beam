@@ -664,7 +664,7 @@ def parse_options(idx=0):
    parser = OptionParser(usage=usage,version=1.00)
    parser.add_option('-r','--remap','--do_remapping','--remapping',dest="do_remapping",default=False,action="store_true", help="Re-mapping [default %default]",metavar="STRING")
    parser.add_option('-p','--pol','--polarisation',dest="polarisation",default=None, help="Polarisation [default %default]")
-   parser.add_option('-a','--azim','--az','--az_deg',dest="azim_deg",default=0, help="Azimuth [deg]",type="float")
+   parser.add_option('-a','--azim','--az','--az_deg','--azim_deg',dest="azim_deg",default=0, help="Azimuth [deg]",type="float")
    parser.add_option('-z','--zenith_angle','--za','--za_deg',dest="za_deg",default=0, help="Zenith angle [deg]",type="float")
    parser.add_option('-f','--freq_mhz','--frequency_mhz','--frequency',dest="frequency_mhz",default=160, help="Frequency [MHz]",type="float")
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
@@ -708,8 +708,8 @@ if __name__ == "__main__":
       za = options.za_deg
       freq_mhz = options.frequency_mhz
       
-      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X' )   
-      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y' )   
+      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection )   
+      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection )   
       print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
       
       beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' )
