@@ -305,9 +305,32 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
 #   beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
    x_int = int( round(x_pixel) )
    y_int = int( round(y_pixel) )
-   beam_value = current_fits_beam[0].data[ x_int , y_int ] # 2020-05-30 : changed to the same orientation as in get_fits_beam_multi - uses the fact of transposition in python so that the answer is correct !
-                                                                     #              otherwise it seems to have been giving wrong answers !!!
-                                                                     #              no x <-> y swap here to return transposed value (North is on top in ds9) !
+   
+   if x_int >= 0 and x_int < x_size and y_int >=0 and y_int < y_size : 
+      try : 
+         beam_value = current_fits_beam[0].data[ x_int , y_int ] # 2020-05-30 : changed to the same orientation as in get_fits_beam_multi - uses the fact of transposition in python so that the answer is correct !
+                                                                 #              otherwise it seems to have been giving wrong answers !!!
+                                                                 #              no x <-> y swap here to return transposed value (North is on top in ds9) !
+      except :
+         print("ERROR : exception caught when accessing data at pixel (%d,%d) corresponding to (azim,za) = (%.4f,%.4f) [deg] -> skipped" % (x_int , y_int, azim_deg, za_deg))
+   else :
+      print("WARNING : calculated pixel coordinates for (azim,za) = (%.4f,%.4f) [deg] are (%d,%d) which is outside the image -> asigning closest value" % (azim_deg, za_deg, x_int , y_int))
+      
+      if x_int <=0 :
+         x_int = 0
+      if y_int <= 0 :
+         y_int = 0
+      if x_int >= x_size :
+         x_int = (x_size-1)
+      if y_int >= y_size :
+         y_int = (y_size-1)
+         
+      print("WARNING : getting beam value at pixel (%d,%d)" % (x_int,y_int))   
+         
+      beam_value = current_fits_beam[0].data[ x_int , y_int ] # 2020-05-30 : changed to the same orientation as in get_fits_beam_multi - uses the fact of transposition in python so that the answer is correct 
+                                                              #              otherwise it seems to have been giving wrong answers !!!
+                                                              #              no x <-> y swap here to return transposed value (North is on top in ds9) !
+                                                                                       
    print("Beam( %.4f deg, %.4f deg ) = %.8f at pixel (%d,%d) , dist_za = %.4f [deg]" % (azim_deg,za_deg,beam_value,x_int,y_int,dist_za))
    return (beam_value)
 
@@ -701,7 +724,11 @@ if __name__ == "__main__":
    elif options.time_azh_file is not None :
       print("Reading file %s ..." % (options.time_azh_file))
       (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file )
-      outfile=options.time_azh_file.replace(".txt","_BeamCorr.txt")
+      projection = options.projection
+      if projection is None or len(projection) <= 0 :
+         projection = "SIN" 
+      postfix = ( "_BeamCorr%s.txt" % (projection.upper()) ) 
+      outfile=options.time_azh_file.replace(".txt",postfix)
       beam_correct_flux( dt, tm, az, el, ra, dec, flux, cnt, frequency_mhz=options.frequency_mhz, outfile=outfile, pol=options.polarisation, projection=options.projection )
    else :
       az = options.azim_deg
