@@ -4,7 +4,7 @@ Tim Colegate, updated from Randall Wayth's mwa_tile.py.
 """
 from __future__ import print_function
 
-import pdb
+# import pdb
 
 import numpy as np
 import math
