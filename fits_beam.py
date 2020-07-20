@@ -617,8 +617,21 @@ def beam_correct_flux( dt_arr, tm_arr, az_arr, el_arr, ra_arr, dec_arr, flux_arr
       ra = ra_arr[i]
       dec = dec_arr[i]
       flux = flux_arr[i]
+
+      beam_pol = 1.00      
+      if pol == "I" :
+         # this is not correct way as X and Y should be beam-corrected before averaging !
+         
+         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , frequency_mhz=frequency_mhz, polarisation="X", projection=projection )
+         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , frequency_mhz=frequency_mhz, polarisation="Y", projection=projection )
+         beam_pol = (beam_x + beam_y)/2.00
+         
+         print("WARNING : pol=%s will use Beam_I = (X+Y)/2 = (%.8f + %.8f)/2.00 = %.8f, but X and Y images should be beam-corrected separately first !" % (pol,beam_x,beam_y,beam_pol))
+      else :
+         beam_pol = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , frequency_mhz=frequency_mhz, polarisation=pol, projection=projection )
       
-      beam_pol = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , frequency_mhz=frequency_mhz, polarisation=pol, projection=projection )
+      
+      
       flux_corr = flux / beam_pol
       
       line = "%s %s %.14f %.14f %.14f %.14f %.14f %.4f %.14f\n" % (dt,tm,az,el,ra,dec,flux,beam_pol,flux_corr)
@@ -627,7 +640,20 @@ def beam_correct_flux( dt_arr, tm_arr, az_arr, el_arr, ra_arr, dec_arr, flux_arr
       
    out_f.close()
 
-def read_time_azh_file( filename ) :
+def read_time_azh_file( filename,
+                        dt_index   = 0, 
+                        tm_index   = 1,
+                        az_index   = 2,
+                        el_index   = 3,
+                        ra_index   = 4,
+                        dec_index  = 5,
+                        flux_index = 6,
+                        
+                        default_ra  = 0.00,
+                        default_dec = 0.00,
+                        
+                        debug_level = 1
+                      ) :
 # format : date; time; azimuth; elevation; right ascension; declination; and peak flux density
    print("read_data(%s) ..." % (filename))
    file=open(filename,'r')
@@ -635,6 +661,9 @@ def read_time_azh_file( filename ) :
    # reads the entire file into a list of strings variable data :
    data=file.readlines()
    # print data
+
+   if debug_level > 0 :
+      print("DEBUG : %d / %d / %d / %d / %d / %d / %d" % (dt_index,tm_index,az_index,el_index,ra_index,dec_index,flux_index))
 
    # initialisation of empty lists :
    dt=[]
@@ -656,13 +685,20 @@ def read_time_azh_file( filename ) :
       if line[0] != "#" :
 #         print line[:-1]
 # format : 2020-01-31 04:26:28.9 152.32707214144972 42.232977712074245 1.26869122140846 -62.705127298233535 142.89981842041016     
-         dt1=words[0+0]
-         tm1=words[1+0]
-         az1=float(words[2+0])
-         el1=float(words[3+0])
-         ra1=float(words[4+0])
-         dec1=float(words[5+0])
-         f=float(words[6+0])
+         dt1=words[dt_index+0]
+         tm1=words[tm_index+0]
+         az1=float(words[az_index+0])         
+         el1=float(words[el_index+0])
+         
+         ra1 = default_ra
+         if ra_index >= 0 :
+            ra1 = float(words[ra_index+0])
+         
+         dec1 = default_dec
+         if dec_index >= 0 :      
+            dec1 = float(words[dec_index+0])
+            
+         f = float(words[flux_index+0])
 
          # format : date; time; azimuth; elevation; right ascension; declination; and peak flux density
          dt.append(dt1)
@@ -672,6 +708,9 @@ def read_time_azh_file( filename ) :
          ra.append(ra1)
          dec.append(dec1)
          flux.append(f)
+         
+         if debug_level > 0 :
+            print("DEBUG : %s / %s (az,el) = (%.4f,%.4f) [deg], (ra,dec) = (%.4f,%.4f) [deg] , flux = %.2f [Jy]" % (dt1,tm1,az1,el1,ra1,dec1,f))
          
          cnt += 1
          
@@ -693,6 +732,18 @@ def parse_options(idx=0):
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
    parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")
    
+   # reading text file for beam correction :
+   parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
+   parser.add_option("--dt_index"        , dest="dt_index"   , default=None, help="DT index"  , type="int")
+   parser.add_option("--tm_index"        , dest="tm_index"   , default=None, help="TM index"  , type="int")
+   parser.add_option("--az_index"        , dest="az_index"   , default=None, help="AZ index"  , type="int")
+   parser.add_option("--el_index"        , dest="el_index"   , default=None, help="EL index"  , type="int")
+   parser.add_option("--ra_index"        , dest="ra_index"   , default=None, help="RA index"  , type="int")
+   parser.add_option("--dec_index"       , dest="dec_index"  , default=None, help="DEC index" , type="int")
+   parser.add_option("--flux_index"      , dest="flux_index" , default=None, help="Flux index", type="int")
+   parser.add_option('--ra','--ra_deg'   , dest="ra_deg",default=0, help="RA [deg] - for lightcurve of RA,DEC object",type="float")
+   parser.add_option('--dec','--dec_deg' , dest="dec_deg",default=0, help="DEC [deg] - for lightcurve of RA,DEC object",type="float")
+      
    (options, args) = parser.parse_args(sys.argv[idx:])
 
    return (options, args)
@@ -706,7 +757,9 @@ if __name__ == "__main__":
    print("######################################################")
    print("PARAMETERS :")
    print("######################################################")
-   print("Projection = %s" % (options.projection))
+   print("Projection      = %s" % (options.projection))
+   print("lightcurve_file = %s" % (options.lightcurve_file))
+   print("time_azh_file   = %s" % (options.time_azh_file))
    print("######################################################")
 
    if options.do_remapping :
@@ -721,15 +774,60 @@ if __name__ == "__main__":
       
       print("Remapping fits_file = %s in steps of %d" % (fits_name,step))
       remap_beam( fits_name , step=step, do_test=False, radius=20 )
+
    elif options.time_azh_file is not None :
       print("Reading file %s ..." % (options.time_azh_file))
-      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file )
+      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file ) 
       projection = options.projection
       if projection is None or len(projection) <= 0 :
          projection = "SIN" 
-      postfix = ( "_BeamCorr%s.txt" % (projection.upper()) ) 
+      postfix = ( "_%.2fMHz_BeamCorr%s.txt" % (options.frequency_mhz,projection.upper()) ) 
       outfile=options.time_azh_file.replace(".txt",postfix)
       beam_correct_flux( dt, tm, az, el, ra, dec, flux, cnt, frequency_mhz=options.frequency_mhz, outfile=outfile, pol=options.polarisation, projection=options.projection )
+
+   elif options.lightcurve_file is not None :
+      print("Reading lightcurve file %s ..." % (options.lightcurve_file))
+      
+      dt_index  = 0
+      tm_index  = 0 
+      az_index  = 9
+      el_index  = 10
+      ra_index  = -1
+      dec_index = -1
+      flux_index = 1 
+      
+      if options.dt_index is not None :
+         dt_index = options.dt_index
+
+      if options.tm_index is not None :
+         dt_index = options.tm_index
+
+      if options.az_index is not None :
+         az_index = options.az_index
+      
+      if options.el_index is not None :
+         el_index = options.el_index
+
+      if options.ra_index is not None :
+         ra_index = options.ra_index
+
+      if options.dec_index is not None :
+         dec_index = options.dec_index
+
+      if options.flux_index is not None :
+         flux_index = options.flux_index
+      
+      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.lightcurve_file , dt_index=dt_index, tm_index=tm_index,   az_index=az_index, el_index=el_index, 
+                                                                                    ra_index=ra_index, dec_index=dec_index, flux_index=flux_index,
+                                                                                    default_ra=options.ra_deg, default_dec=options.dec_deg )
+      projection = options.projection
+      if projection is None or len(projection) <= 0 :
+         projection = "SIN" 
+      postfix = ( "_%.2fMHz_BeamCorr%s.txt" % (options.frequency_mhz,projection.upper()) ) 
+      outfile=options.lightcurve_file.replace(".txt",postfix)
+      beam_correct_flux( dt, tm, az, el, ra, dec, flux, cnt, frequency_mhz=options.frequency_mhz, outfile=outfile, pol=options.polarisation, projection=options.projection )
+      
+      
    else :
       az = options.azim_deg
       za = options.za_deg
