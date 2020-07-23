@@ -747,6 +747,12 @@ def parse_options(idx=0):
    parser.add_option('--dec','--dec_deg' , dest="dec_deg",default=0, help="DEC [deg] - for lightcurve of RA,DEC object",type="float")
       
    (options, args) = parser.parse_args(sys.argv[idx:])
+   
+   if options.station_name.upper() == "AAVS2" :
+      options.station_name = "SKALA4"
+
+   if options.station_name.upper() == "AAVS1" :
+      options.station_name = "SKALA2"
 
    return (options, args)
 
