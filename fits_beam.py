@@ -6,10 +6,22 @@ import numpy
 import os,sys
 import math
 from string import Template
+import datetime
+import time
 import beam_tools
 
 # import pyfits
 import astropy.io.fits as pyfits
+try :
+   from astropy.coordinates import SkyCoord, EarthLocation
+   # CONSTANTS :
+   MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height=377.8)
+   
+   import sky2pix
+   from astropy.time import Time
+except :
+   print("ERROR : could not load astropy.coordinates - fits2beam cannot be used")   
+   MWA_POS=None
 
 # options :
 from optparse import OptionParser,OptionGroup
@@ -24,7 +36,7 @@ def save_fits( data , out_fits_name ) :
    hdu = pyfits.PrimaryHDU()
    hdu.data = data
    hdulist = pyfits.HDUList([hdu])
-   hdulist.writeto( out_fits_name , clobber=True )
+   hdulist.writeto( out_fits_name , overwrite=True )
 
    print("Saved fits file %s" % (out_fits_name))   
 
@@ -244,7 +256,7 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
-def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/", projection="zea" ) :
+def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/", projection="zea", debug_level=0 ) :
    print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
@@ -255,7 +267,8 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
    npix = x_size
    x_center = x_size / 2
    y_center = y_size / 2 
-   print('INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center))   
+   if debug_level > 0 :
+      print('INFO : Current fits file %s size = %d x %d -> center = %d x %d' % (beam_file_name,x_size,y_size,x_center,y_center))   
 
    # assuming that ds9 shows :   
    #       NORTH
@@ -299,7 +312,8 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
    
    x_pixel = ( npix/2 + dist_za*numpy.cos( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
    y_pixel = ( npix/2 + dist_za*numpy.sin( azim_deg*(math.pi/180.00) ) )  # orientaition in python is N(az=0) = (512,256), E(az=90deg) = (256,512) , S(az=180deg) = (0,255), W(az=-90/270deg) = (255,0)
-   print("x_pixel : count = %d" % (len(x_pixel)))
+   if debug_level > 0 :
+      print("x_pixel : count = %d" % (len(x_pixel)))
 
    # single pixel :
 #   beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
@@ -313,7 +327,7 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
                                                                  #              no x <-> y swap here to return transposed value (North is on top in ds9) !
       except :
          print("ERROR : exception caught when accessing data at pixel (%d,%d) corresponding to (azim,za) = (%.4f,%.4f) [deg] -> skipped" % (x_int , y_int, azim_deg, za_deg))
-   else :
+   else :      
       print("WARNING : calculated pixel coordinates for (azim,za) = (%.4f,%.4f) [deg] are (%d,%d) which is outside the image -> asigning closest value" % (azim_deg, za_deg, x_int , y_int))
       
       if x_int <=0 :
@@ -554,19 +568,19 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
       hdu.data = beam_values
       out_fits_name = "test_beam_fits_%05d.fits" % (global_fits_counter)
       hdulist = pyfits.HDUList([hdu])
-      hdulist.writeto( out_fits_name , clobber=True )
+      hdulist.writeto( out_fits_name , overwrite=True )
       
       hdu_az = pyfits.PrimaryHDU()
       hdu_az.data = azim_deg
       out_fits_name = "test_azim_fits_%05d.fits" % (global_fits_counter)
       hdulist_az = pyfits.HDUList([hdu_az])
-      hdulist_az.writeto( out_fits_name , clobber=True )
+      hdulist_az.writeto( out_fits_name , overwrite=True )
 
       hdu_za = pyfits.PrimaryHDU()
       hdu_za.data = za_deg
       out_fits_name = "test_za_fits_%05d.fits" % (global_fits_counter)
       hdulist_za = pyfits.HDUList([hdu_za])
-      hdulist_za.writeto( out_fits_name , clobber=True )
+      hdulist_za.writeto( out_fits_name , overwrite=True )
 
    
 
@@ -719,6 +733,95 @@ def read_time_azh_file( filename,
 
    return (dt,tm,az,el,ra,dec,flux,cnt)
 
+def fits2beam( fitsfile, options=None ) :
+
+   print("Reading fits file %s" % (fitsfile))
+   fits = pyfits.open(fitsfile)
+   x_size=fits[0].header['NAXIS1']
+   y_size=fits[0].header['NAXIS2']
+   dateobs=fits[0].header['DATE-OBS']
+
+   ( ra , dec ) = sky2pix.pix2sky( fits, fitsfile )
+
+
+   out_ra_fits = fitsfile.replace(".fits","_ra.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = ra.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_ra_fits ,overwrite=True)
+
+   out_dec_fits = fitsfile.replace(".fits","_dec.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = dec.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_dec_fits ,overwrite=True)
+      
+   coord = SkyCoord( ra, dec, equinox='J2000',frame='icrs', unit='deg')
+   coord.location = MWA_POS
+   utc=fitsfile[9:24]  
+   uxtime = time.mktime(datetime.datetime.strptime(utc, "%Y%m%dT%H%M%S").timetuple()) + 8*3600 # just for Perth !!!
+   coord.obstime = Time( uxtime, scale='utc', format="unix" )
+   altaz = coord.transform_to('altaz')
+   az, alt = altaz.az.deg, altaz.alt.deg
+   za = 90.00 - alt
+
+   out_az_fits = fitsfile.replace(".fits","_az.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = az.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_az_fits ,overwrite=True)
+
+   out_alt_fits = fitsfile.replace(".fits","_alt.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = alt.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_alt_fits ,overwrite=True)
+
+   out_za_fits = fitsfile.replace(".fits","_za.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = za.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_za_fits ,overwrite=True)
+
+#   beam_value_x = get_fits_beam_multi( az , za , options.frequency_mhz, polarisation='X', station_name=options.station_name ) # projection=options.projection, station_name=options.station_name )
+#   beam_value_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )
+
+   beam_value_x = numpy.ones( (x_size,y_size) )*numpy.nan
+   beam_value_y = numpy.ones( (x_size,y_size) )*numpy.nan
+   
+   for y in range(0,y_size) : 
+      for x in range(0,x_size) :
+         az_deg = az[y,x]
+         za_deg = za[y,x]
+         el_deg = alt[y,x]
+
+         if el_deg >= 0 :
+            if not numpy.isnan(az_deg) and not numpy.isnan(za_deg) :
+               beam_x = get_fits_beam( numpy.array([[az_deg]]) , numpy.array([[za_deg]]) , options.frequency_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+               beam_y = get_fits_beam( numpy.array([[az_deg]]) , numpy.array([[za_deg]]) , options.frequency_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )
+               
+               beam_value_x[y,x] = beam_x
+               beam_value_y[y,x] = beam_y
+               
+#         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+
+      
+#         beam_value_x[y,x] = beam_x
+
+   out_bx_fits = fitsfile.replace(".fits","_BeamX.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = beam_value_x.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_bx_fits , overwrite=True)
+
+   out_by_fits = fitsfile.replace(".fits","_BeamY.fits")
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = beam_value_y.transpose()
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto( out_by_fits , overwrite=True)
+   
+   print("BEAM FILES written to files : %s and %s" % (out_bx_fits,out_by_fits))
+
 
 def parse_options(idx=0):
    usage="Usage: %prog [options]\n"
@@ -733,6 +836,7 @@ def parse_options(idx=0):
    parser.add_option('-f','--freq_mhz','--frequency_mhz','--frequency',dest="frequency_mhz",default=160, help="Frequency [MHz]",type="float")
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
    parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")   
+   parser.add_option('--fits2beam', dest="fits2beam", default=None, help="Generates beam for a specified FITS file [default %default]",metavar="STRING")
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
@@ -773,6 +877,7 @@ if __name__ == "__main__":
    print("lightcurve_file = %s" % (options.lightcurve_file))
    print("time_azh_file   = %s" % (options.time_azh_file))
    print("Coordinates (az,za) = (%.4f,%.4f) [deg] ( elevation param = %s )" % (options.azim_deg,options.za_deg,options.el_deg))
+   print("fits2beam       = %s" % (options.fits2beam))
    print("######################################################")
 
    if options.do_remapping :
@@ -841,6 +946,10 @@ if __name__ == "__main__":
       beam_correct_flux( dt, tm, az, el, ra, dec, flux, cnt, frequency_mhz=options.frequency_mhz, outfile=outfile, pol=options.polarisation, projection=options.projection )
       
       
+   elif options.fits2beam is not None :
+      print("DEBUG : fits2beam for file %s" % (options.fits2beam))
+      
+      fits2beam( options.fits2beam, options )
    else :
       az = options.azim_deg
       za = options.za_deg
