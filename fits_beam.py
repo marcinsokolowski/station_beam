@@ -1,6 +1,6 @@
 from __future__ import print_function
 # from pylab import *
-import pdb
+# import pdb
 
 import numpy
 import os,sys
@@ -724,13 +724,15 @@ def parse_options(idx=0):
    usage="Usage: %prog [options]\n"
    usage+='\tAccesses SKA-Low dipole files to get beam values\n'
    parser = OptionParser(usage=usage,version=1.00)
+   parser.add_option('-s','--station','--station_name',dest="station_name",default="EDA",help="Station name [EDA2 or AAVS2 or AAVS1] [default %default]",metavar="STRING")
    parser.add_option('-r','--remap','--do_remapping','--remapping',dest="do_remapping",default=False,action="store_true", help="Re-mapping [default %default]",metavar="STRING")
    parser.add_option('-p','--pol','--polarisation',dest="polarisation",default=None, help="Polarisation [default %default]")
    parser.add_option('-a','--azim','--az','--az_deg','--azim_deg',dest="azim_deg",default=0, help="Azimuth [deg]",type="float")
    parser.add_option('-z','--zenith_angle','--za','--za_deg',dest="za_deg",default=0, help="Zenith angle [deg]",type="float")
+   parser.add_option('-e','--elev_deg','--el','--el_deg',dest="el_deg",default=None, help="Elevation [deg]",type="float")
    parser.add_option('-f','--freq_mhz','--frequency_mhz','--frequency',dest="frequency_mhz",default=160, help="Frequency [MHz]",type="float")
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
-   parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")
+   parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")   
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
@@ -754,12 +756,17 @@ if __name__ == "__main__":
 
    (options, args) = parse_options()
    
+   if options.el_deg is not None :
+      print("DEBUG : elevation parameter used = %.4f [deg]" % (options.el_deg))
+      options.za_deg = (90.00 - options.el_deg)
+   
    print("######################################################")
    print("PARAMETERS :")
    print("######################################################")
    print("Projection      = %s" % (options.projection))
    print("lightcurve_file = %s" % (options.lightcurve_file))
    print("time_azh_file   = %s" % (options.time_azh_file))
+   print("Coordinates (az,za) = (%.4f,%.4f) [deg] ( elevation param = %s )" % (options.azim_deg,options.za_deg,options.el_deg))
    print("######################################################")
 
    if options.do_remapping :
@@ -833,12 +840,12 @@ if __name__ == "__main__":
       za = options.za_deg
       freq_mhz = options.frequency_mhz
       
-      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection )   
-      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection )   
+      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
       print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
       
-      beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' )
-      beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' )
+      beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' , station_name=options.station_name )
+      beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' , station_name=options.station_name )
       print("DEBUG2: BEAM_X = %.4f , BEAM_Y = %.4f ( SQUARED = %.4f , %.4f )" % (beam_x_2[0][0],beam_y_2[0][0],(beam_x_2[0][0])**2,(beam_y_2[0][0])**2))
 
       
