@@ -57,6 +57,8 @@ import numpy
 import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as md  # to convert unix time to date on X-axis 
+import os
+from scipy.interpolate import interp1d # for interpolation 
 
 # local packages :
 import beam_tools
@@ -137,13 +139,66 @@ def calc_anglular_distance_degrees( azim1_deg, za1_deg, azim2_deg , za2_deg ) :
     return dist_value_deg
 
 
+def read_text_file( filename , do_fit=True ) : 
+   print("read_data(%s) ..." % (filename))
+
+   if not os.path.exists( filename ) :
+      print("ERROR : could not read satellite info file %s" % (filename))
+      return (None,None,None)
+   
+   file=open(filename,'r')
+
+   # reads the entire file into a list of strings variable data :
+   data=file.readlines()
+   # print data
+   
+   freq_mhz = []
+   t_rcv    = []
+
+   for line in data : 
+      line=line.rstrip()
+      words = line.split(' ')
+
+      if line[0] == '#' or line[0]=='\n' or len(line) <= 0 or len(words)<2 :
+         continue
+
+#      print "line = %s , words = %d" % (line,len(words))
+
+      if line[0] != "#" :
+         f  = float( words[0+0] )
+         t = float( words[1+0] )
+         
+         freq_mhz.append( f )
+         t_rcv.append( t )
+
+
+   freq_mhz = numpy.array( freq_mhz )
+   t_rcv    = numpy.array( t_rcv )
+
+   fit_func = None
+   if do_fit :
+      fit_func = interp1d( freq_mhz, t_rcv, kind='cubic')  
+      #  ret_val = lna_gain_db_cubic( freq_mhz )
+         
+         
+   return (freq_mhz,t_rcv,fit_func)
+
+
 # get sensitivity vs. frequency for given pointing direction [degrees] and lst [hours]:
 def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00 ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00,
+                             receiver_temp_file=None ) :
         
     global debug_level
     
+    
+    # 
+    file_freq_mhz = None
+    file_trcv     = None
+    file_trcv_func = None
+    if receiver_temp_file is not None :
+       (file_freq_mhz,file_trcv,file_trcv_func) = read_text_file( receiver_temp_file )
                              
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
@@ -238,6 +293,12 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
         creator     = row[14]
         code_version = row[15]
         
+        if file_trcv_func is not None :
+           # in case trcv is provided in the external text file (like a config file) :
+           t_rcv = file_trcv_func( freq_mhz )
+           aot = a_eff / ( t_ant + t_rcv )                
+           sefd        = (2*1380.00)/aot
+        
         ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
               
         print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg))
@@ -275,7 +336,8 @@ def unixtime2lst( unixtime ) :
 # get sensitivity vs. unix time for a specific polarisation :
 def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             receiver_temperature=None) :
 
     out_uxtime = []
     out_aot    = []
@@ -376,6 +438,12 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
            creator     = row[14]
            code_version = row[15]
            
+           if receiver_temperature is not None and receiver_temperature >= 0.00 :
+              # in case trcv is provided in the external text file (like a config file) :
+              t_rcv = receiver_temperature
+              aot = a_eff / ( t_ant + t_rcv )
+              sefd        = (2*1380.00)/aot
+           
            print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
            if best_rec_id < 0 or id == best_rec_id : 
@@ -393,7 +461,8 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
 # get sensitivity vs. LST for a specific polarisation :
 def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, lst_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             receiver_temperature=None) :
 
     out_lst = []
     out_aot    = []
@@ -487,6 +556,11 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
         timestamp   = row[13]
         creator     = row[14]
         code_version = row[15]
+        
+        if receiver_temperature is not None and receiver_temperature >= 0.00 :
+           t_rcv = receiver_temperature
+           aot = a_eff / ( t_ant + t_rcv )
+           sefd        = (2*1380.00)/aot
            
         print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
@@ -506,7 +580,8 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
 # get sensitivity vs. time :
 def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             receiver_temperature=None ) :
         
     global debug_level
                                  
@@ -514,18 +589,21 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
 # Change to loop over time range in steps of step      
     (out_uxtime_x, out_aot_x, out_sefd_x) = get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol='X', time_step=time_step,
                                                                                   station=station, db_base_name=db_base_name, db_path=db_path, 
-                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
+                                                                                  receiver_temperature=receiver_temperature )
 
     (out_uxtime_y, out_aot_y, out_sefd_y) = get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol='Y', time_step=time_step,
                                                                                   station=station, db_base_name=db_base_name, db_path=db_path, 
-                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
+                                                                                  receiver_temperature=receiver_temperature )
 
     return ( numpy.array(out_uxtime_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_uxtime_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
 
 def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             receiver_temperature=None) :
 
     global debug_level
                                  
@@ -533,11 +611,13 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
 # Change to loop over time range in steps of step      
     (out_lst_x, out_aot_x, out_sefd_x) = get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, lst_end, pol='X', time_step=time_step,
                                                                                   station=station, db_base_name=db_base_name, db_path=db_path, 
-                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
+                                                                                  receiver_temperature=receiver_temperature )
 
     (out_lst_y, out_aot_y, out_sefd_y) = get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, lst_end, pol='Y', time_step=time_step,
                                                                                   station=station, db_base_name=db_base_name, db_path=db_path, 
-                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz )
+                                                                                  db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
+                                                                                  receiver_temperature=receiver_temperature )
 
     return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
@@ -547,7 +627,7 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
 def get_sensitivity_map( freq_mhz, lst_hours, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_freq_resolution_mhz=10.00, output_file_base=None,
-                             out_fitsname_base="sensitivity_map_", output_dir="./" ) :
+                             out_fitsname_base="sensitivity_map_", output_dir="./", receiver_temperature=None ) :
                        
     global debug_level                        
                              
@@ -655,6 +735,11 @@ def get_sensitivity_map( freq_mhz, lst_hours,
         creator     = row[14]
         code_version = row[15]
         
+        if receiver_temperature is not None and receiver_temperature >= 0.00 :
+           t_rcv = receiver_temperature
+           aot = a_eff / ( t_ant + t_rcv )
+           sefd        = (2*1380.00)/aot
+        
         if debug_level >= 2 :
            print("TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz))
         
@@ -695,7 +780,8 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 # 
 def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_end_h , 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00 ) :
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00,
+                             receiver_temperature=None ) :
                              
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
@@ -741,6 +827,11 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
         timestamp   = row[13]
         creator     = row[14]
         code_version = row[15]
+        
+        if receiver_temperature is not None and receiver_temperature >= 0.00 :
+           t_rcv = receiver_temperature
+           aot = a_eff / ( t_ant + t_rcv )
+           sefd        = (2*1380.00)/aot
         
         print("TEST : %d , freq_mhz = %.4f [MHz]" % (id,freq_mhz))
         
@@ -1067,6 +1158,9 @@ def parse_options(idx):
    parser.add_option('--save_text','--save_text_file','--text',action="store_true",dest="save_text_file",default=False, help="Save text file - for some options is always enabled, but for all-sky sensitivity map it's not [default %]")   
    
  
+   # providing external values of T_receiver :
+   parser.add_option('--receiver_temperature','--receiver_temp','--t_rcv','--T_rcv',dest="receiver_temperature",default=None, help="Externally provided receiver temperature (overwrites the value in the database) [default %default]",metavar="float",type="float")
+   parser.add_option('--trcv_file','--receiver_temp_file',dest="receiver_temp_file",default=None, help="Text file with receiver temperature vs. frequency [default %default]")
 
    (options, args) = parser.parse_args(sys.argv[idx:])
    
@@ -1184,11 +1278,11 @@ def save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_fi
  
 if __name__ == "__main__":
     (options, args) = parse_options(1)
-
+        
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
        print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
-       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours )
+       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
           if options.output_file is not None :
@@ -1206,7 +1300,8 @@ if __name__ == "__main__":
        print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base )
+       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
+                                                                                                                          receiver_temperature=options.receiver_temperature )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :
@@ -1233,7 +1328,8 @@ if __name__ == "__main__":
            
            if options.azim_deg is not None and options.za_deg is not None :
               print("\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-              (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, time_step=options.step_seconds, station=options.station_name )
+              (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, 
+                                                                                          time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
               if options.do_plot :
                  out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
@@ -1253,7 +1349,8 @@ if __name__ == "__main__":
            
            if options.azim_deg is not None and options.za_deg is not None :
               print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-              (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, time_step=options.step_seconds, station=options.station_name )
+              (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
+                                                                                   time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
               if options.do_plot :
                  out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.azim_deg,options.za_deg,options.freq_mhz)          
