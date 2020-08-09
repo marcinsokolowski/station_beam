@@ -13,7 +13,7 @@ import beam_tools
 # import pyfits
 import astropy.io.fits as pyfits
 try :
-   from astropy.coordinates import SkyCoord, EarthLocation
+   from astropy.coordinates import SkyCoord, EarthLocation, get_sun
    # CONSTANTS :
    MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height=377.8)
    
@@ -822,6 +822,26 @@ def fits2beam( fitsfile, options=None ) :
    
    print("BEAM FILES written to files : %s and %s" % (out_bx_fits,out_by_fits))
 
+def sun_position( unix_time=None ):
+   if unix_time is None or unix_time <= 0 :
+      print("ERROR : unix_time parameter not provided to sun_position function -> cannot continue")
+      return (None,None,None,None)       
+      
+   t = Time(unix_time,format='unix')
+   sunpos = get_sun(t)
+   print("INFO : sun position = (RA,DEC) = (%.4f,%.4f) [deg]" % (sunpos.ra.degree, sunpos.dec.degree))
+   
+   # calculate az,za of the sun :
+   coord = SkyCoord( sunpos.ra.degree, sunpos.dec.degree, equinox='J2000',frame='icrs', unit='deg')
+   coord.location = MWA_POS
+   coord.obstime = Time( unix_time, scale='utc', format="unix" )
+   altaz = coord.transform_to('altaz')
+   az, alt = altaz.az.deg, altaz.alt.deg
+   za = 90.00 - alt
+   
+   return ( sunpos.ra.degree, sunpos.dec.degree, az, alt, za )
+   
+
 
 def parse_options(idx=0):
    usage="Usage: %prog [options]\n"
@@ -837,6 +857,10 @@ def parse_options(idx=0):
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
    parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")   
    parser.add_option('--fits2beam', dest="fits2beam", default=None, help="Generates beam for a specified FITS file [default %default]",metavar="STRING")
+   parser.add_option('--ux','--uxtime','--unix_time','--unixtime',dest="unix_time",default=None, help="Unix time",type="float")
+   
+   # 
+   parser.add_option('--sun','--beam_on_sun','--sun_beam',dest="beam_on_sun",default=False,action="store_true", help="Calculate beam value on the Sun [default %default]")
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
@@ -878,6 +902,7 @@ if __name__ == "__main__":
    print("time_azh_file   = %s" % (options.time_azh_file))
    print("Coordinates (az,za) = (%.4f,%.4f) [deg] ( elevation param = %s )" % (options.azim_deg,options.za_deg,options.el_deg))
    print("fits2beam       = %s" % (options.fits2beam))
+   print("Beam on Sun     = %s" % (options.beam_on_sun))
    print("######################################################")
 
    if options.do_remapping :
@@ -954,6 +979,15 @@ if __name__ == "__main__":
       az = options.azim_deg
       za = options.za_deg
       freq_mhz = options.frequency_mhz
+      
+      if options.beam_on_sun :
+         if options.unix_time is None or options.unix_time <= 0 :
+            print("ERROR : calculation of beam on Sun is required, but time is not specified -> cannot continue, please provide --uxtime or --unix_time parameter value")
+            os.sys.exit(-1)
+      
+         print("INFO : calculation of beam on Sun is required")         
+         ( ra, dec, az, alt, za ) = sun_position( options.unix_time )
+         print("INFO : sun position calculated (RA,DEC) = (%.4f,%.4f) [deg] , (AZ,ELEV,ZA) = (%.4f,%.4f,%.4f) [deg]" % (ra, dec, az, alt, za))
       
       beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
       beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
