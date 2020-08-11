@@ -10,7 +10,7 @@ This is the script interface to the functions and modules defined in MWA_Tools/s
 """
 from __future__ import print_function
 
-# import pdb
+import pdb
 # TEMPORARY ??? fails in pawsey 
 try :
    from astropy.utils.iers import conf
@@ -159,6 +159,9 @@ def main():
     parser.add_option('--extra_trcv',dest="extra_trcv",default=0,help="Additional T_rcv (Adrian says it might be 10-15 K extra)",type="float")
     parser.add_option('--dipole_type',dest='dipole_type',default='short',help='Dipole type default %default')
     parser.add_option('--print_trcv_only',dest='print_trcv_only',default=False,action="store_true",help="Only print T_rcv and exit [default %default]")
+
+    # use single dipole beam :
+    parser.add_option('--correlated_mode','--corr_mode','--correlator_mode',action="store_true",dest="correlator_mode",default=False,help="Use single dipole beam [default %default]")
     
     # sun:
     parser.add_option('--add_sun',action="store_true",dest="add_sun",default=False,help="Add sun")
@@ -343,7 +346,7 @@ def main():
         # DEFAULT option.trcv_type == lightcurve201612 
 
 # 20190820 - changed to a function instead of coded here :
-        T_rcv = station_trcv.trcv_lightcurve201612( freq_mhz )         
+#20200811        T_rcv = station_trcv.trcv_lightcurve201612( freq_mhz )         
 #        T_rcv =  +53480.71172570309136062860488891601562500000000000000000 - 1455.76561026112926811038050800561904907226562500000000*freq_mhz \
 #             +12.16264789947674174186431628186255693435668945312500*freq_mhz*freq_mhz -0.00271098517125182300949171043669139180565252900124*freq_mhz*freq_mhz*freq_mhz \
 #             -0.00030428122418899071835451941581140999915078282356*freq_mhz*freq_mhz*freq_mhz*freq_mhz -0.00000046193435183846278872557794374642536894270961*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz \
@@ -352,36 +355,38 @@ def main():
 #             -0.00000000000028926757335617184960944065203237193611*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz \
 #             +0.00000000000000055485231182041931661150443032917814*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz*freq_mhz
         
-        if options.trcv_type=="budi" : # or options.trcv_budi :
-           print("Using Trcv_BUDI")
-           T_rcv = station_trcv.trcv_budi( freq_mhz )
-        elif options.trcv_type=="data_vs_model_201612" : # or options.trcv_fit_data_vs_mode :
-           print("Using Trcv trcv_fit_data_vs_mode (201612)")           
-           T_rcv = station_trcv.trcv_fit_data_vs_mode( freq_mhz )
-        elif options.trcv_type=="lightcurve_20160703_cubic" : # or options.trcv_fit_lightcurve_20160703_cubic :
-           print("Using Trcv trcv_fit_lightcurve_20160703_cubic")
-           T_rcv = station_trcv.trcv_fit_lightcurve_20160703_cubic( freq_mhz )
-        elif options.trcv_type=="lightcurve_20160703_polfit" :
-           print("Using Trcv trcv_fit_lightcurve_20160703_polfit")
-           T_rcv = station_trcv.trcv_fit_lightcurve_20160703_polfit( freq_mhz )
-        elif options.trcv_type=="trcv_angelica_data_vs_time" :
-           T_rcv = station_trcv.trcv_angelica_data_vs_time( freq_mhz )
-        elif options.trcv_type=="trcv_haslam_data_vs_model" :
-           T_rcv = station_trcv.trcv_haslam_data_vs_model( freq_mhz )
-        elif options.trcv_type=="trcv_angelica_data_vs_time_powerlawfit" :
-           T_rcv = station_trcv.trcv_angelica_data_vs_time_powerlawfit( freq_mhz )
-        elif options.trcv_type=="trcv_from_skymodel_with_err" :
-           T_rcv = station_trcv.trcv_from_skymodel_with_err( freq_mhz )
-        elif options.trcv_type=="trcv_aavs2" :
-           print("INFO : Calling trcv_aavs2")
-           T_rcv = station_trcv.trcv_aavs2( freq_mhz )
-        elif options.trcv_type=="trcv_aavs2_vs_za_deg" :
-           print("INFO : Calling trcv_aavs2_vs_za_deg")
-           T_rcv = station_trcv.trcv_aavs2( freq_mhz, za_deg=options.pointing_za_deg )
-        elif options.trcv_type=="trcv_eda2" :
-           T_rcv = station_trcv.trcv_eda2( freq_mhz )
-        elif options.trcv_type=="trcv_eda1" :
-           T_rcv = station_trcv.trcv_eda1( freq_mhz )
+#20200811        if options.trcv_type=="budi" : # or options.trcv_budi :
+#20200811           print("Using Trcv_BUDI")
+#20200811           T_rcv = station_trcv.trcv_budi( freq_mhz )
+#20200811        elif options.trcv_type=="data_vs_model_201612" : # or options.trcv_fit_data_vs_mode :
+#20200811           print("Using Trcv trcv_fit_data_vs_mode (201612)")           
+#20200811           T_rcv = station_trcv.trcv_fit_data_vs_mode( freq_mhz )
+#20200811        elif options.trcv_type=="lightcurve_20160703_cubic" : # or options.trcv_fit_lightcurve_20160703_cubic :
+#20200811           print("Using Trcv trcv_fit_lightcurve_20160703_cubic")
+#20200811           T_rcv = station_trcv.trcv_fit_lightcurve_20160703_cubic( freq_mhz )
+#20200811        elif options.trcv_type=="lightcurve_20160703_polfit" :
+#20200811           print("Using Trcv trcv_fit_lightcurve_20160703_polfit")
+#20200811           T_rcv = station_trcv.trcv_fit_lightcurve_20160703_polfit( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_angelica_data_vs_time" :
+#20200811           T_rcv = station_trcv.trcv_angelica_data_vs_time( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_haslam_data_vs_model" :
+#20200811           T_rcv = station_trcv.trcv_haslam_data_vs_model( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_angelica_data_vs_time_powerlawfit" :
+#20200811           T_rcv = station_trcv.trcv_angelica_data_vs_time_powerlawfit( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_from_skymodel_with_err" :
+#20200811           T_rcv = station_trcv.trcv_from_skymodel_with_err( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_aavs2" :
+#20200811           print("INFO : Calling trcv_aavs2")
+#20200811           T_rcv = station_trcv.trcv_aavs2( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_aavs2_vs_za_deg" :
+#20200811           print("INFO : Calling trcv_aavs2_vs_za_deg")
+#20200811           T_rcv = station_trcv.trcv_aavs2( freq_mhz, za_deg=options.pointing_za_deg )
+#20200811        elif options.trcv_type=="trcv_eda2" :
+#20200811           T_rcv = station_trcv.trcv_eda2( freq_mhz )
+#20200811        elif options.trcv_type=="trcv_eda1" :
+#20200811           T_rcv = station_trcv.trcv_eda1( freq_mhz )        
+        T_rcv = station_trcv.trcv_multi( freq_mhz, options.trcv_type, za_deg=options.pointing_za_deg )
+        print("DEBUG : new code version T_rcv = %.4f [K] from station_trcv.trcv_multi" % (T_rcv))
 
         # has to be last to overwrite with consant value 
         if options.t_rcv > 1 : # if set external value use it :
@@ -437,6 +442,25 @@ def main():
               corr = corr_factor_adrian(freq_mhz)
            else :
               corr = corr_factor(freq_mhz)
+
+        if options.correlator_mode :  
+           # in correlator mode, T_ant is really from just a single dipole, but A_eff is still for the full beam !
+            (dip_beamsky_sum_XX,dip_beam_sum_XX,dip_Tant_XX,dip_beam_dOMEGA_sum_XX,dip_beamsky_sum_YY,dip_beam_sum_YY,dip_Tant_YY,dip_beam_dOMEGA_sum_YY,dip_beams) = make_primarybeammap( gps, delays, freq, model=model, plottype=plottype, 
+                                                                                                                                                   extension=extension, resolution=options.size, 
+                                                                                                                                                   directory=options.dir, out_filename=options.out_filename,
+                                                                                                                                                   pointing_za_deg=options.pointing_za_deg,
+                                                                                                                                                   pointing_az_deg=options.pointing_az_deg,
+                                                                                                                                                   gain_sigma_ph_160mhz=options.gain_sigma_ph,
+                                                                                                                                                   gain_sigma_dB=options.gain_sigma_db,
+                                                                                                                                                   radio_image=options.radio_image,
+                                                                                                                                                   pol_list_string=options.pol_list_string,
+                                                                                                                                                   use_beam_fits=options.use_beam_fits, 
+                                                                                                                                                   station_name=options.station_name,
+                                                                                                                                                   mean_dipole_beam=True
+                                                                                                                                                 )
+            Tant_XX = dip_Tant_XX
+            Tant_YY = dip_Tant_YY                                                                                                                                                 
+
         
         T_sys_XX = ( Tant_XX + T_rcv/corr )
         T_sys_YY = ( Tant_YY + T_rcv/corr )

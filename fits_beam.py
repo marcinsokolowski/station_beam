@@ -438,7 +438,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                          simulation_path="$HOME/aavs-calibration/BeamModels/",
                          use_isotropic_antenna=False,
                          use_beam_as_is=True,
-                         debug=False
+                         debug=False, power=False
                         ) :
 
    global global_fits_counter 
@@ -551,8 +551,13 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
 #                print "(x_int,y_int) = (%d,%d)" % (x_int,y_int)
                 
                         if x_int < beam_values.shape[0] and y_int < beam_values.shape[1] :
-                           beam_values[x_int,y_int] = numpy.sqrt( current_fits_beam[0].data[x_int,y_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
-                                                                                                           # no x <-> y swap here to return transposed value (North is on top in ds9) !
+                           if power :
+                              # power is no SQRT :
+                              beam_values[x_int,y_int] = current_fits_beam[0].data[x_int,y_int]
+                           else :
+                              # Jones is SQRT :
+                              beam_values[x_int,y_int] = numpy.sqrt( current_fits_beam[0].data[x_int,y_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
+                                                                                                              # no x <-> y swap here to return transposed value (North is on top in ds9) !
                         else :
                            print("WARNING : skipped pixel (x_int,y_int) = (%d,%d)" % (x_int,y_int))
    else :

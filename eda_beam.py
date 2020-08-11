@@ -939,6 +939,31 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
 
 # execute a series of tests if invoked from the command line
 # was pointing_za_deg=6.81 
+def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution=512, delays=None, zenithnorm=True, power=True, jones=False, freq = 240e6, 
+                            lst=0.00, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', 
+                            xpos=None, ypos=None, zpos=None,  # list of antenna positions can overwrite the default list 
+                            use_beam_fits=True, station_name="EDA"
+                          ) :    
+    if use_beam_fits :
+       dipole_type = "fits_beam"
+    else :
+       logger.warning("get_single_dipole_beam : only implemented to use beam FITS files")    
+    logger.setLevel(logging.DEBUG)
+    logger.info("get_single_dipole_beam , use_beam_fits=%s, dipole_type = %s" % (use_beam_fits,dipole_type))
+    
+    az_deg = az*(180.00/math.pi)
+    za_deg = za*(180.00/math.pi)
+    freq_mhz = freq/1e6
+    
+    (beam_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='X', station_name=station_name, power=True )  # get_fits_beam
+    (beam_y,current_fits_beam_y,x_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='Y', station_name=station_name, power=True )  # get_fits_beam
+    
+    return (beam_x,beam_y)
+    
+
+
+# execute a series of tests if invoked from the command line
+# was pointing_za_deg=6.81 
 def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution=512, delays=None, zenithnorm=True, power=True, jones=False, freq = 240e6, 
                   lst=0.00, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', 
                   xpos=None, ypos=None, zpos=None,  # list of antenna positions can overwrite the default list 
@@ -1096,5 +1121,7 @@ if __name__ == "__main__":
    (ha,dec) = h2e(az,za,lat)
    pa = calcParallacticAngle(ha,dec,lat)
                                                                         
-   get_eda_beam( za, az, pointing_az_deg=pointing_az_deg, pointing_za_deg=pointing_za_deg, freq=freq, gain_sigma_dB=gain_sigma_dB, gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, resolution=npix )     
+   (beam_x,beam_y) = get_eda_beam( za, az, pointing_az_deg=pointing_az_deg, pointing_za_deg=pointing_za_deg, freq=freq, gain_sigma_dB=gain_sigma_dB, gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, resolution=npix, use_beam_fits=False )     
+#   print("beam_x = %.8f" % (beam_x[0,0]))
+#   print("beam_y = %.8f" % (beam_y[0,0]))
                                                            

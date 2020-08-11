@@ -207,6 +207,55 @@ def trcv_aavs2( freq_mhz , use_cubic=True, za_deg=None ): # default was power la
    
    return trcv
 
+# EDA2 - FEM contribution :
+# see /home/msok/Desktop/EDA2/logbook/20200128_EDA2_receiver_temperature.odt
+def trcv_eda2_fem( freq_mhz , use_cubic=False ): # default was power law fit but I wanted to be able to use cubic fit too 
+   print("INFO : using trcv_eda2 (same as EDA-1 + receiver temperature of the FEM in the SmartBox")
+
+   x=[ 40, 50, 60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300,310,320,330,340,350 ]
+   y=[ 13517.9, 13517.9,11947.6,11202.1,10830.2,10539,10205.4,10015.1,9683.08,9575.04,9396.75,9193.21,9046.74,8947.86,8820.11,8807.01,8596.01,8451,8367.9,8316.72,8230.98,8134.13,8023.28,7987.7,7761.26,7889.29,7796.44,7724.62,7741.32,7572.9,7504.12,7483.41 ]
+
+#   gain_eda2_lna = 100.00 # about 20dB 
+   gain_eda2_lna_db = eda2_lna_gain_db( freq_mhz )
+   gain_eda2_lna = db2num( gain_eda2_lna_db )
+   trcv_fem = 10000.00 / gain_eda2_lna # Approximately 10000 K / 20 dB of MWA LNA
+   if freq_mhz >= 40 and freq_mhz <= 350 :
+       trcv_fem_interpol = interp1d(x, y, kind='cubic')
+       trcv_fem = trcv_fem_interpol( freq_mhz ) / gain_eda2_lna
+
+   print("INFO : using trcv_eda2_fem( %.2f MHz) =  %.2f [K]" % (freq_mhz,trcv_fem))
+   
+   return trcv_fem
+
+   
+# This is based on Daniel's paper : Figure 9 in https://arxiv.org/pdf/2003.05116.pdf
+# Digitised : /home/msok/Desktop/MWA/papers/2020/Daniel/images/FINAL/Figure9_Trcv_vs_Freq_EDA2.png   
+#             /home/msok/Desktop/MWA/papers/2020/Daniel/images/FINAL/Figure9_Trcv_vs_Freq_EDA2_SINGLE_ISOLATED_ELEMENT.txt
+#             using plot_digitiser! 
+def trcv_eda2_single_dipole( freq_mhz , use_cubic=False, add_fem=True ):   
+   x = [ 55.6462, 57.2146, 57.8419, 58.7829, 60.0376, 60.3513, 61.6060, 62.5471, 63.4881, 64.4291, 65.0565, 66.6248, 67.8795, 68.5069, 69.1343, 70.3890, 71.6437, 72.4801, 73.5257, 74.5713, 75.6169, 76.4534, 77.4990, 79.3810, 80.4266, 81.6813, 82.7269, 83.3542, 84.1907, 85.4454, 86.7001, 87.9548, 89.4187, 91.0916, 92.7645, 94.0192, 95.2739, 97.1560, 98.6198, 100.084, 101.129, 102.593, 104.266, 105.939, 107.821, 109.076, 110.121, 111.167, 112.212, 113.363, 114.147, 115.245, 116.656, 118.381, 119.479, 120.577, 121.832, 123.087, 124.498, 126.380, 128.890, 129.987, 131.242, 132.497, 133.908, 135.320, 136.888, 138.143, 139.555, 140.809, 141.907, 143.162, 144.417, 145.985, 147.710, 148.965, 150.063, 151.317, 152.415, 153.513, 154.454, 155.709, 157.434, 159.473, 161.198, 162.923, 164.492, 167.001, 169.040, 170.295, 172.020, 173.118, 174.373, 175.627, 177.666, 179.705, 182.371, 184.253, 185.351, 187.233, 189.900, 190.997, 192.252, 193.036, 194.448, 195.546, 196.957, 197.898, 201.035, 203.492, 205.270, 206.420, 208.093, 210.079, 212.484, 214.262, 216.458, 217.817, 219.281, 220.117, 221.476, 223.777, 225.450, 226.495, 227.854, 228.795, 229.737, 231.200, 233.501, 235.383, 238.310, 241.133, 243.538, 245.002, 247.721, 250.230, 253.367, 255.144, 257.967, 260.477, 262.986, 265.182, 267.273, 270.201, 273.233, 275.115, 277.520, 280.761, 283.584, 287.453, 290.694, 293.726, 296.445, 298.223, 300.105, 302.300, 304.287, 305.646, 307.424, 309.515, 312.129, 314.638, 317.148, 319.448, 322.585, 324.780, 326.453 ]
+   y = [ 9302.72, 7336.19, 6348.78, 5608.92, 4804.13, 4244.27, 3749.65, 3312.68, 2896.57, 2612.40, 2307.96, 2081.54, 1997.32, 1916.51, 1764.56, 1558.92, 1349.10, 1220.95, 1139.73, 1035.02, 939.927, 877.402, 813.418, 743.789, 694.312, 639.264, 592.646, 564.766, 549.427, 523.581, 505.866, 468.976, 437.780, 414.323, 394.832, 376.258, 361.034, 341.690, 325.616, 310.298, 295.700, 283.736, 266.691, 252.402, 240.528, 232.390, 224.528, 218.430, 209.592, 199.732, 191.651, 185.805, 177.369, 171.959, 167.577, 159.969, 155.090, 149.585, 142.794, 134.910, 126.806, 123.574, 118.574, 113.777, 109.173, 104.756, 100.518, 95.9539, 91.5975, 88.8036, 87.4388, 83.0391, 78.8608, 74.8927, 71.8625, 69.3118, 66.1649, 63.8165, 62.8357, 62.1902, 61.2344, 59.9828, 57.2595, 55.5130, 52.9926, 51.3762, 50.0670, 47.5478, 45.1553, 43.7780, 43.5525, 43.3283, 41.5752, 41.1481, 40.5157, 40.5157, 40.9362, 41.5752, 41.7904, 41.5752, 41.5752, 41.5752, 41.1481, 40.5157, 40.9362, 41.1481, 41.3611, 41.5752, 41.5752, 42.0067, 41.7185, 41.7185, 43.0310, 44.3848, 44.2323, 45.0001, 45.0001, 45.4672, 46.2564, 47.2216, 47.5478, 47.5478, 47.3844, 47.2216, 47.2216, 47.0593, 47.5478, 48.5399, 49.8950, 50.2396, 49.7235, 49.8950, 50.0670, 52.3581, 54.5658, 55.1322, 54.5658, 54.3783, 54.9427, 56.2825, 56.8667, 57.6550, 58.6558, 59.2646, 58.4543, 58.4543, 59.0610, 59.6739, 60.9191, 60.5012, 61.3399, 62.4046, 62.4046, 62.4046, 62.4046, 61.5514, 61.5514, 61.5514, 60.9191, 60.0861, 60.5012, 60.2933, 60.0861, 61.3399, 61.9765, 63.0523, 63.9264 ]
+   
+   trcv_eda_lna = 9302.72
+   if freq_mhz >= 326 :
+      trcv_eda_lna = 63.9264
+      
+   if freq_mhz >= 55 and freq_mhz <= 326 :
+      trcv_interpol = interp1d(x, y, kind='cubic')
+      trcv_eda_lna = trcv_interpol( freq_mhz )
+      
+   trcv_out = trcv_eda_lna
+   
+   trcv_fem = 0.00
+   if add_fem :   
+      trcv_fem = trcv_eda2_fem( freq_mhz )
+      trcv_out += trcv_fem
+
+   print("INFO : using trcv_eda2_single_dipole( %.2f MHz) = %.2f + %.2f  = %.2f [K]" % (freq_mhz,trcv_eda_lna,trcv_fem,trcv_out))
+      
+   return trcv_out
+
+
 # EDA2 : 
 # see /home/msok/Desktop/EDA2/logbook/20200128_EDA2_receiver_temperature.odt
 def trcv_eda2( freq_mhz , use_cubic=False ): # default was power law fit but I wanted to be able to use cubic fit too 
@@ -270,7 +319,7 @@ def trcv_fit_lightcurve_20160703_polfit( freq_mhz ):
    return t_lna
 
 
-def trcv_multi( freq_mhz , type, use_cubic=False ):
+def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0 ):
    t_rcv = 0.00
    if type.lower() == "eda2" or type.lower() == "trcv_eda2" :
       t_rcv = trcv_eda2( freq_mhz, use_cubic=use_cubic )
@@ -278,6 +327,10 @@ def trcv_multi( freq_mhz , type, use_cubic=False ):
       t_rcv = trcv_eda1( freq_mhz, use_cubic=use_cubic )
    elif type.lower() == "aavs2" or type.lower() == "trcv_aavs2" :
       t_rcv = trcv_aavs2( freq_mhz, use_cubic=use_cubic )       
+   elif type.lower() == "eda2_singledip" or type.lower() == "trcv_eda2_singledip" or type.lower() == "trcv_eda2_single_dipole" or type.lower() == "trcv_eda2_single_dip" :
+      t_rcv = trcv_eda2_single_dipole( freq_mhz, use_cubic=use_cubic )
+   elif type.lower() == "trcv_aavs2_vs_za_deg " :
+      t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
    else :
       print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
       exit(-1)
