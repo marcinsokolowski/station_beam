@@ -10,6 +10,12 @@ if [[ -n "$2" && "$2" != "-" ]]; then
    interval=$2
 fi
 
+options="" # --correlated_mode
+if [[ -n "$3" && "$3" != "-" ]]; then
+   options=$3
+fi
+
+
 path=`pwd`
 dir_path=`dirname $path`
 
@@ -59,7 +65,8 @@ else
    echo "File antenna_locations_aavs2.txt already exist -> copy skipped"
 fi
 
-echo "nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - "--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt" $mwa_coarse_channel - 300 400 400 > out 2>&1 &"
-nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - "--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt" $mwa_coarse_channel - 300 400 400 > out 2>&1 &
+# --correlated_mode
+echo "nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - \"--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt ${options}\" $mwa_coarse_channel - 300 400 400 > out 2>&1 &"
+nohup calc_eda_sensitvity_all.sh $ux_start ${interval} - \"--use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt ${options}\" $mwa_coarse_channel - 300 400 400 > out 2>&1 &
 
 # ~/github/station_beam/tools/merge_sensitivity_loop.sh
