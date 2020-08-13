@@ -329,7 +329,7 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0 ):
       t_rcv = trcv_aavs2( freq_mhz, use_cubic=use_cubic )       
    elif type.lower() == "eda2_singledip" or type.lower() == "trcv_eda2_singledip" or type.lower() == "trcv_eda2_single_dipole" or type.lower() == "trcv_eda2_single_dip" :
       t_rcv = trcv_eda2_single_dipole( freq_mhz, use_cubic=use_cubic )
-   elif type.lower() == "trcv_aavs2_vs_za_deg " :
+   elif type.lower() == "trcv_aavs2_vs_za_deg" :
       t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
    else :
       print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
