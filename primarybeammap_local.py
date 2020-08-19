@@ -510,7 +510,7 @@ def get_beam_power(  gps, delays, frequency, model, pointing_az_deg=0, pointing_
    beams={}   
    beams['XX'],beams['YY']=eda_beam.get_eda_beam( theta, phi, zenithnorm=True, power=True, freq=frequency, lst=lst, pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, 
                                                   gain_sigma_dB=gain_sigma_dB, gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
-                                                  use_beam_fits=use_beam_fits, station_name=station_name )
+                                                  use_beam_fits=use_beam_fits, station_name=station_name, projection=projection )
    
    return beams
        
