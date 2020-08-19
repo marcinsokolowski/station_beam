@@ -906,7 +906,7 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
            plotDipoleJones(d,freq)
        dipoles = []
        for i in range(n_dipoles_eda):
-           dipoles.append(Dipole(type,station_name=station_name))
+           dipoles.append(Dipole(type,station_name=station_name,projection=projection))
 
        dipoles_ideal = []
        for i in range(n_dipoles_eda):
