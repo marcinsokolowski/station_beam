@@ -139,7 +139,7 @@ def is_broken_dipole( dip_x=-1.00, dip_y=-1.00 ) :
 class Dipole:
     """Provides a generic dual pol dipole object to support MWA beam models"""
 
-    def __init__(self, type='short', height=0.29, len=0.74, lookup_filename=os.path.join(filesdir,'Jmatrix.fits'), gain=None,station_name="EDA"):
+    def __init__(self, type='short', height=0.29, len=0.74, lookup_filename=os.path.join(filesdir,'Jmatrix.fits'), gain=None,station_name="EDA", projection="zea" ):
         """General dipole object. Dual pol crossed dipole.
         Assumes a groundscreen with dipole height meters above ground.
         Supported types are 'short': analytic short dipole
@@ -154,6 +154,7 @@ class Dipole:
         self.height=height
         self.len=len
         self.station_name = station_name
+        self.projection = projection
         if gain is None:
             self.gain = numpy.eye(2,dtype=numpy.complex64)
         else:
@@ -218,8 +219,8 @@ class Dipole:
 
     def getFitsBeam(self,az,za,freq) :
 #        def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/") :
-        (beam_values_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "X", station_name=self.station_name )
-        (beam_values_y,current_fits_beam_y,y_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "Y", station_name=self.station_name )
+        (beam_values_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "X", station_name=self.station_name, projection=self.projection )
+        (beam_values_y,current_fits_beam_y,y_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "Y", station_name=self.station_name, projection=self.projection )
         
         print("DEBUG : fits_beam.get_fits_beam_multi returned beam_x = %.4f , beam_y = %.4f for pixel (%.1f,%.1f) at (az,za) = (%.4f,%.4f) - please verify" % (beam_values_x[0,0],beam_values_y[0,0],x_pixel_x[0,0],y_pixel_x[0,0],az[0,0],za[0,0]))
 
@@ -881,7 +882,7 @@ tile=None
 tile_ideal=None
 g_freq=-100
 
-def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, freq=240e6, type='short', xpos=None, ypos=None, zpos=None, station_name="EDA" ) :
+def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, freq=240e6, type='short', xpos=None, ypos=None, zpos=None, station_name="EDA", projection="zea" ) :
     global tiles_initialised
     global d
     global d_ideal
@@ -899,8 +900,8 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
     if not tiles_initialised :
        logger.debug("init_tiles(%.2f,%.2f): initialising objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
        print("init_tiles(%.2f,%.2f): initialising objects" % (gain_sigma_dB,gain_sigma_ph_160mhz))
-       d = Dipole(type=type,station_name=station_name)
-       d_ideal = Dipole(type=type,station_name=station_name)
+       d = Dipole(type=type,station_name=station_name,projection=projection)
+       d_ideal = Dipole(type=type,station_name=station_name,projection=projection)
        if doplots:
            plotDipoleJones(d,freq)
        dipoles = []
@@ -942,7 +943,7 @@ def init_tiles( gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, doplots=False, fre
 def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution=512, delays=None, zenithnorm=True, power=True, jones=False, freq = 240e6, 
                             lst=0.00, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', 
                             xpos=None, ypos=None, zpos=None,  # list of antenna positions can overwrite the default list 
-                            use_beam_fits=True, station_name="EDA"
+                            use_beam_fits=True, station_name="EDA", projection="zea"
                           ) :    
     if use_beam_fits :
        dipole_type = "fits_beam"
@@ -955,8 +956,8 @@ def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, 
     za_deg = za*(180.00/math.pi)
     freq_mhz = freq/1e6
     
-    (beam_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='X', station_name=station_name, power=True )  # get_fits_beam
-    (beam_y,current_fits_beam_y,x_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='Y', station_name=station_name, power=True )  # get_fits_beam
+    (beam_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='X', station_name=station_name, power=True, projection=projection )  # get_fits_beam
+    (beam_y,current_fits_beam_y,x_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='Y', station_name=station_name, power=True, projection=projection )  # get_fits_beam
     
     return (beam_x,beam_y)
     
@@ -967,7 +968,7 @@ def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, 
 def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution=512, delays=None, zenithnorm=True, power=True, jones=False, freq = 240e6, 
                   lst=0.00, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', 
                   xpos=None, ypos=None, zpos=None,  # list of antenna positions can overwrite the default list 
-                  use_beam_fits=False, station_name="EDA"
+                  use_beam_fits=False, station_name="EDA", projection="zea"
                 ) :    
     if use_beam_fits :
        dipole_type = "fits_beam"
@@ -983,7 +984,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
     (ha,dec) = h2e(az,za,lat)
     pa = calcParallacticAngle(ha,dec,lat)
 
-    (d,d_ideal,dipoles,dipoles_ideal,tile,tile_ideal) = init_tiles( gain_sigma_dB=gain_sigma_dB , gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, doplots=doplots, freq=freq, type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos, station_name=station_name  )
+    (d,d_ideal,dipoles,dipoles_ideal,tile,tile_ideal) = init_tiles( gain_sigma_dB=gain_sigma_dB , gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, doplots=doplots, freq=freq, type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos, station_name=station_name, projection=projection  )
 #    d = Dipole()
 #    d_ideal = Dipole()
 #    if doplots:

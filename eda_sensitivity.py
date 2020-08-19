@@ -192,6 +192,7 @@ def main():
     # use_beam_fits=options.use_beam_fits, station_name=options.station_name
     parser.add_option('--use_beam_fits',action="store_true",dest="use_beam_fits",default=False,help="Use fits beam files from ~/aavs-calbration/BeamModels/ [default %default]")
     parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help="Station name to find beam fits files in ~/aavs-calbration/BeamModels/ [default %default]")
+    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
     
     # antenna locations file :
     # read_antenna_list

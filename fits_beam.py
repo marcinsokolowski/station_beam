@@ -508,7 +508,8 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                          simulation_path="$HOME/aavs-calibration/BeamModels/",
                          use_isotropic_antenna=False,
                          use_beam_as_is=True,
-                         debug=False, power=False
+                         debug=False, power=False,
+                         projection="zea"
                         ) :
 
    global global_fits_counter 
@@ -521,7 +522,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
 
    print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
 
-   (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path )
+   (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
       
    x_size = int( current_fits_beam[0].header['NAXIS1'] )
    y_size = int( current_fits_beam[0].header['NAXIS2'] )

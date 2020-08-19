@@ -325,7 +325,8 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
                         pointing_za_deg=0.00, pointing_az_deg=0.00,gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short',
                         radio_image='radio408.RaDec.fits', T_rcv=0, rcv_noise_coupling=0.00, use_trcv=False, xpos=None, ypos=None, zpos=None,
                         feko_file=None, interpolate=False, interpolate_to_nearest=False, pol_list_string="XX",
-                        use_beam_fits=False, station_name="EDA", mean_dipole_beam=False ): 
+                        use_beam_fits=False, station_name="EDA", mean_dipole_beam=False,
+                        projection="zea" ): 
     """
     """                
     print("Output beam file resolution = %d , output directory = %s" % (resolution,directory))
@@ -364,13 +365,13 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
                beams['XX'],beams['YY']=eda_beam.get_single_dipole_beam( theta, phi, resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
                                                                         pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
                                                                         gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
-                                                                        use_beam_fits=use_beam_fits, station_name=station_name )
+                                                                        use_beam_fits=use_beam_fits, station_name=station_name, projection=projection )
             else :
                print("INFO : beams = None and feko_file = None -> generating normal EDA beam")
                beams['XX'],beams['YY']=eda_beam.get_eda_beam( theta, phi, resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
                                                               pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
                                                               gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
-                                                              use_beam_fits=use_beam_fits, station_name=station_name )
+                                                              use_beam_fits=use_beam_fits, station_name=station_name, projection=projection )
     else :
         print("INFO : beams != None -> using externally provided beam")
                                                                  
