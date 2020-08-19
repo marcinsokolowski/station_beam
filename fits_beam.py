@@ -609,8 +609,12 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
           if beam_values.shape[0] != current_fits_beam[0].data.shape[0] or beam_values.shape[1] != current_fits_beam[0].data.shape[1] :
              print("ERROR in code shapes do not match (%d != %d or %d != %d)" % (beam_values.shape[0],current_fits_beam[0].data.shape[0],beam_values.shape[1],current_fits_beam[0].data.shape[1]))
              return (None,None,None,None)
-         
-          beam_values = numpy.sqrt( current_fits_beam[0].data )
+
+          beam_values = None 
+          if power :
+             beam_values = current_fits_beam[0].data
+          else :         
+             beam_values = numpy.sqrt( current_fits_beam[0].data )
 
        else :   
            if len(azim_deg) > 1 :
@@ -636,11 +640,14 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
        x_pixel_int = int( round(x_pixel) )
        y_pixel_int = int( round(y_pixel) )
 
-       beam_values[0,0] = numpy.sqrt( current_fits_beam[0].data[x_pixel_int,y_pixel_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
+       if power :
+          beam_values[0,0] = current_fits_beam[0].data[x_pixel_int,y_pixel_int]
+       else : 
+          beam_values[0,0] = numpy.sqrt( current_fits_beam[0].data[x_pixel_int,y_pixel_int] ) # same orientation as in get_fits_beam - uses the fact of transposition in python so that the answer is correct 
                                                                                            # no x <-> y swap here to return transposed value (North is on top in ds9) !
 
 #  test save :
-   if debug : 
+   if debug or False : 
       hdu = pyfits.PrimaryHDU()
       hdu.data = beam_values
       out_fits_name = "test_beam_fits_%05d.fits" % (global_fits_counter)
