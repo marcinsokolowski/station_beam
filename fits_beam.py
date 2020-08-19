@@ -214,6 +214,76 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
    out_file = fits_file.replace(".fits","_zea.fits" )    
    save_fits( out_beam, out_file )            
          
+def matlab2sin( matlab_fits_file , x_size=512, step=1, do_test=False, radius=20 ) :
+   beam   = pyfits.open( matlab_fits_file )
+   matlab_data = beam[0]
+   y_size = x_size
+   npix = x_size    
+   print("Read file %s with size (%d,%d)" % (matlab_fits_file,x_size,y_size))
+   
+   (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True )
+   (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True )
+   
+   print("Test orientation azim SIN :")
+   print("         %.2f            " % (az_sin[npix-1,npix/2]))                  # WARNING data[y,x] !!!
+   print("%.2f                 %.2f" % (az_sin[npix/2,0],az_sin[npix/2,npix-1])) # WARNING data[y,x] !!!   
+   print("         %.2f            " % (az_sin[0,npix/2]))                       # WARNING data[y,x] !!! 
+
+   print("Test orientation xy SIN :")
+   print("         (%d,%d)            "   % (x_zea[npix/2,npix-1],y_zea[npix/2,npix-1]))
+   print("(%d,%d)                (%d,%d)" % (x_zea[0,npix/2],y_zea[0,npix/2],x_zea[npix-1,npix/2],y_zea[npix-1,npix/2]))
+   print("         (%d,%d)            "   % (x_zea[npix/2,0],y_zea[npix/2,0]))
+   
+#   dist_za_sin = numpy.sin( za_sin )*(npix/2)
+#   x_pixel = ( npix/2 - dist_za_sin*numpy.sin( az_sin ) ) 
+#   y_pixel = ( npix/2 + dist_za_sin*numpy.cos( az_sin ) )   
+
+   
+   save_fits(az_sin,"test_az_sin.fits")
+   save_fits(za_sin,"test_za_sin.fits")
+   
+   save_fits(az_zea,"test_az_zea.fits")
+   save_fits(za_zea,"test_za_zea.fits")
+   
+   out_file = matlab_fits_file.replace(".fits","_test.fits" )
+   save_fits( beam[0].data, out_file )
+      
+   out_beam = numpy.zeros( (x_size,y_size) )
+   for y in range(0,y_size,step):
+      # print "i = %d" % (i)
+      for x in range(0,x_size): 
+         print("TEST (x,y) = (%d,%d)" % (x,y))
+         az_zea_ij = az_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         za_zea_ij = za_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         
+         if not numpy.isnan( za_zea_ij ) :
+             d_sin     = math.sin( za_zea_ij )
+             y_zea_ij  = y_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+             x_zea_ij  = x_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+         
+             d_sin = (npix/2)*math.sin( za_zea_ij )
+             y_sin_ij = d_sin*math.cos( az_zea_ij ) + (npix/2)
+             x_sin_ij = d_sin*math.sin( az_zea_ij ) + (npix/2)
+             
+             if do_test :     
+                 print("\t(%d,%d) : ZEA (x_zea,y_zea) = (%d,%d) , (az,za) = (%.2f,%.2f) [deg] -> SIN : (x_sin,y_sin) = (%d,%d)" % (x,y,x_zea_ij,y_zea_ij,az_zea_ij,za_zea_ij,int(x_sin_ij),int(y_sin_ij)))
+
+             # find given (az,za) from ZEA map in SIN map and return beam value (in SIN mapping) :
+             beam_value = numpy.NaN
+             
+             az_zea_ij_deg = az_zea_ij*(180.00/math.pi)
+             za_zea_ij_deg = za_zea_ij*(180.00/math.pi)
+             
+             az_zea_ij_deg_idx = int( az_zea_ij_deg / 0.5 )
+             za_zea_ij_deg_idx = int( za_zea_ij_deg / 0.5 )
+             
+             beam_value = matlab_data.data[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
+             out_beam[x,y] = beam_value
+                  
+
+   out_file = matlab_fits_file.replace(".fits","_aee.fits" )    
+   save_fits( out_beam, out_file )            
+         
          
 
 
@@ -854,6 +924,7 @@ def parse_options(idx=0):
    parser = OptionParser(usage=usage,version=1.00)
    parser.add_option('-s','--station','--station_name',dest="station_name",default="EDA",help="Station name [EDA2 or AAVS2 or AAVS1] [default %default]",metavar="STRING")
    parser.add_option('-r','--remap','--do_remapping','--remapping',dest="do_remapping",default=False,action="store_true", help="Re-mapping [default %default]",metavar="STRING")
+   parser.add_option('--matlab2fits',dest="matlab2fits",default=None,help="Convert rectangular MATLAB file into SIN or ZEA projection")
    parser.add_option('-p','--pol','--polarisation',dest="polarisation",default=None, help="Polarisation [default %default]")
    parser.add_option('-a','--azim','--az','--az_deg','--azim_deg',dest="azim_deg",default=0, help="Azimuth [deg]",type="float")
    parser.add_option('-z','--zenith_angle','--za','--za_deg',dest="za_deg",default=0, help="Zenith angle [deg]",type="float")
@@ -908,6 +979,7 @@ if __name__ == "__main__":
    print("Coordinates (az,za) = (%.4f,%.4f) [deg] ( elevation param = %s )" % (options.azim_deg,options.za_deg,options.el_deg))
    print("fits2beam       = %s" % (options.fits2beam))
    print("Beam on Sun     = %s" % (options.beam_on_sun))
+   print("matlab2fits     = %s" % (options.matlab2fits))
    print("######################################################")
 
    if options.do_remapping :
@@ -980,6 +1052,8 @@ if __name__ == "__main__":
       print("DEBUG : fits2beam for file %s" % (options.fits2beam))
       
       fits2beam( options.fits2beam, options )
+   elif options.matlab2fits is not None :
+      matlab2sin( options.matlab2fits, x_size=512 )
    else :
       az = options.azim_deg
       za = options.za_deg
