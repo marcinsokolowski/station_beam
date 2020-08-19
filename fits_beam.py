@@ -520,7 +520,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
    azim_deg = azim_rad*(180.00/math.pi)
    za_deg   = za_rad*(180.00/math.pi)
 
-   print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
+   print("requestion beam model for azza map of size (%d x %d) pixels, projection = %s" % (azim_deg.shape[0],azim_deg.shape[1],projection))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
       

@@ -950,7 +950,7 @@ def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, 
     else :
        logger.warning("get_single_dipole_beam : only implemented to use beam FITS files")    
     logger.setLevel(logging.DEBUG)
-    logger.info("get_single_dipole_beam , use_beam_fits=%s, dipole_type = %s" % (use_beam_fits,dipole_type))
+    logger.info("get_single_dipole_beam , use_beam_fits=%s, dipole_type = %s, projection=%s" % (use_beam_fits,dipole_type,projection))
     
     az_deg = az*(180.00/math.pi)
     za_deg = za*(180.00/math.pi)
