@@ -222,7 +222,7 @@ class Dipole:
         (beam_values_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "X", station_name=self.station_name, projection=self.projection )
         (beam_values_y,current_fits_beam_y,y_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az, za, freq/1e6, "Y", station_name=self.station_name, projection=self.projection )
         
-        print("DEBUG : fits_beam.get_fits_beam_multi returned beam_x = %.4f , beam_y = %.4f for pixel (%.1f,%.1f) at (az,za) = (%.4f,%.4f) - please verify" % (beam_values_x[0,0],beam_values_y[0,0],x_pixel_x[0,0],y_pixel_x[0,0],az[0,0],za[0,0]))
+        print("DEBUG : fits_beam.get_fits_beam_multi returned beam_x = %.4f , beam_y = %.4f for pixel (%.1f,%.1f) at (az,za) = (%.4f,%.4f) - please verify ( projection = %s)" % (beam_values_x[0,0],beam_values_y[0,0],x_pixel_x[0,0],y_pixel_x[0,0],az[0,0],za[0,0],self.projection))
 
         result = numpy.empty((za.shape+(2,2)),dtype=numpy.complex64)
         
@@ -973,7 +973,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
     if use_beam_fits :
        dipole_type = "fits_beam"
     logger.setLevel(logging.DEBUG)
-    logger.info("get_eda_beam , use_beam_fits=%s, dipole_type = %s" % (use_beam_fits,dipole_type))
+    logger.info("get_eda_beam , use_beam_fits=%s, dipole_type = %s , projection = %s" % (use_beam_fits,dipole_type,projection))
     
     doplots=False
     exportBeam=True
