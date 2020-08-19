@@ -327,7 +327,7 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
 def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/", projection="zea", debug_level=0 ) :
-   print("requestion beam model for azza map of size (%d x %d) pixels" % (azim_deg.shape[0],azim_deg.shape[1]))
+   print("get_fits_beam : requestion beam model for azza map of size (%d x %d) pixels , projection = %s" % (azim_deg.shape[0],azim_deg.shape[1],projection))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
    
@@ -511,7 +511,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                          debug=False, power=False,
                          projection="zea"
                         ) :
-   print("DEBUG : projection = %s" % (projection))
+   print("DEBUG get_fits_beam_multi : projection = %s" % (projection))
 
    global global_fits_counter 
    global_fits_counter = global_fits_counter + 1
@@ -521,7 +521,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
    azim_deg = azim_rad*(180.00/math.pi)
    za_deg   = za_rad*(180.00/math.pi)
 
-   print("requestion beam model for azza map of size (%d x %d) pixels, projection = %s" % (azim_deg.shape[0],azim_deg.shape[1],projection))
+   print("get_fits_beam_multi : requestion beam model for azza map of size (%d x %d) pixels, projection = %s" % (azim_deg.shape[0],azim_deg.shape[1],projection))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
       

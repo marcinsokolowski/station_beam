@@ -956,8 +956,8 @@ def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, 
     za_deg = za*(180.00/math.pi)
     freq_mhz = freq/1e6
     
-    (beam_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='X', station_name=station_name, power=True, projection="aee" )  # get_fits_beam
-    (beam_y,current_fits_beam_y,x_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='Y', station_name=station_name, power=True, projection="aee" )  # get_fits_beam
+    (beam_x,current_fits_beam_x,x_pixel_x,y_pixel_x) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='X', station_name=station_name, power=True, projection=projection )  # get_fits_beam
+    (beam_y,current_fits_beam_y,x_pixel_y,y_pixel_y) = fits_beam.get_fits_beam_multi( az_deg , za_deg , freq_mhz, polarisation='Y', station_name=station_name, power=True, projection=projection )  # get_fits_beam
     
     return (beam_x,beam_y)
     
