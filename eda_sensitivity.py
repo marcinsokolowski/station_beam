@@ -415,7 +415,8 @@ def main():
                                                                                                                                                    radio_image=options.radio_image,
                                                                                                                                                    pol_list_string=options.pol_list_string,
                                                                                                                                                    use_beam_fits=options.use_beam_fits, 
-                                                                                                                                                   station_name=options.station_name
+                                                                                                                                                   station_name=options.station_name,
+                                                                                                                                                   projection=options.projection
                                                                                                                                                  )
         beams=get_beam_power( gps, delays, freq, model=model, 
                               pointing_az_deg=options.pointing_az_deg, 
@@ -457,7 +458,8 @@ def main():
                                                                                                                                                    pol_list_string=options.pol_list_string,
                                                                                                                                                    use_beam_fits=options.use_beam_fits, 
                                                                                                                                                    station_name=options.station_name,
-                                                                                                                                                   mean_dipole_beam=True
+                                                                                                                                                   mean_dipole_beam=True,
+                                                                                                                                                   projection=options.projection
                                                                                                                                                  )
             Tant_XX = dip_Tant_XX
             Tant_YY = dip_Tant_YY                                                                                                                                                 
