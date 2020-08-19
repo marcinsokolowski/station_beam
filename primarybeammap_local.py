@@ -496,7 +496,8 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
 
 
 #FIXME: most the arguments in make_primarybeammap are not needed
-def get_beam_power(gps, delays, frequency, model, pointing_az_deg=0, pointing_za_deg=0, zenithnorm=True, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', xpos=None, ypos=None, zpos=None, use_beam_fits=False, station_name="EDA" ):
+def get_beam_power(  gps, delays, frequency, model, pointing_az_deg=0, pointing_za_deg=0, zenithnorm=True, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', xpos=None, ypos=None, zpos=None, 
+                     use_beam_fits=False, station_name="EDA", projection="zea" ):
 
    lst=get_LST(gps)   
    # first go from altitude to zenith angle

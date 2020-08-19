@@ -424,7 +424,9 @@ def main():
                               zenithnorm=options.zenithnorm, 
                               gain_sigma_ph_160mhz=options.gain_sigma_ph, 
                               gain_sigma_dB=options.gain_sigma_db, 
-                              use_beam_fits=options.use_beam_fits, station_name=options.station_name 
+                              use_beam_fits=options.use_beam_fits, 
+                              station_name=options.station_name,
+                              projection=options.projection
                             )
                               
 
