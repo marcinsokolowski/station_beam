@@ -511,6 +511,7 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                          debug=False, power=False,
                          projection="zea"
                         ) :
+   print("DEBUG : projection = %s" % (projection))
 
    global global_fits_counter 
    global_fits_counter = global_fits_counter + 1
