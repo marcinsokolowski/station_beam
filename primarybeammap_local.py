@@ -329,7 +329,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
                         projection="zea" ): 
     """
     """                
-    print("Output beam file resolution = %d , output directory = %s" % (resolution,directory))
+    print("Output beam file resolution = %d , output directory = %s , projection = %s" % (resolution,directory,projection))
 #    (az_grid, za_grid) = beam_tools.makeAZZA(resolution,'ZEA') #Get grids in radians
     za_grid = None
     az_grid = None
@@ -361,13 +361,13 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
             beams['YY'] = beams['XX'].copy()
         else :
             if mean_dipole_beam :
-               print("INFO : calculating single dipole %s beam" % (station_name))
+               print("INFO : calculating single dipole %s beam , projection = %s" % (station_name,projection))
                beams['XX'],beams['YY']=eda_beam.get_single_dipole_beam( theta, phi, resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
                                                                         pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
                                                                         gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
                                                                         use_beam_fits=use_beam_fits, station_name=station_name, projection=projection )
             else :
-               print("INFO : beams = None and feko_file = None -> generating normal EDA beam")
+               print("INFO : beams = None and feko_file = None -> generating normal EDA beam ( projection = %s )" % (projection))
                beams['XX'],beams['YY']=eda_beam.get_eda_beam( theta, phi, resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
                                                               pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
                                                               gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
