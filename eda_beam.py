@@ -378,7 +378,8 @@ class ApertureArray:
         """
         n_dipoles=numpy.size(delays)/2
         lam = vel_light/freq
-        phases = -2.0*numpy.pi*delays*(DQ/lam)
+        phases = -2.0*numpy.pi*delays*(DQ/lam) # delays were calculated in seconds/DQ (steps of beamformer) it was specifically for the EDA1, now DQ could be set to 1 !
+                                               # TODO : change DQ=1 in the future or remove !
         ph_rot = numpy.cos(phases) + 1.0j*numpy.sin(phases)
         # this code ignores any dipole gain (and crosstalk) terms.
         # should FIXME it.
@@ -444,8 +445,12 @@ class ApertureArray:
             if is_broken :            
                count_broken = count_broken + 1 
             else :
-               ax += port_current[1,i]*(numpy.cos(ph) + 1.0j*numpy.sin(ph))    # X dipoles
-               ay += port_current[0,i]*(numpy.cos(ph) + 1.0j*numpy.sin(ph))    # Y dipoles
+               cos_ph = numpy.cos(ph)
+               sin_ph = numpy.sin(ph)
+               exp_ph = (cos_ph + 1.0j*sin_ph)
+            
+               ax += port_current[1,i]*exp_ph    # X dipoles
+               ay += port_current[0,i]*exp_ph    # Y dipoles
                
 #               if ax.shape[0] == 1 :
 #                  print "DEBUG_getArrayFactor (za = %.2f [deg]) : ax += %s * %s = %s" % (za[0]*(180.00/math.pi),port_current[1,i],(numpy.cos(ph[0]) + 1.0j*numpy.sin(ph[0])),ax[0])
