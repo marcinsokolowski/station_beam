@@ -651,8 +651,13 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
                                                                                   db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
                                                                                   receiver_temperature=receiver_temperature )
 
+    # calculate SEFD_I - if possible (same sizes of arrays):
+    ( out_lst_i , out_sefd_i , out_aot_i ) = calc_sefd_i( out_sefd_x, out_lst_x, out_sefd_y, out_lst_y )
+
+
     return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
-             numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+             numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
+             numpy.array(out_lst_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i) )
 
 
 # get sensitivity map for a given LST and freq_mhz
@@ -950,7 +955,8 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
 def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
-                              do_show = True, save_output_path="./" ) :
+                              do_show = True, save_output_path="./",
+                              lst_i=None, aot_i=None, point_i='b+' ) :
 
    global web_interface_initialised
    
@@ -1405,12 +1411,12 @@ if __name__ == "__main__":
            
            if options.azim_deg is not None and options.za_deg is not None :
               print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-              (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
+              (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i ) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
                                                                                    time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
               if options.do_plot :
                  out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.azim_deg,options.za_deg,options.freq_mhz)          
-                 plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base )
+                 plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i )
               
               
            else :
