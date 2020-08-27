@@ -1126,7 +1126,7 @@ def parse_options(idx):
    parser = OptionParser(usage=usage,version=1.00)
 
    # General parameters :
-   parser.add_option('-s','--station_name','--station',dest="station_name",default="EDA2", help="Station name [default %default]")
+   parser.add_option('-s','--station_name','--station',dest="station_name",default="AAVS2", help="Station name [default %default]")
 
    # TEST : azim=0, za=0, lst=15.4 
    parser.add_option('-p','--plot','--do_plot',action="store_true",dest="do_plot",default=False, help="Plot")

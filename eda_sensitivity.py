@@ -436,9 +436,11 @@ def main():
         
         print("gain_XX = %.8f / (%.8f/(4PI)) , gain_YY = %.8f / (%.8f/(4PI))" % (beams['XX'],beam_dOMEGA_sum_XX,beams['YY'],beam_dOMEGA_sum_YY))
         
+        # 7161.97 was with C_ms = 300 (in MHz units)
+        # 7152.06646627 is for C_ms = 299.792458 - the difference is ~0.1 % so insignificant
         ant_efficiency=1.00
-        aeff_XX = (7161.97/(freq_mhz*freq_mhz))*(gain_XX*ant_efficiency)
-        aeff_YY = (7161.97/(freq_mhz*freq_mhz))*(gain_YY*ant_efficiency)
+        aeff_XX = (7152.06646627/(freq_mhz*freq_mhz))*(gain_XX*ant_efficiency)
+        aeff_YY = (7152.06646627/(freq_mhz*freq_mhz))*(gain_YY*ant_efficiency)
         
         corr = 1.00
         if options.use_s11 :

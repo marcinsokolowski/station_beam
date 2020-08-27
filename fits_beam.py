@@ -23,13 +23,44 @@ except :
    print("ERROR : could not load astropy.coordinates - fits2beam cannot be used")   
    MWA_POS=None
 
+try :
+   import h5py 
+except :
+   print("WARNING : could not load package h5py -> option --outfile_beam_on_sun will not be available, but all the others are ok")
+
 # options :
 from optparse import OptionParser,OptionGroup
 
 current_fits_filename = None
 current_fits_beam     = None 
-azim_map              = None
-za_map                = None
+# azim_map              = None
+# za_map                = None
+
+
+def read_list( list_filename ) :
+   out_fits_list=[]
+
+   print("DEBUG : read_list : reading file %s" % (list_filename))
+
+   if os.path.exists( list_filename ) and os.stat( list_filename ).st_size > 0 :
+      file=open( list_filename ,'r')
+      data=file.readlines()
+      for line in data :
+         line=line.rstrip()
+         words = line.split(' ')
+         if line[0] == '#' :
+            continue
+
+         if line[0] != "#" :
+            elem = words[0+0] 
+            out_fits_list.append( elem )
+                        
+      file.close()
+   else :
+      print("WARNING : empty or non-existing file %s" % (list_filename))
+
+   return out_fits_list
+
 
 
 def save_fits( data , out_fits_name ) :
@@ -287,11 +318,12 @@ def matlab2sin( matlab_fits_file , x_size=512, step=1, do_test=False, radius=20 
          
 
 
+# TODO (2020-08-20) : use dictionary to cache all FITS files ! It all works very slow on bighorns ...
 def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/" , postfix="zea" ) :
    global current_fits_filename
    global current_fits_beam
-   global azim_map
-   global za_map
+#   global azim_map
+#   global za_map
 
    polarisation_string = polarisation[0]
    postfix_full = ""
@@ -817,6 +849,50 @@ def read_time_azh_file( filename,
 
    return (dt,tm,az,el,ra,dec,flux,cnt)
 
+
+def save_beam_on_sun_file( options ) :
+   out_file = "beam_on_sun.txt"
+   if options.outfile_beam_on_sun is not None :
+      out_file = options.outfile_beam_on_sun
+      
+   if options.infile_hdf5list is None or not os.path.exists( options.infile_hdf5list ) :
+      print("ERROR : input file with list of hdf5 files not specified (None) or %s does not exist -> cannot continue" % (options.infile_hdf5list) )
+      os.sys.exit(-1)
+
+   (hdf5_files_list) = read_list( options.infile_hdf5list )
+   
+   print("DEBUG : read %d files from list file %s" % (len(hdf5_files_list),options.infile_hdf5list))
+   
+   if len(hdf5_files_list) > 0 :
+   
+      out_f = open( options.outfile_beam_on_sun , "w" )
+      out_f.write( "# Channel SUN_BEAM_X SUN_BEAM_Y UXTIME FREQ_MHz HDF5-FILE\n" )
+      
+      for hdf5_file in hdf5_files_list :
+         hdf5_f = h5py.File( hdf5_file )         
+         ux = hdf5_f['sample_timestamps']['data'][0]
+         channel_id = hdf5_f['root'].attrs['channel_id']
+         freq_mhz = float( channel_id )*(400.00/512.00)
+         
+         if freq_mhz >= 49 and freq_mhz <= 350 : # only these FITS files are available for the beam models 
+            ( ra, dec, az, alt, za ) = sun_position( ux )
+            print("INFO : %s -> ux = %.4f , channel_id = %d (%.2f MHz) -> sun position calculated (RA,DEC) = (%.4f,%.4f) [deg] , (AZ,ELEV,ZA) = (%.4f,%.4f,%.4f) [deg]" % (hdf5_file, ux, channel_id, freq_mhz, ra, dec, az, alt, za))
+         
+            beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+            beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+            print("\tBEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
+         
+            line = "%d %.4f %.4f %.4f %.4f %s\n" % (channel_id,beam_x,beam_y,ux,freq_mhz,hdf5_file)
+            out_f.write( line )
+         else :
+            print("WARNING : channel_id = %d , freq = %.2f MHz - skipped (missing beam model FITS files)" % (channel_id,freq_mhz))
+
+      out_f.close()   
+         
+   else :
+      print("ERROR : no files in the list file %s" % (hdf5_files_list))
+      os.sys.exit(-1)
+
 def fits2beam( fitsfile, options=None ) :
 
    print("Reading fits file %s" % (fitsfile))
@@ -944,8 +1020,10 @@ def parse_options(idx=0):
    parser.add_option('--fits2beam', dest="fits2beam", default=None, help="Generates beam for a specified FITS file [default %default]",metavar="STRING")
    parser.add_option('--ux','--uxtime','--unix_time','--unixtime',dest="unix_time",default=None, help="Unix time",type="float")
    
-   # 
+   # sun in the beam :
    parser.add_option('--sun','--beam_on_sun','--sun_beam',dest="beam_on_sun",default=False,action="store_true", help="Calculate beam value on the Sun [default %default]")
+   parser.add_option('--outfile_beam_on_sun',dest="outfile_beam_on_sun",default=None, help="Beam on Sun output text file in format : Channel SUN_BEAM_X SUN_BEAM_Y UXTIME FREQ_MHz HDF5-FILE [default %default]")
+   parser.add_option('--infile_hdf5list',dest="infile_hdf5list",default=None, help="Input list of HDF5 files to calculate value of the beam in the direction of the Sun [default %default]")
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
@@ -987,8 +1065,11 @@ if __name__ == "__main__":
    print("time_azh_file   = %s" % (options.time_azh_file))
    print("Coordinates (az,za) = (%.4f,%.4f) [deg] ( elevation param = %s )" % (options.azim_deg,options.za_deg,options.el_deg))
    print("fits2beam       = %s" % (options.fits2beam))
-   print("Beam on Sun     = %s" % (options.beam_on_sun))
    print("matlab2fits     = %s" % (options.matlab2fits))
+   print("Beam on Sun values:")
+   print("\tBeam on Sun         = %s" % (options.beam_on_sun))
+   print("\tinfile_hdf5list     = %s" % (options.infile_hdf5list))
+   print("\toutfile_beam_on_sun = %s" % (options.outfile_beam_on_sun))
    print("######################################################")
 
    if options.do_remapping :
@@ -1058,11 +1139,15 @@ if __name__ == "__main__":
       
       
    elif options.fits2beam is not None :
-      print("DEBUG : fits2beam for file %s" % (options.fits2beam))
-      
+      print("DEBUG : fits2beam for file %s" % (options.fits2beam))      
       fits2beam( options.fits2beam, options )
-   elif options.matlab2fits is not None :
+      
+   elif options.matlab2fits is not None :   
       matlab2sin( options.matlab2fits, x_size=512 )
+      
+   elif options.infile_hdf5list is not None : 
+      save_beam_on_sun_file( options )
+      
    else :
       az = options.azim_deg
       za = options.za_deg

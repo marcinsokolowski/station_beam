@@ -973,7 +973,8 @@ def get_single_dipole_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, 
 def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution=512, delays=None, zenithnorm=True, power=True, jones=False, freq = 240e6, 
                   lst=0.00, gain_sigma_dB=0.0, gain_sigma_ph_160mhz=0.00, dipole_type='short', 
                   xpos=None, ypos=None, zpos=None,  # list of antenna positions can overwrite the default list 
-                  use_beam_fits=False, station_name="EDA", projection="zea"
+                  use_beam_fits=False, station_name="EDA", projection="zea",
+                  debug=False
                 ) :    
     if use_beam_fits :
        dipole_type = "fits_beam"
@@ -1024,15 +1025,16 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
     delays1=numpy.array([[0]*n_dipoles_eda,[0]*n_dipoles_eda],dtype=numpy.float32)
     za_delays = {'0':delays1*0,'15':numpy.array([delays_0_75_ideal,delays_0_75_ideal])}
 
-    (ax0,ay0) = tile.getArrayFactor(az,za,freq,za_delays['15'])
-    val=numpy.abs(ax0)
-    val_no_nan=val.copy()
-    numpy.isfinite(val, val_no_nan)    
-#    val_finite=val[val_no_nan]
-#    val_max=numpy.amax(val_finite)
-    val_max=numpy.nanmax(val)
-    if val.shape[0]>1 and val.shape[1]>1 :
-       print("VALUE : %.8f %.8f %.8f" % (freq,val_max,val[resolution/2,resolution/2]))                
+    if debug :  # 2020-08-20, the lines below seem to be only for debugging purposes so I pratically removed them for now to see and test if it will work ok 
+       (ax0,ay0) = tile.getArrayFactor(az,za,freq,za_delays['15'])
+       val=numpy.abs(ax0)
+       val_no_nan=val.copy()
+       numpy.isfinite(val, val_no_nan)    
+#      val_finite=val[val_no_nan]
+#      val_max=numpy.amax(val_finite)
+       val_max=numpy.nanmax(val)
+       if val.shape[0]>1 and val.shape[1]>1 :
+          print("VALUE : %.8f %.8f %.8f" % (freq,val_max,val[resolution/2,resolution/2]))                
 
     if doplots:
         for za_delay in za_delays:

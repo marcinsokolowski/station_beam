@@ -349,7 +349,7 @@ if __name__ == "__main__":
        type=sys.argv[2]
 
     t_rcv = trcv_multi( freq_mhz , type, False )
-    print("%s : T_rcv (%.2f MHz) = %.2f [K]" % (type,freq_mhz,t_rcv))
+    print("%s : T_rcv (%.2f MHz) = %.8f [K]" % (type,freq_mhz,t_rcv))
        
        
     
