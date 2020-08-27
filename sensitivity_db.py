@@ -967,9 +967,19 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    if lst_y is not None and aot_y is not None :
       ax_y = plt.plot( lst_y, aot_y, point_y )
 
+   if lst_i is not None and aot_i is not None :
+      ax_i = plt.plot( lst_i, aot_i, point_i )
+      
+      max_i = max( aot_i )
+      if max_i > max_ylimit :
+         max_ylimit = max_i * 1.1 # max_i + 10% of max_i
+
    # legend :
    if lst_x is not None and aot_x is not None and lst_y is not None and aot_y is not None :
-      plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+      if lst_i is None and aot_i is None :      
+         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+      else :
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')
    else :
       if lst_x is not None and aot_x is not None :
          plt.legend(('X polarisation'), loc='upper right')
