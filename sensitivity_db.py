@@ -183,6 +183,30 @@ def read_text_file( filename , do_fit=True ) :
          
    return (freq_mhz,t_rcv,fit_func)
 
+# calculate Stokes I using WRONG formula, but this is best we can do see Sutijno, Sokolowski et al (2020) for the improved one :
+def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y ) :
+    out_freq_i = []
+    out_sefd_i = []
+    out_aot_i = []
+
+    # calculate SEFD_I - if possible (same sizes of arrays):
+    if len(out_sefd_x) == len(out_sefd_y) :
+       for i in range(0,len(out_sefd_x)) :
+          sefd_x = out_sefd_x[i]
+          sefd_y = out_sefd_y[i]
+          
+          sefd_i = 0.5*math.sqrt( sefd_x*sefd_x + sefd_y*sefd_y )
+
+          out_freq_i.append( out_freq_x[i] )
+          out_sefd_i.append( sefd_i )
+
+          aot_i = (2*1380.00)/sefd_i
+          out_aot_i.append( aot_i )          
+    else :
+       print("ERROR : len(out_aot_x) != len(out_aot_y) ( %d != %d )" % (len(out_aot_x),len(out_aot_y)))
+
+
+    return (out_freq_i,out_sefd_i,out_aot_i)
 
 # get sensitivity vs. frequency for given pointing direction [degrees] and lst [hours]:
 def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
@@ -271,10 +295,6 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     out_aot_y  = []
     out_sefd_y = []
 
-    out_freq_i = []
-    out_aot_i  = []
-    out_sefd_i = []
-        
     for row in rows:
         if debug_level > 0 : 
            print(row)
@@ -325,20 +345,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
  
 
     # calculate SEFD_I - if possible (same sizes of arrays):
-    if len(out_sefd_x) == len(out_sefd_y) :
-       for i in range(0,len(out_sefd_x)) :
-          sefd_x = out_sefd_x[i]
-          sefd_y = out_sefd_y[i]
-          
-          sefd_i = 0.5*math.sqrt( sefd_x*sefd_x + sefd_y*sefd_y )
-
-          out_freq_i.append( out_freq_x[i] )
-          out_sefd_i.append( sefd_i )
-
-          aot_i = (2*1380.00)/sefd_i
-          out_aot_i.append( aot_i )          
-    else :
-       print("ERROR : len(out_aot_x) != len(out_aot_y) ( %d != %d )" % (len(out_aot_x),len(out_aot_y)))
+    ( out_freq_i , out_sefd_i , out_aot_i ) = calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y )
 
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
