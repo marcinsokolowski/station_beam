@@ -270,6 +270,10 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     out_freq_y = []
     out_aot_y  = []
     out_sefd_y = []
+
+    out_freq_i = []
+    out_aot_i  = []
+    out_sefd_i = []
         
     for row in rows:
         if debug_level > 0 : 
@@ -320,8 +324,25 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
            print("\t\tDB Record ignored due to angular distance too large")
  
 
+    # calculate SEFD_I - if possible (same sizes of arrays):
+    if len(out_sefd_x) == len(out_sefd_y) :
+       for i in range(0,len(out_sefd_x)) :
+          sefd_x = out_sefd_x[i]
+          sefd_y = out_sefd_y[i]
+          
+          sefd_i = 0.5*math.sqrt( sefd_x*sefd_x + sefd_y*sefd_y )
+
+          out_freq_i.append( out_freq_x[i] )
+          out_sefd_i.append( sefd_i )
+
+          aot_i = (2*1380.00)/sefd_i
+          out_aot_i.append( aot_i )          
+    else :
+       print("ERROR : len(out_aot_x) != len(out_aot_y) ( %d != %d )" % (len(out_aot_x),len(out_aot_y)))
+
     return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
-             numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+             numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
+             numpy.array(out_freq_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i) )
 
 
 def unixtime2lst( unixtime ) :
@@ -964,7 +985,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
 
    return (png_image_path)
 
-def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx' ):
+def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx', freq_i=None, aot_i=None, point_i='b+' ):
 
    global web_interface_initialised
 
@@ -975,9 +996,15 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    if freq_y is not None and aot_y is not None :
       plt.plot( freq_y, aot_y, point_y )
 
+   if freq_i is not None and aot_i is not None :
+      plt.plot( freq_i, aot_i, point_i )
+
    # legend :
    if freq_x is not None and aot_x is not None and freq_y is not None and aot_y is not None :
-      plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+      if freq_i is not None and aot_i is not None :
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')    
+      else :
+         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
    else :
       if freq_x is not None and aot_x is not None :
          plt.legend(('X polarisation'), loc='upper right')
@@ -1258,13 +1285,16 @@ def save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_fi
    outfile = ( "%s.txt" % (out_file_base) ) 
    out_f = open( outfile , "w" )
    
-   header_line = "#  FREQ[MHz] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy]\n"
+   header_line = "#  FREQ[MHz] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy] A/T_i[m^2/K] SEFD_i[Jy]\n"
    out_f.write( header_line )
    
    len = freq_x.shape[0]
    n_lines = 0
    for i in range(0,len) :
-      line = "%.4f %.6f %.6f %.6f %.6f\n" % (freq_x[i], aot_x[i], sefd_x[i], aot_y[i], sefd_y[i])
+      sefd_i = 0.5*math.sqrt( sefd_x[i]*sefd_x[i] + sefd_y[i]*sefd_y[i] )
+      aot_i = (2*1380.00)/sefd_i
+   
+      line = "%.4f %.6f %.6f %.6f %.6f %.6f %.6f\n" % (freq_x[i], aot_x[i], sefd_x[i], aot_y[i], sefd_y[i], sefd_i, aot_i)
       
       out_f.write( line )
       n_lines += 1
@@ -1282,7 +1312,7 @@ if __name__ == "__main__":
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
        print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
-       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file )
+       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y,out_freq_i,out_aot_i,out_sefd_i) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
           if options.output_file is not None :
@@ -1292,8 +1322,11 @@ if __name__ == "__main__":
              if out_freq_y is not None and out_aot_y is not None :
                 save_output_file( out_freq_y,out_aot_y, "Y" , options.output_file )
 
+             if out_freq_i is not None and out_aot_i is not None :
+                save_output_file( out_freq_i , out_aot_i, "I" , options.output_file )
+
           if options.do_plot :
-             plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file )
+             plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file, freq_i=out_freq_i, aot_i=out_aot_i )
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :

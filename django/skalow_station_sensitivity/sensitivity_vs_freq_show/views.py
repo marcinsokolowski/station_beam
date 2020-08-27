@@ -77,7 +77,7 @@ def sensitivity_vs_freq_show(request):
 #                             db_lst_resolution=0.5, db_ang_res_deg=5.00 ) :
 #    return ( numpy.array(out_freq_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
 #             numpy.array(out_freq_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )   
-   ( freq_x,aot_x,sefd_x, freq_y,aot_y,sefd_y ) = sensitivity_db.get_sensitivity_azzalst( azimuth_deg, za_deg, lst_hours, station=station, db_path=db_path )
+   ( freq_x,aot_x,sefd_x, freq_y, aot_y, sefd_y, freq_i, aot_i, sefd_i ) = sensitivity_db.get_sensitivity_azzalst( azimuth_deg, za_deg, lst_hours, station=station, db_path=db_path )
 
    # 
    save_output_path = config.save_output_path
@@ -86,7 +86,7 @@ def sensitivity_vs_freq_show(request):
    # create plots :   
    print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s)" % (save_output_path))
    output_file_base = "%s_sensitivity_az%.2fdeg_za_%.2fdeg_%.2fhours" % (station,azimuth_deg,za_deg,lst_hours)
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
+   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base, freq_i=freq_i, aot_i=aot_i )
    
    
    out_file_name = save_output_path + "/" + output_file_base
