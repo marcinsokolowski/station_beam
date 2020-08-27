@@ -183,7 +183,7 @@ def read_text_file( filename , do_fit=True ) :
          
    return (freq_mhz,t_rcv,fit_func)
 
-# calculate Stokes I using WRONG formula, but this is best we can do see Sutijno, Sokolowski et al (2020) for the improved one :
+# calculate Stokes I using an APPROXIMATE formula, but this is best we can do see Sutijno, Sokolowski et al (2020) for the improved one :
 def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y ) :
     out_freq_i = []
     out_sefd_i = []
@@ -625,8 +625,12 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
                                                                                   db_lst_resolution=db_lst_resolution, db_ang_res_deg=db_ang_res_deg, db_freq_resolution_mhz=db_freq_resolution_mhz,
                                                                                   receiver_temperature=receiver_temperature )
 
+    # calculate SEFD_I - if possible (same sizes of arrays):
+    ( out_uxtime_i , out_sefd_i , out_aot_i ) = calc_sefd_i( out_sefd_x, out_uxtime_x, out_sefd_y, out_uxtime_y )
+
     return ( numpy.array(out_uxtime_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
-             numpy.array(out_uxtime_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y) )
+             numpy.array(out_uxtime_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
+             numpy.array(out_uxtime_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i) )
 
 def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
@@ -882,7 +886,8 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 
 def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start, unixtime_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
-                              min_ylimit=0.00, max_ylimit=2.00 ) :
+                              min_ylimit=0.00, max_ylimit=2.00,
+                              uxtime_i=None, aot_i=None , point_i='b+') :
                      
    # conversion of unix time to UTC :                               
    x_utc = []
@@ -890,6 +895,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    for ux in uxtime_x :
       utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
       x_utc.append( utc )
+            
    for ux in uxtime_y :
       utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
       y_utc.append( utc )
@@ -902,11 +908,21 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    
    if uxtime_y is not None and aot_y is not None :
       ax_y = plt.plot( y_utc, aot_y, point_y )
+
+   if uxtime_i is not None and aot_i is not None :
+      ax_i = plt.plot( x_utc, aot_i, point_i )
+      
+      max_i = max(aot_i)
+      if max_i > max_ylimit :
+         max_ylimit = max_i*1.1 # max_i + 10% max_i
 #      ax_y.set_ylim(( min_ylimit,  max_ylimit ))
 
    # legend :
    if uxtime_x is not None and aot_x is not None and uxtime_y is not None and aot_y is not None :
-      plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+      if uxtime_i is not None and aot_i is not None :
+         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+      else :
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')
    else :
       if uxtime_x is not None and aot_x is not None :
          plt.legend(('X polarisation'), loc='upper right')
@@ -1368,12 +1384,12 @@ if __name__ == "__main__":
            
            if options.azim_deg is not None and options.za_deg is not None :
               print("\tPlotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-              (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, 
+              (uxtime_x,aot_x,sefd_x, uxtime_y,aot_y,sefd_y, uxtime_i,aot_i,sefd_i) = get_sensitivity_timerange( options.azim_deg, options.za_deg, options.freq_mhz, options.unixtime_start, options.unixtime_end, 
                                                                                           time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
               if options.do_plot :
                  out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
-                 plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base )
+                 plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, uxtime_i=uxtime_i, aot_i=aot_i )
               
               
            else :
