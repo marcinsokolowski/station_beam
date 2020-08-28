@@ -1,6 +1,6 @@
 #!/bin/bash
 
-station_name=EDA2
+station_name=EDA
 if [[ -n "$1" && "$1" != "-" ]]; then
    station_name=$1
 fi
