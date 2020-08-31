@@ -184,10 +184,13 @@ def read_text_file( filename , do_fit=True ) :
    return (freq_mhz,t_rcv,fit_func)
 
 # calculate Stokes I using an APPROXIMATE formula, but this is best we can do see Sutijno, Sokolowski et al (2020) for the improved one :
-def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y ) :
-    out_freq_i = []
+def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y, out_file=None ) :
+    out_freq_i = None
     out_sefd_i = []
     out_aot_i = []
+    
+    if out_freq_x is not None :
+       out_freq_i = []
 
     # calculate SEFD_I - if possible (same sizes of arrays):
     if len(out_sefd_x) == len(out_sefd_y) :
@@ -197,11 +200,21 @@ def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y ) :
           
           sefd_i = 0.5*math.sqrt( sefd_x*sefd_x + sefd_y*sefd_y )
 
-          out_freq_i.append( out_freq_x[i] )
+          if out_freq_x is not None :
+             out_freq_i.append( out_freq_x[i] )
           out_sefd_i.append( sefd_i )
 
-          aot_i = (2*1380.00)/sefd_i
+          aot_i = 0
+          if not numpy.isnan(sefd_i) :
+             aot_i = (2*1380.00)/sefd_i
+             
           out_aot_i.append( aot_i )          
+          
+          if out_file is not None :
+             line = "%.4f %.4f %.8f\n" % (out_freq_x[i],out_freq_y[i],aot_i)
+             out_file.write( line )
+          
+#          print("DEBUG : %.4f %.4f -> %.4f -> %.4f" % (sefd_x,sefd_y,sefd_i,aot_i))
     else :
        print("ERROR : len(out_aot_x) != len(out_aot_y) ( %d != %d )" % (len(out_aot_x),len(out_aot_y)))
 
@@ -735,18 +748,22 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     out_txt_filename_X = None
     out_txt_filename_Y = None
+    out_txt_filename_I = None
     if output_file_base is not None :
        out_txt_filename_X = output_dir + "/" + out_fitsname_base + "_X.txt"
        out_txt_filename_Y = output_dir + "/" + out_fitsname_base + "_Y.txt"
+       out_txt_filename_I = output_dir + "/" + out_fitsname_base + "_I.txt"
        
        out_txt_x_f = open( out_txt_filename_X , "w" )
        out_txt_y_f = open( out_txt_filename_Y , "w" )
+       out_txt_i_f = open( out_txt_filename_I , "w" )
        
        print("DEBUG : saving output text files to %s and %s" % (out_txt_filename_X,out_txt_filename_Y))
        
        line = "# AZIM[deg] ZA[deg] A/T[m^2/K]"
        out_txt_x_f.write( line + "    for X polarisation\n" )
        out_txt_y_f.write( line + "    for Y polarisation\n" )
+       out_txt_i_f.write( line + "    for Stokes I polarisation\n" )
         
     for row in rows:
         if debug_level >= 2 :
@@ -801,16 +818,23 @@ def get_sensitivity_map( freq_mhz, lst_hours,
         else :
            print("ERROR : unknown polarisation = %s" % (pol))
  
+    ( out_freq_i , out_sefd_i , out_aot_i ) = calc_sefd_i( out_sefd_x, out_azim_x, out_sefd_y, out_za_x, out_file=out_txt_i_f  )   
+    
+    
     if out_txt_x_f is not None :
        out_txt_x_f.close()
 
     if out_txt_y_f is not None :
        out_txt_y_f.close()
-       
+
+    if out_txt_i_f is not None :
+       out_txt_i_f.close()
+
 
     return ( numpy.array(out_azim_x), numpy.array(out_za_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
-             out_txt_filename_X, out_txt_filename_Y )
+             numpy.array(out_azim_y), numpy.array(out_za_y), numpy.array(out_aot_i) , numpy.array(out_sefd_i),
+             out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I )
 
 
 
@@ -1024,35 +1048,64 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
 
    return (png_image_path)
 
-def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx', freq_i=None, aot_i=None, point_i='b+' ):
+def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx', freq_i=None, aot_i=None, point_i='b+', min_ylimit=0.00, max_ylimit=2.00, info=None,
+                      fig_size_x=20, fig_size_y=10 ):
 
    global web_interface_initialised
-
-   plt.figure()
+   
+   max_aot = 0.00
+   min_freq = min(freq_x)
+   
+   plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   ax = None
    if freq_x is not None and aot_x is not None :
       plt.plot( freq_x, aot_x, point_x )
+      
+      if max(aot_x) > max_aot :
+         max_aot = max(aot_x)
    
    if freq_y is not None and aot_y is not None :
       plt.plot( freq_y, aot_y, point_y )
+      
+      if max(aot_y) > max_aot :
+         max_aot = max(aot_y)
+
 
    if freq_i is not None and aot_i is not None :
       plt.plot( freq_i, aot_i, point_i )
 
+      if max(aot_i) > max_aot :
+         max_aot = max(aot_i)
+
+
    # legend :
    if freq_x is not None and aot_x is not None and freq_y is not None and aot_y is not None :
       if freq_i is not None and aot_i is not None :
-         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')    
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20)    
       else :
-         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+         plt.legend(('X polarisation','Y polarisation'), loc='upper right' , fontsize=20)
    else :
       if freq_x is not None and aot_x is not None :
-         plt.legend(('X polarisation'), loc='upper right')
+         plt.legend(('X polarisation'), loc='upper right' , fontsize=20)
       else :
-         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[freq_y, aot_y])
+         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[freq_y, aot_y],fontsize=20)
    
-   plt.xlabel('Frequency (MHz)')
-   plt.ylabel('Sensitivity A/T [m^2/K]')
+   plt.xlabel('Frequency (MHz)' , fontsize=20 )
+   plt.ylabel('Sensitivity A/T [m$^2$/K]' , fontsize=20 )
    plt.grid()
+
+#   if max_aot < 0.5 :
+#      max_ylimit = 0.5
+      
+   max_ylimit0 = max_ylimit
+   max_ylimit = max_ylimit*1.1 # + 10%
+   
+   plt.ylim(( min_ylimit,  max_ylimit )) 
+   
+   if info is not None :
+      # place a text box in upper left in axes coords
+      text( min_freq, max_ylimit0*1.05, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+
    
    outfile = None
    if output_file_base is not None :
@@ -1071,14 +1124,14 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    return( outfile , None )
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./" ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5 ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
    global web_interface_initialised
 
 
    azim_rad = azim_deg*(numpy.pi/180.0)
    za_rad   = za_deg*(numpy.pi/180.0)
-   lut = SmoothSphereBivariateSpline( za_rad, azim_rad, aot , s=3.5)
+   lut = SmoothSphereBivariateSpline( za_rad, azim_rad, aot , s=s)
 #   fine_lats = numpy.linspace(0., numpy.pi/2.00,256)
 #   fine_lons = numpy.linspace(0., 2 * numpy.pi, 256)
 #   data_smth = lut(fine_lats, fine_lons)
@@ -1093,6 +1146,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
    
    
    sensitivity = numpy.zeros( az_rad.shape )
+   max_sens = 0
    for i in range(0,za_rad.shape[0]) :
       for j in range(0,za_rad.shape[1]) :
          a_rad = az_rad[ i , j ]
@@ -1102,6 +1156,9 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
          if aot_value >= 0 :
             # ignore non-physical negative values :
             sensitivity[ i , j ] = aot_value
+            
+            if aot_value > max_sens :
+               max_sens = aot_value
          
 
    pol_string = "_%s" % (pol)
@@ -1155,13 +1212,14 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       ax2.grid(which='major', color='0.5') 
     
       #Beamsky example:
-      vmax = 1.00
+#      vmax = 1.00
+      vmax = max_sens
       im=ax1.imshow( sensitivity , interpolation='none', vmax=vmax )
 
       #Add colorbar on own axis
       cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
       cbar=fig.colorbar(im, cax=cbar_ax)
-      cbar.set_label("A/T [m^2/K]")
+      cbar.set_label("A/T [m$^2$/K]")
  
       title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
       ax1.set_title( title , fontsize=8 )
@@ -1195,7 +1253,7 @@ def parse_options(idx):
    parser.add_option('-s','--station_name','--station',dest="station_name",default="AAVS2", help="Station name [default %default]")
 
    # TEST : azim=0, za=0, lst=15.4 
-   parser.add_option('-p','--plot','--do_plot',action="store_true",dest="do_plot",default=False, help="Plot")
+   parser.add_option('-p','--plot','--do_plot','--do_plots',action="store_true",dest="do_plot",default=False, help="Plot")
    parser.add_option('-a','--azim','--azim_deg',dest="azim_deg",default=None, help="Pointing direction azimuth in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidreal time in hours [default %default]",metavar="float",type="float")
@@ -1365,15 +1423,16 @@ if __name__ == "__main__":
                 save_output_file( out_freq_i , out_aot_i, "I" , options.output_file )
 
           if options.do_plot :
-             plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file, freq_i=out_freq_i, aot_i=out_aot_i )
+             info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.azim_deg,options.za_deg)
+             plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file, freq_i=out_freq_i, aot_i=out_aot_i, info=info )
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
        print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-       (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
-                                                                                                                          receiver_temperature=options.receiver_temperature, station=options.station_name )
+       (azim_x,za_x,aot_x,sefd_x, azim_y,za_y,aot_y,sefd_y, azim_i,za_i,aot_i,sefd_i, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
+                                                                                                                                                     receiver_temperature=options.receiver_temperature, station=options.station_name )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :
@@ -1391,6 +1450,12 @@ if __name__ == "__main__":
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
               plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y" )
+
+
+              print("DEBUG : %d / %d / %d" % (len(aot_x),len(aot_y),len(aot_i)))             
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_I" % (options.lst_hours,options.freq_mhz)
+              plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="I", s=5 )
+                            
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
         print("Plotting sensitivity for a specified time range unix time %.2f - %.2f" % (options.unixtime_start,options.unixtime_end))

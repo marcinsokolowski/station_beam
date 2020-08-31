@@ -1,6 +1,8 @@
 Modifications :
    - sensitivity vs. freq :
-     /home/msok/github/station_beam/django/skalow_station_sensitivity/sensitivity_vs_freq_show
+     django/skalow_station_sensitivity/sensitivity_vs_freq_show
 
-
+   - plot_sensitivity_map :
+     django/skalow_station_sensitivity//sensitivity_map_show/views.py
+     sensitivity_map_show/index.html
   
