@@ -959,7 +959,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[uxtime_y, uxtime_y])
    
    plt.xlabel('Time [UTC]')
-   plt.ylabel('Sensitivity A/T [m^2/K]')
+   plt.ylabel('Sensitivity A / T [m$^2$/K]')
    plt.gcf().autofmt_xdate()
 #   ax=plt.gca()
 #   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -1011,7 +1011,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[lst_y, lst_y])
    
    plt.xlabel('Local sidereal time [hours]')
-   plt.ylabel('Sensitivity A/T [m^2/K]')
+   plt.ylabel('Sensitivity A / T [m$^2$/K]')
    plt.gcf().autofmt_xdate()
 #   ax=plt.gca()
 #   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -1219,7 +1219,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       #Add colorbar on own axis
       cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
       cbar=fig.colorbar(im, cax=cbar_ax)
-      cbar.set_label("A/T [m$^2$/K]")
+      cbar.set_label("A / T [m$^2$/K]")
  
       title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
       ax1.set_title( title , fontsize=8 )
@@ -1431,7 +1431,7 @@ if __name__ == "__main__":
        print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-       (azim_x,za_x,aot_x,sefd_x, azim_y,za_y,aot_y,sefd_y, azim_i,za_i,aot_i,sefd_i, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
+       (azim_x,za_x,aot_x,sefd_x, azim_y,za_y,aot_y,sefd_y, azim_i,za_i,aot_i,sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
                                                                                                                                                      receiver_temperature=options.receiver_temperature, station=options.station_name )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
@@ -1445,15 +1445,15 @@ if __name__ == "__main__":
            # test :
            if options.do_plot :
               # out_fitsname_base
-              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_X" % (options.lst_hours,options.freq_mhz)
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
               plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="X" )
               
-              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_Y" % (options.lst_hours,options.freq_mhz)
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
               plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y" )
 
 
               print("DEBUG : %d / %d / %d" % (len(aot_x),len(aot_y),len(aot_i)))             
-              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz_I" % (options.lst_hours,options.freq_mhz)
+              out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
               plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="I", s=5 )
                             
 
