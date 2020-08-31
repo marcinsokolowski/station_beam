@@ -1431,7 +1431,8 @@ if __name__ == "__main__":
        print("LST and frequency specified -> creating sensitivity (A/T) map over the whole hemisphere") 
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-       (azim_x,za_x,aot_x,sefd_x, azim_y,za_y,aot_y,sefd_y, azim_i,za_i,aot_i,sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
+       (azim_x,za_x,aot_x,sefd_x, azim_y,za_y,aot_y,sefd_y, azim_i,za_i,aot_i,sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base,
+                                                                                                                                                     out_fitsname_base=out_fitsname_base,
                                                                                                                                                      receiver_temperature=options.receiver_temperature, station=options.station_name )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
