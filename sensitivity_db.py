@@ -377,12 +377,18 @@ def unixtime2lst( unixtime ) :
 # get sensitivity vs. unix time for a specific polarisation :
 def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, ux_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=5.00, 
                              receiver_temperature=None) :
 
     out_uxtime = []
     out_aot    = []
     out_sefd   = []
+    
+    out_f = None
+    if pol == "X" or pol == "Y" :
+       tmp_filename = "test_%s.txt" % (pol)
+       out_f = open( tmp_filename ,"w")
+    
 
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
@@ -426,12 +432,19 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
     print("Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg))
 
 
-    
+    used_db_record_id = []
+        
     for unixtime in range( int(ux_start), int(ux_end)+1, time_step ) :
        lst_hours = unixtime2lst( unixtime )
+       
+#       print("DEBUG : ux=%.2f -> lst=%.2f" % (unixtime,lst_hours))
     
        cur = conn.cursor()       
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(lst-%.4f)<%.4f and polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, lst_hours, db_lst_resolution, pol )
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s'" %  \
+                 ( (lst_hours-db_lst_resolution),(lst_hours+db_lst_resolution),\
+                   (freq_mhz-(db_freq_resolution_mhz+0.01)), (freq_mhz+(db_freq_resolution_mhz+0.01)),\
+                   za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol\
+                  )
        if debug_level >= 2 :
           print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
        cur.execute( szSQL )
@@ -456,28 +469,35 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        if debug_level >= 2 or min_lst_distance < db_lst_resolution :
           print("DEBUG : closest in time is min_lst_diff = %.4f [h] (id = %d)" % (min_lst_distance,best_rec_id))
 
-        
+
+       last_lst = -1000        
        for row in rows :
            if debug_level > 0 : 
               print(row)
         
            id = int( row[0] )
+           
+           if id in used_db_record_id :
+              # skip already used records :
+              continue
+           
            azim_deg_db = float( row[1] )
            za_deg_db   = float( row[2] )
            freq_mhz    = float( row[3] )
            pol         = row[4]
            lst_db      = float( row[5] )
-           unixtime    = float( row[6] )
+           unixtime_db = float( row[6] ) # when filled 
            gpstime     = float( row[7] )
            aot         = float( row[8] )
            sefd        = (2*1380.00)/aot
            a_eff       = float( row[9] )
-           t_rcv       = float( row[10] )
-           t_ant       = float( row[11] )
-           array_type  = int( row[12] )
-           timestamp   = row[13]
-           creator     = row[14]
-           code_version = row[15]
+           t_sys       = float( row[10] )
+           t_rcv       = float( row[11] )
+           t_ant       = float( row[12] )
+           array_type  = int( row[13] )
+           timestamp   = row[14]
+           creator     = row[15]
+           code_version = row[16]
            
            if receiver_temperature is not None and receiver_temperature >= 0.00 :
               # in case trcv is provided in the external text file (like a config file) :
@@ -491,12 +511,29 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
               ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
         
               if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
+                  if debug_level >= 4 :
+                     is_in_list = False
+                     if id in used_db_record_id :
+                        is_in_list = True
+                     print("DEBUG_FINAL id = %d : %.4f %.4f %.4f , list count = %d , is_in_list = %s" % (id,unixtime,aot,sefd,len(used_db_record_id),is_in_list))
+                     
                   out_uxtime.append( unixtime )
                   out_aot.append( aot )
                   out_sefd.append( sefd ) 
+                  
+                  used_db_record_id.append( id ) 
               else :
                  print("\t\tDB Record ignored due to angular distance too large")
+             
+           if out_f is not None :
+              line = "%.4f %.4f\n" % (unixtime,t_ant) 
+              out_f.write( line )
+           
+           last_lst = lst_db
  
+    if out_f is not None :
+       out_f.close()
+
     return (out_uxtime, out_aot, out_sefd)
 
 # get sensitivity vs. LST for a specific polarisation :
@@ -621,7 +658,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
 # get sensitivity vs. time :
 def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
-                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
+                             db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=5.00, 
                              receiver_temperature=None ) :
         
     global debug_level
@@ -917,8 +954,10 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
                               uxtime_i=None, aot_i=None , point_i='b+' ,
-                              fig_size_x=20, fig_size_y=10 ) :
+                              fig_size_x=20, fig_size_y=10, info=None ) :
                      
+   legend_location = "upper center" # "upper right"
+
    # conversion of unix time to UTC :                               
    x_utc = []
    y_utc = []
@@ -952,17 +991,17 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    # legend :
    if uxtime_x is not None and aot_x is not None and uxtime_y is not None and aot_y is not None :
       if uxtime_i is not None and aot_i is not None :
-         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc=legend_location, fontsize=20)
       else :
-         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')
+         plt.legend(('X polarisation','Y polarisation'), loc=legend_location,  fontsize=20 )
    else :
       if uxtime_x is not None and aot_x is not None :
-         plt.legend(('X polarisation'), loc='upper right')
+         plt.legend(('X polarisation'), loc=legend_location,  fontsize=20 )
       else :
-         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[uxtime_y, uxtime_y])
+         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=legend_location,handles=[uxtime_y, uxtime_y])
    
-   plt.xlabel('Time [UTC]')
-   plt.ylabel('Sensitivity A / T [m$^2$/K]')
+   plt.xlabel('Time [UTC]' , fontsize=20 )
+   plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=20 )
    plt.gcf().autofmt_xdate()
    
    ax_list = fig.axes
@@ -983,7 +1022,14 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
 #   xfmt = md.DateFormatter('%H:%M:%S')
 #   ax.xaxis.set_major_formatter(xfmt)
 #   ax.set_ylim(( min_ylimit,  max_ylimit ))
+   max_ylimit0 = max_ylimit
+   max_ylimit = max_ylimit*1.1 # + 10%
    plt.ylim(( min_ylimit,  max_ylimit ))  
+   
+   if info is not None :
+      # place a text box in upper left in axes coords
+      min_x = min( x_utc )
+      text( x_start, max_ylimit0, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
@@ -1487,8 +1533,11 @@ if __name__ == "__main__":
                                                                                           time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
               if options.do_plot :
+                 info = "Freq. = %.3f [MHz]\n(azim,za) = (%.2f,%.2f) [deg]" % ( options.freq_mhz,options.azim_deg,options.za_deg)
+              
                  out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
-                 plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, uxtime_i=uxtime_i, aot_i=aot_i )
+                 plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg,\
+                                            options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, uxtime_i=uxtime_i, aot_i=aot_i, info=info )
               
               
            else :
