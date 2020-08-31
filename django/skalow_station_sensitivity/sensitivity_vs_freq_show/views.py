@@ -86,7 +86,9 @@ def sensitivity_vs_freq_show(request):
    # create plots :   
    print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s)" % (save_output_path))
    output_file_base = "%s_sensitivity_az%.2fdeg_za_%.2fdeg_%.2fhours" % (station,azimuth_deg,za_deg,lst_hours)
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base, freq_i=freq_i, aot_i=aot_i )
+   
+   info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg]" % ( lst_hours, azimuth_deg, za_deg )
+   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base, freq_i=freq_i, aot_i=aot_i, info=info )
    
    
    out_file_name = save_output_path + "/" + output_file_base

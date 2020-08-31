@@ -1351,7 +1351,7 @@ if __name__ == "__main__":
     if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
        print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
-       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y,out_freq_i,out_aot_i,out_sefd_i) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file )
+       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y,out_freq_i,out_aot_i,out_sefd_i) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file, station=options.station_name )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
           if options.output_file is not None :
@@ -1373,7 +1373,7 @@ if __name__ == "__main__":
        
        out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
        (azim_x,za_x,aot_x,sefd_x,azim_y,za_y,aot_y,sefd_y, out_txt_filename_X, out_txt_filename_Y) = get_sensitivity_map( options.freq_mhz, options.lst_hours, output_file_base=out_fitsname_base, 
-                                                                                                                          receiver_temperature=options.receiver_temperature )
+                                                                                                                          receiver_temperature=options.receiver_temperature, station=options.station_name )
        
        if ( azim_x is not None and za_x is not None and aot_x is not None and sefd_x is not None ) or ( azim_y is not None and za_y is not None and aot_x is not None and sefd_y is not None ) :
 #           if options.output_file is not None :
