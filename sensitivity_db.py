@@ -916,7 +916,8 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start, unixtime_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
-                              uxtime_i=None, aot_i=None , point_i='b+') :
+                              uxtime_i=None, aot_i=None , point_i='b+' ,
+                              fig_size_x=20, fig_size_y=10 ) :
                      
    # conversion of unix time to UTC :                               
    x_utc = []
@@ -929,10 +930,12 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
       utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
       y_utc.append( utc )
    
-   plt.figure()
+   plt.figure( figsize=( fig_size_x , fig_size_y ) )
    fig = plt.gcf()
+   
    if uxtime_x is not None and aot_x is not None :
       ax_x =  plt.plot( x_utc, aot_x, point_x )
+      # ax_x.tick_params(which='major', length=10, width=20, direction='inout')
 #      ax_x.set_ylim(( min_ylimit,  max_ylimit ))
    
    if uxtime_y is not None and aot_y is not None :
@@ -961,6 +964,20 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    plt.xlabel('Time [UTC]')
    plt.ylabel('Sensitivity A / T [m$^2$/K]')
    plt.gcf().autofmt_xdate()
+   
+   ax_list = fig.axes
+   ticks = plt.xticks
+   x_start, x_end = ax_list[0].get_xlim()
+   print("DEBUG : x_start = %.8f , x_end = %.8f" % (x_start,x_end))
+#   ax_list[0].xaxis.set_ticks(numpy.arange(x_start, x_end, 10.00))
+#   ax_list[0].xaxis.set_major_locator(md.MinuteLocator(interval=1))
+#   ax_list[0].xaxis.set_major_locator(md.MinuteLocator(interval=10))
+   if ( x_end - x_start ) >= 20.00 :
+      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 4))
+   else :
+      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 2))
+   
+   
 #   ax=plt.gca()
 #   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
 #   xfmt = md.DateFormatter('%H:%M:%S')
