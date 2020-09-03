@@ -255,6 +255,16 @@ def trcv_eda2_single_dipole( freq_mhz , use_cubic=False, add_fem=True ):
       
    return trcv_out
 
+# This is based on Daniel's paper : Figure 9 in https://arxiv.org/pdf/2003.05116.pdf
+# Digitised : /home/msok/Desktop/MWA/papers/2020/Daniel/images/FINAL/Figure9_Trcv_vs_Freq_EDA2.png   
+#             /home/msok/Desktop/MWA/papers/2020/Daniel/images/FINAL/Figure9_Trcv_vs_Freq_EDA2_SINGLE_ISOLATED_ELEMENT.txt
+#             using plot_digitiser! 
+def trcv_eda1_single_dipole( freq_mhz , use_cubic=False, add_fem=True ):
+   ret = trcv_eda2_single_dipole( freq_mhz , use_cubic=use_cubic, add_fem=False ) # add_fem=False -> EDA1 Trcv as in the Daniel's paper for a single EDA2 dipole 
+   
+   return ret   
+
+
 
 # EDA2 : 
 # see /home/msok/Desktop/EDA2/logbook/20200128_EDA2_receiver_temperature.odt
@@ -329,6 +339,8 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0 ):
       t_rcv = trcv_aavs2( freq_mhz, use_cubic=use_cubic )       
    elif type.lower() == "eda2_singledip" or type.lower() == "trcv_eda2_singledip" or type.lower() == "trcv_eda2_single_dipole" or type.lower() == "trcv_eda2_single_dip" :
       t_rcv = trcv_eda2_single_dipole( freq_mhz, use_cubic=use_cubic )
+   elif type.lower() == "eda1_singledip" or type.lower() == "trcv_eda1_singledip" or type.lower() == "trcv_eda1_single_dipole" or type.lower() == "trcv_eda1_single_dip" :
+      t_rcv = trcv_eda1_single_dipole( freq_mhz, use_cubic=use_cubic )
    elif type.lower() == "trcv_aavs2_vs_za_deg" :
       t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
    else :
