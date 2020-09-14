@@ -3,6 +3,10 @@ import beam_tools
 # from pylab import *
 import numpy
 import math
+import sys
+
+import astropy.io.fits as pyfits
+from pylab import loadtxt 
 
 from scipy.interpolate import griddata
 import scipy.interpolate
@@ -275,7 +279,19 @@ def get_feko_beam_slow( theta, phi, feko_file="AAVS1_full_station_160MHz_Without
 
     
 def main() :
-   (theta_phi , values ) = read_feko_file()
+   feko_file = "AAVS2_256_elem_station_160MHz_Xpol.txt"
+   if len(sys.argv) > 1:
+       feko_file = sys.argv[1]
+
+   (theta_phi,values,data, theta_unique, phi_unique, step_theta, step_phi, theta_mesh, phi_mesh, beam_values_2d) = read_feko_file( feko_file=feko_file )
+   size_x = beam_values_2d.shape[0]
+   size_y = beam_values_2d.shape[1]
+   
+   hdu = pyfits.PrimaryHDU()
+   hdu.data = beam_values_2d
+   hdulist = pyfits.HDUList([hdu])
+   hdulist.writeto('new.fits',clobber=True)
+   
    # plt.subplot(221)
    # plt.imshow(func(grid_x, grid_y).T, extent=(0,1,0,1), origin='lower')
    # plt.plot(phi_theta, values, 'k.', ms=1)

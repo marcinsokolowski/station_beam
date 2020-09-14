@@ -12,6 +12,10 @@ if [[ $station != "eda2" ]]; then
    beams_name=AAVS2
 fi
 
+local_dir=/media/msok/0754e982-0adb-4e33-80cc-f81dda1580c8/${station}/data/real_time_calibration/
+cd ${local_dir}
+pwd
+
 path=`ssh ${station} "ls -dtr /data/real_time_calibration/????_??_??-??:??" | tail -1`
 dtm=`basename $path`
 
