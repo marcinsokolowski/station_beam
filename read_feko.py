@@ -291,6 +291,9 @@ def main() :
    hdu.data = beam_values_2d
    hdulist = pyfits.HDUList([hdu])
    hdulist.writeto('new.fits',clobber=True)
+
+   import fits_beam      
+   fits_beam.beammap2sin( theta_phi, beam_values_2d , x_size=512 ) 
    
    # plt.subplot(221)
    # plt.imshow(func(grid_x, grid_y).T, extent=(0,1,0,1), origin='lower')

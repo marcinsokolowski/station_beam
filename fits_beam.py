@@ -247,10 +247,15 @@ def remap_beam( fits_file , step=1, do_test=False, radius=20 ) :
          
 def matlab2sin( matlab_fits_file , x_size=512, step=1, do_test=False, radius=20 ) :
    beam   = pyfits.open( matlab_fits_file )
-   matlab_data = beam[0]
+   matlab_data = beam[1] # was 0 previously
    y_size = x_size
    npix = x_size    
-   print("Read file %s with size (%d,%d)" % (matlab_fits_file,x_size,y_size))
+#   print("Read file %s with size (%d,%d)" % (matlab_fits_file,x_size,y_size))
+   if matlab_data is None :
+       print("ERROR : could not read FITS file %s" % (matlab_fits_file))
+       return 
+
+   print("Read file %s with size (%d,%d)" % (matlab_fits_file,matlab_data.shape[0],matlab_data.shape[0]))
    
    (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True )
    (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True )
@@ -313,6 +318,74 @@ def matlab2sin( matlab_fits_file , x_size=512, step=1, do_test=False, radius=20 
                   
 
    out_file = matlab_fits_file.replace(".fits","_aee.fits" )    
+   save_fits( out_beam, out_file )            
+         
+def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, radius=20, out_file="feko.fits" ) :
+   y_size = x_size
+   npix = x_size
+
+   print("Read file with size (%d,%d)" % (theta_phi.shape[0],theta_phi.shape[1]))
+   
+   (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True )
+   (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True )
+   
+   print("Test orientation azim SIN :")
+   print("         %.2f            " % (az_sin[npix-1,npix/2]))                  # WARNING data[y,x] !!!
+   print("%.2f                 %.2f" % (az_sin[npix/2,0],az_sin[npix/2,npix-1])) # WARNING data[y,x] !!!   
+   print("         %.2f            " % (az_sin[0,npix/2]))                       # WARNING data[y,x] !!! 
+
+   print("Test orientation xy SIN :")
+   print("         (%d,%d)            "   % (x_zea[npix/2,npix-1],y_zea[npix/2,npix-1]))
+   print("(%d,%d)                (%d,%d)" % (x_zea[0,npix/2],y_zea[0,npix/2],x_zea[npix-1,npix/2],y_zea[npix-1,npix/2]))
+   print("         (%d,%d)            "   % (x_zea[npix/2,0],y_zea[npix/2,0]))
+   
+#   dist_za_sin = numpy.sin( za_sin )*(npix/2)
+#   x_pixel = ( npix/2 - dist_za_sin*numpy.sin( az_sin ) ) 
+#   y_pixel = ( npix/2 + dist_za_sin*numpy.cos( az_sin ) )   
+
+   
+   save_fits(az_sin,"test_az_sin.fits")
+   save_fits(za_sin,"test_za_sin.fits")
+   
+   save_fits(az_zea,"test_az_zea.fits")
+   save_fits(za_zea,"test_za_zea.fits")
+   
+   test_out_file = out_file.replace(".fits","_test.fits" )
+   save_fits( beam_values_2d, test_out_file )
+   
+   out_beam = numpy.zeros( (x_size,y_size) )
+   for y in range(0,y_size,step):
+      # print "i = %d" % (i)
+      for x in range(0,x_size): 
+         print("TEST (x,y) = (%d,%d)" % (x,y))
+         az_zea_ij = az_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         za_zea_ij = za_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         
+         if not numpy.isnan( za_zea_ij ) :
+             d_sin     = math.sin( za_zea_ij )
+             y_zea_ij  = y_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+             x_zea_ij  = x_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+         
+             d_sin = (npix/2)*math.sin( za_zea_ij )
+             y_sin_ij = d_sin*math.cos( az_zea_ij ) + (npix/2)
+             x_sin_ij = d_sin*math.sin( az_zea_ij ) + (npix/2)
+             
+             if do_test :     
+                 print("\t(%d,%d) : ZEA (x_zea,y_zea) = (%d,%d) , (az,za) = (%.2f,%.2f) [deg] -> SIN : (x_sin,y_sin) = (%d,%d)" % (x,y,x_zea_ij,y_zea_ij,az_zea_ij,za_zea_ij,int(x_sin_ij),int(y_sin_ij)))
+
+             # find given (az,za) from ZEA map in SIN map and return beam value (in SIN mapping) :
+             beam_value = numpy.NaN
+             
+             az_zea_ij_deg = az_zea_ij*(180.00/math.pi)
+             za_zea_ij_deg = za_zea_ij*(180.00/math.pi)
+             
+             az_zea_ij_deg_idx = int( az_zea_ij_deg / 0.5 )
+             za_zea_ij_deg_idx = int( za_zea_ij_deg / 0.5 )
+             
+             beam_value = beam_values_2d[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
+             out_beam[x,y] = beam_value
+                  
+
    save_fits( out_beam, out_file )            
          
          
