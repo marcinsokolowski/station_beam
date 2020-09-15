@@ -451,7 +451,8 @@ def main():
 
         if options.correlator_mode :  
            # in correlator mode, T_ant is really from just a single dipole, but A_eff is still for the full beam !
-            (dip_beamsky_sum_XX,dip_beam_sum_XX,dip_Tant_XX,dip_beam_dOMEGA_sum_XX,dip_beamsky_sum_YY,dip_beam_sum_YY,dip_Tant_YY,dip_beam_dOMEGA_sum_YY,dip_beams) = make_primarybeammap( gps, delays, freq, model=model, plottype=plottype, 
+            (dip_beamsky_sum_XX,dip_beam_sum_XX,dip_Tant_XX,dip_beam_dOMEGA_sum_XX,dip_beamsky_sum_YY,dip_beam_sum_YY,dip_Tant_YY,dip_beam_dOMEGA_sum_YY,dip_beams) = make_primarybeammap( gps, delays, freq, model=model, 
+                                                                                                                                                   plottype=None, # do not plot single dipole beams 
                                                                                                                                                    extension=extension, resolution=options.size, 
                                                                                                                                                    directory=options.dir, out_filename=options.out_filename,
                                                                                                                                                    pointing_za_deg=options.pointing_za_deg,

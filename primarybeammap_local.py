@@ -466,7 +466,7 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
         if plottype=='all':
             plottypes=['beam','sky','beamsky','beamsky_scaled'] 
         else:
-            if plottype.lower() =='none' :
+            if plottype is None or plottype.lower() =='none' :
                 plottypes=[]
             else :
                 plottypes=[plottype]            
