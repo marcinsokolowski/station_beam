@@ -462,7 +462,7 @@ class ApertureArray:
         ay[p] = 0.0
         return (ax,ay)
 
-    def getResponse(self,az,za,freq=155e6,delays=None):
+    def getResponse(self,az,za,freq=155e6,delays=None,debug=0):
         """
         Get the full Jones matrix response of the tile including the dipole
         reponse and array factor incorporating any mutual coupling effects
@@ -472,12 +472,14 @@ class ApertureArray:
         of points to calculate the response for.
         Result is an array like az/za with [2][2] on the end for the Jones.
         """
-        print("delays = %s , size(delays) = %d, shape(delays) = %s, n_dipoles_eda = %d" % (delays,numpy.size(delays),delays.shape,n_dipoles_eda))        
+        if debug > 0 :
+           print("delays = %s , size(delays) = %d, shape(delays) = %s, n_dipoles_eda = %d" % (delays,numpy.size(delays),delays.shape,n_dipoles_eda))        
 #        assert delays == None or numpy.size(delays)==2*n_dipoles_eda, "Expecting 512 delays, got %r" % str(numpy.size(delays))
         assert delays is None or (numpy.size(delays[0])==n_dipoles_eda and numpy.size(delays[1])==n_dipoles_eda), "Expecting 2 x %d delays, got %s" % ((n_dipoles_eda),delays.shape )
-        print("Number of delays = %d" % numpy.size(delays))
-        print("delays = %s" % (delays))
-        print("n_dipoles_eda = %d" % (n_dipoles_eda))               
+        if debug > 0 :
+           print("Number of delays = %d" % numpy.size(delays))
+           print("delays = %s" % (delays))
+           print("n_dipoles_eda = %d" % (n_dipoles_eda))               
 
         # assert delays == None or numpy.size(delays)==2*n_dipoles_eda, "Expecting 512 delays, got %r" % str(numpy.size(delays))
         print("Number of delays = %d" % numpy.size(delays))
@@ -499,7 +501,7 @@ class ApertureArray:
         j[...,1,1] *= ay
         return j
 
-    def getIdealDelays(self,az,za):
+    def getIdealDelays(self,az,za,debug=0):
         """
         Calculate the ideal delays given the positions of the dipoles to point
         at the sky direction defined by az and za (in radian)
@@ -516,9 +518,11 @@ class ApertureArray:
 #        print "Ideal delays in nanoseconds = %s" % ((delays/vel_light)*1e9)
 
         delays_ns = ((delays/vel_light)*1e9)
-        print("Ideal delays in nanoseconds :")
-        for ant in range(0,len(delays)) :
-           print("Ant_index_%03d : %.4f [ns]" % (ant,delays_ns[ant]))
+        
+        if debug > 0 :
+           print("Ideal delays in nanoseconds :")
+           for ant in range(0,len(delays)) :
+              print("Ant_index_%03d : %.4f [ns]" % (ant,delays_ns[ant]))
            
         return delays
 

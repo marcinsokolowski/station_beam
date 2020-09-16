@@ -379,11 +379,12 @@ def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, 
              az_zea_ij_deg = az_zea_ij*(180.00/math.pi)
              za_zea_ij_deg = za_zea_ij*(180.00/math.pi)
              
-             az_zea_ij_deg_idx = int( az_zea_ij_deg / 0.5 )
-             za_zea_ij_deg_idx = int( za_zea_ij_deg / 0.5 )
+             az_zea_ij_deg_idx = int( round(az_zea_ij_deg / 0.5) ) + 10
+             za_zea_ij_deg_idx = int( round(za_zea_ij_deg / 0.5) ) + 10
              
-             beam_value = beam_values_2d[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
-             out_beam[x,y] = beam_value
+             if az_zea_ij_deg_idx < beam_values_2d.shape[0] and za_zea_ij_deg_idx < beam_values_2d.shape[1] : 
+                beam_value = beam_values_2d[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
+                out_beam[x,y] = beam_value
                   
 
    save_fits( out_beam, out_file )            
