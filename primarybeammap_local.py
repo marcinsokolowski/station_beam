@@ -78,7 +78,7 @@ def set_sun( add_sun_param, sun_ra_param, sun_dec_param, scale_size=1.00 ) :
    sun_radius_arcsec = sun_radius_arcsec * scale_size
    sun_radius_deg = sun_radius_arcsec / 3600.00
    
-   print("Sun parameters (ra,dec) = (%.4f,%.4f) , radius = %.2f [arcsec]" % (sun_ra,sun_dec,sun_radius_arcsec))
+   print("Sun parameters radius = %.2f [arcsec] and coordinates will be calculated for each timestamp (new version)" % (sun_radius_arcsec))
 
 def shift_antenna( ant_idx, dx=0, dy=0 ) :
    eda_beam.shift_antenna( ant_idx=ant_idx, dx=dx, dy=dy )   
@@ -197,20 +197,27 @@ za_grid - grid of ZAs onto which we map sky
 
     # test adding sun
     if add_sun : 
-       print("Adding sun at (ra,dec)=(%.4f,%.4f) [deg]" % (sun_ra,sun_dec))
-       print("dec shape = %d x %d" % (grid2eq['dec'].shape[0],grid2eq['dec'].shape[1]))
-       for dy in range(0,grid2eq['dec'].shape[1]):
-          for dx in range(0,grid2eq['dec'].shape[0]):
-             dec_px=grid2eq['dec'][dx,dy]
-             ra_px=grid2eq['RA'][dx,dy]
+       # 2020-10-13 - always calculate current Sun position :
+       # uxtime = Time( gps, scale='gps', format="unix" )       
+       uxtime = gps + 315964783 # TODO : should use proper function, but cannot find it now ...
+       (sun_ra,sun_dec, sun_az, sun_alt, sun_za ) = fits_beam.sun_position( unix_time=uxtime )
+    
+       if sun_alt > 0 :
+          print("Adding sun at (ra,dec)=(%.4f,%.4f) [deg] (az,elev)=(%.4f,%.4f) [deg] for gps=%d / uxtime = %d" % (sun_ra,sun_dec,sun_az,sun_alt,gps,uxtime))
+          print("dec shape = %d x %d" % (grid2eq['dec'].shape[0],grid2eq['dec'].shape[1]))
+          for dy in range(0,grid2eq['dec'].shape[1]):
+             for dx in range(0,grid2eq['dec'].shape[0]):
+                dec_px=grid2eq['dec'][dx,dy]
+                ra_px=grid2eq['RA'][dx,dy]
           
-             dist_arcsec = ang_dist(ra_px,dec_px,sun_ra,sun_dec)*(180.00/math.pi)*3600.00
-             if dist_arcsec < sun_radius_arcsec :
-                my_map[dx,dy] = sun_T_b
-                print("Sun detected")
+                dist_arcsec = ang_dist(ra_px,dec_px,sun_ra,sun_dec)*(180.00/math.pi)*3600.00
+                if dist_arcsec < sun_radius_arcsec :
+                   my_map[dx,dy] = sun_T_b
+                   print("Sun detected")
+       else : 
+          print("WARNING : Sun below horizon at (ra,dec)=(%.4f,%.4f) [deg] (az,elev)=(%.4f,%.4f) [deg] for gps=%d / uxtime = %d" % (sun_ra,sun_dec,sun_az,sun_alt,gps,uxtime))
        
-    
-    
+        
     return my_map
      
 def eq2horz(ra, dec, gps): 
@@ -492,6 +499,40 @@ def make_primarybeammap(gps, delays, frequency, model, beams=None, extension='pn
                              figsize=figsize,directory=directory, lst=lst)
     
     out_file.close()
+    
+    if False :
+       # This is integration test to verify if this way of integrating beam is better than using projection and if it agrees with showspec 
+       # see memo : /home/msok/Desktop/AAVS2/logbook/20200915_array_factor_beam_vs_feko_beam.odt
+       test_sum_domega = 0
+       test_sum = 0
+       test_sum2 = 0
+       # integration test :
+       theta_deg = 0
+       step = 1 # 0.1 on bighorns
+       step_rad = step*(math.pi/180.00)
+       while theta_deg <= 90.00 :
+          print("DEBUG_INTEGRATION : theta_deg = %.4f [deg] , test_sum = %.10f , test_domega = %.10f ( test_sum2 = %.10f )" % (theta_deg,test_sum,test_sum_domega,test_sum2))
+          theta_rad = (math.pi/180.00)*theta_deg
+          phi_deg = 0.00       
+          while phi_deg <= 360.00 :
+             phi_rad = (math.pi/180.00)*phi_deg          
+             dOmega = math.sin(theta_rad)*step_rad*step_rad
+          
+             beams_xx,beams_yy=eda_beam.get_eda_beam( numpy.array([[theta_rad]]), numpy.array([[phi_rad]]), resolution=resolution, zenithnorm=True, power=True, freq=frequency, lst=lst, 
+                                                      pointing_za_deg=pointing_za_deg, pointing_az_deg=pointing_az_deg, gain_sigma_dB=gain_sigma_dB, 
+                                                      gain_sigma_ph_160mhz=gain_sigma_ph_160mhz, dipole_type=dipole_type, xpos=xpos, ypos=ypos, zpos=zpos,
+                                                      use_beam_fits=use_beam_fits, station_name=station_name, projection=projection )
+
+             test_sum += beams_yy[0,0]*dOmega
+             test_sum2 += beams_yy[0,0]
+             test_sum_domega += dOmega
+          
+             phi_deg += step
+          
+          theta_deg += step
+       
+       print("DEBUG_INTEGRATION : test_sum = %.10f , test_domega = %.10f ( test_sum2 = %.10f )" % (test_sum,test_sum_domega,test_sum2))
+    
     return (beamsky_sum_XX,beam_sum_XX,Tant_XX,beam_dOMEGA_sum_XX,beamsky_sum_YY,beam_sum_YY,Tant_YY,beam_dOMEGA_sum_YY,beams)
 
 

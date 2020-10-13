@@ -165,8 +165,8 @@ def main():
     
     # sun:
     parser.add_option('--add_sun',action="store_true",dest="add_sun",default=False,help="Add sun")
-    parser.add_option('--sun_ra',dest="sun_ra",default=290.46450056,help="Sun RA [deg] default = %default [deg]",type="float")
-    parser.add_option('--sun_dec',dest="sun_dec",default=-26.70331900,help="Sun Dec [deg] default = %default [deg]",type="float")
+    parser.add_option('--sun_ra',dest="sun_ra",default=None,help="Sun RA [deg] default = not set",type="float")
+    parser.add_option('--sun_dec',dest="sun_dec",default=None,help="Sun Dec [deg] default = not set",type="float")
 
     # error in single antenna position:
     # shift_antenna
@@ -230,7 +230,7 @@ def main():
     print("Output file = %s (mode = %s)" % (options.out_filename,options.outfile_mode))
     print("Use S11   = %s"   % options.use_s11)
     print("Dipole type = %s" % options.dipole_type)
-    print("Add sun     = %s at (ra,dec) = (%.4f,%.4f) [deg]" % (options.add_sun,options.sun_ra,options.sun_dec))
+    print("Add sun     = %s at (RA,DEC) calculated for each timestamp" % (options.add_sun))
     print("Shifted antenna index = %d , shift = (%.2f,%.2f) [m]" % (options.offset_ant_idx,options.offset_ant_dx,options.offset_ant_dy))
     print("Print header = %s" % (options.print_header))
     print("Header       = %s" % (options.header))
