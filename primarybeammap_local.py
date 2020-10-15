@@ -52,8 +52,8 @@ logger.setLevel(logging.WARNING)
 MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height=377.8)   
 
 add_sun=False
-sun_ra=229.5167  # test :290.46450056
-sun_dec=-18.2504 # test : -26.70331900
+sun_ra=None  # test :290.46450056
+sun_dec=None # test : -26.70331900
 # SUN :
 #   double sun_T_b = 600000.00; // from Claude Mercier and Gilbert Chambe 2009 paper 
 #   double sun_radius_arcsec = 1818.00/2.00;
@@ -559,7 +559,8 @@ def get_beam_power(  gps, delays, frequency, model, pointing_az_deg=0, pointing_
 
 def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
                  figsize=8, vmax=None, cbar_label='beam x Tsky (K)', 
-                 directory=None, dec=-26.7033, lst=0):       
+                 directory=None, dec=-26.7033, lst=0, 
+                 projection='ZEA' ):       
     # do the plotting
     # this sets up the figure with the right aspect ratio
     
@@ -617,16 +618,30 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
         # add keywords:
 #        pixscale=180.0/(beamsky.shape[0]/2) # for all-sky
 # based on eda_beam.py :
-        pixscale=180.0/beamsky.shape[0]
-        
-        hdu.header['CRPIX1'] = beamsky.shape[0]/2 + 1
-        hdu.header['CDELT1'] = pixscale/math.pi
+
+# 2020-10-15 - this will only work ok for SIN (slant orhtographic correction ) not ZEA, but ZEA is required for equal area pixels in the integration 
+        dec_rad = math.fabs( dec*(math.pi/180.00) )
+        pixscale = 180.0/ math.pi
+        mu = 0.00 #  1e20 - not ok # 0.00 ~ ok, 1.00 - not ok
+        # see Eq. 16 in Greisen and Carballeta /home/msok/Desktop/SKA/Tim/doc/AllSky_imaging/references
+#        pixscale_final = (180.0/ (math.pi*beamsky.shape[0])) * ( (mu+1) * math.cos(dec_rad) ) / ( mu + 	math.sin(dec_rad) )
+        if projection == 'ZEA' :
+           pixscale_final = (180.0/ (math.pi*((beamsky.shape[0])/math.sqrt(2.00)))) * ( (mu+1) * math.cos(dec_rad) ) / ( mu +         math.sin(dec_rad) )
+        else :
+           pixscale_final = (180.0/ (math.pi*beamsky.shape[0])) * ( (mu+1) * math.cos(dec_rad) ) / ( mu + math.sin(dec_rad) )  
+
+        CTYPE1_string = 'RA---%s' % (projection)
+        CTYPE2_string = 'DEC---%s' % (projection)
+                
+        dec_rad = math.fabs( dec*(math.pi/180.00) )
+        hdu.header['CRPIX1'] = beamsky.shape[0]/2 # + 1
+        hdu.header['CDELT1'] = pixscale_final # see Eq. 16 in Greisen and Carballeta /home/msok/Desktop/SKA/Tim/doc/AllSky_imaging/references
         hdu.header['CRVAL1'] = lst*15.00 
-        hdu.header['CTYPE1'] = 'RA---SIN'           
-        hdu.header['CRPIX2'] = beamsky.shape[0]/2 + 1
-        hdu.header['CDELT2'] = pixscale/math.pi 
+        hdu.header['CTYPE1'] = CTYPE1_string # or SIN for SIN projection see 348 call in (az_grid, za_grid,n_total,dOMEGA) = fits_beam.makeAZZA(resolution,projection='ZEA')
+        hdu.header['CRPIX2'] = beamsky.shape[0]/2 # + 1
+        hdu.header['CDELT2'] = pixscale_final # see Eq. 16 in Greisen and Carballeta /home/msok/Desktop/SKA/Tim/doc/AllSky_imaging/references
         hdu.header['CRVAL2']  = dec
-        hdu.header['CTYPE2']  = 'DEC--SIN'           
+        hdu.header['CTYPE2']  = CTYPE2_string # or SIN for SIN projection see 348 call in (az_grid, za_grid,n_total,dOMEGA) = fits_beam.makeAZZA(resolution,projection='ZEA')          
         hdu.header['BEAM_AZ'] = 0 
         hdu.header['BEAM_ZA'] = 0 
         hdu.header['FREQ']    = frequency
