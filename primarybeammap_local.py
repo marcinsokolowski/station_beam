@@ -620,7 +620,8 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
 # based on eda_beam.py :
 
 # 2020-10-15 - this will only work ok for SIN (slant orhtographic correction ) not ZEA, but ZEA is required for equal area pixels in the integration 
-        dec_rad = math.fabs( dec*(math.pi/180.00) )
+#        dec_rad = math.fabs( -26.98138889*(math.pi/180.00) ) # WARNING : this one uses zenith MRO DEC at EPOCH =  B1950 as HASLAM is in this epoch and otherwise there is shift by a few pixels !
+        dec_rad = math.fabs( dec*(math.pi/180.00) ) # WARNING : Haslam epoch B1950 vs. J2000 - still to be sorted !!!
         pixscale = 180.0/ math.pi
         mu = 0.00 #  1e20 - not ok # 0.00 ~ ok, 1.00 - not ok
         # see Eq. 16 in Greisen and Carballeta /home/msok/Desktop/SKA/Tim/doc/AllSky_imaging/references
@@ -645,6 +646,7 @@ def plot_beamsky(beamsky, frequency, textlabel, filename, extension,
         hdu.header['BEAM_AZ'] = 0 
         hdu.header['BEAM_ZA'] = 0 
         hdu.header['FREQ']    = frequency
+        hdu.header['EPOCH']   = 2000.00 # 1950.00 # 2020-10-15 fix : This is because HASLAM is in B1950 and otherwise sources have position shifted by a few pixels !
                        
         hdulist = pyfits.HDUList([hdu])
         hdulist.writeto(full_filename,clobber=True)        
