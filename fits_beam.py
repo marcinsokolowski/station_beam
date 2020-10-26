@@ -9,6 +9,15 @@ from string import Template
 import datetime
 import time
 import beam_tools
+import copy
+
+# in order to avoid crash due to missing SUPER-EXACT ephemeris files which will resule in unnoticeable error:
+import astropy
+from astropy.utils.iers import conf
+conf.auto_max_age = None
+from astropy.utils import iers
+iers.conf.auto_download = False  
+
 
 # import pyfits
 import astropy.io.fits as pyfits
@@ -31,8 +40,8 @@ except :
 # options :
 from optparse import OptionParser,OptionGroup
 
-current_fits_filename = None
-current_fits_beam     = None 
+# current_fits_filename = None
+current_fits_beams    = {}
 # azim_map              = None
 # za_map                = None
 
@@ -326,6 +335,79 @@ def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, 
 
    print("Read file with size (%d,%d)" % (theta_phi.shape[0],theta_phi.shape[1]))
    
+   (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True, force_zenith=True )
+   (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True, force_zenith=True )
+   
+   print("Test orientation azim SIN :")
+   print("         %.2f            " % (az_sin[npix-1,npix/2]))                  # WARNING data[y,x] !!!
+   print("%.2f                 %.2f" % (az_sin[npix/2,0],az_sin[npix/2,npix-1])) # WARNING data[y,x] !!!   
+   print("         %.2f            " % (az_sin[0,npix/2]))                       # WARNING data[y,x] !!! 
+
+   print("Test orientation xy SIN :")
+   print("         (%d,%d)            "   % (x_zea[npix/2,npix-1],y_zea[npix/2,npix-1]))
+   print("(%d,%d)                (%d,%d)" % (x_zea[0,npix/2],y_zea[0,npix/2],x_zea[npix-1,npix/2],y_zea[npix-1,npix/2]))
+   print("         (%d,%d)            "   % (x_zea[npix/2,0],y_zea[npix/2,0]))
+   
+#   dist_za_sin = numpy.sin( za_sin )*(npix/2)
+#   x_pixel = ( npix/2 - dist_za_sin*numpy.sin( az_sin ) ) 
+#   y_pixel = ( npix/2 + dist_za_sin*numpy.cos( az_sin ) )   
+
+   
+   save_fits(az_sin,"test_az_sin.fits")
+   save_fits(za_sin,"test_za_sin.fits")
+   
+   save_fits(az_zea,"test_az_zea.fits")
+   save_fits(za_zea,"test_za_zea.fits")
+   
+   test_out_file = out_file.replace(".fits","_test.fits" )
+   save_fits( beam_values_2d, test_out_file )
+   
+   out_beam = numpy.zeros( (x_size,y_size) )
+   for y in range(0,y_size-1,step):
+      # print "i = %d" % (i)
+      for x in range(0,x_size-1): 
+         # print("TEST (x,y) = (%d,%d)" % (x,y))
+         az_zea_ij = az_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         za_zea_ij = za_zea[y,x] # this order of x,y is ok (see makeAZZA)
+         
+         if not numpy.isnan( za_zea_ij ) :
+             d_sin     = math.sin( za_zea_ij )
+             y_zea_ij  = y_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+             x_zea_ij  = x_zea[x,y] + (npix/2) # or [y,x] see "Test orientation xy SIN :"
+         
+             d_sin = (npix/2)*math.sin( za_zea_ij )
+             y_sin_ij = d_sin*math.cos( az_zea_ij ) + (npix/2)
+             x_sin_ij = d_sin*math.sin( az_zea_ij ) + (npix/2)
+             
+             if do_test :     
+                 print("\t(%d,%d) : ZEA (x_zea,y_zea) = (%d,%d) , (az,za) = (%.2f,%.2f) [deg] -> SIN : (x_sin,y_sin) = (%d,%d)" % (x,y,x_zea_ij,y_zea_ij,az_zea_ij,za_zea_ij,int(x_sin_ij),int(y_sin_ij)))
+
+             # find given (az,za) from ZEA map in SIN map and return beam value (in SIN mapping) :
+             beam_value = numpy.NaN
+             
+             az_zea_ij_deg = az_zea_ij*(180.00/math.pi)
+             za_zea_ij_deg = za_zea_ij*(180.00/math.pi)
+             
+             az_zea_ij_deg_idx = int( round(az_zea_ij_deg / 0.5) )
+             za_zea_ij_deg_idx = int( round(za_zea_ij_deg / 0.5) )
+             
+             if az_zea_ij_deg_idx < beam_values_2d.shape[0] and za_zea_ij_deg_idx < beam_values_2d.shape[1] : 
+                beam_value = beam_values_2d[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
+#                if (x+1) < out_beam.shape[0] and (y+1) < out_beam.shape[1] :
+                out_beam[x,y] = beam_value
+                
+                if x>=250 and x<=260 and y>=250 and y<=260 :
+                   print("DEBUG(%d,%d) = %.8f at (az,za) = (%.6f,%.6f)" % (x,y,beam_value,az_zea_ij,za_zea_ij))
+                  
+
+   save_fits( out_beam, out_file )            
+         
+def beammap2sin_OLD( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, radius=20, out_file="feko.fits" ) :
+   y_size = x_size
+   npix = x_size
+
+   print("Read file with size (%d,%d)" % (theta_phi.shape[0],theta_phi.shape[1]))
+   
    (az_sin,za_sin,x_sin,y_sin,z_sin,d_sin) = beam_tools.makeAZZA( x_size, 'SIN' ,azim_from_north=True, return_all=True )
    (az_zea,za_zea,x_zea,y_zea,z_zea,d_zea) = beam_tools.makeAZZA( x_size, 'ZEA' ,azim_from_north=True, return_all=True )
    
@@ -354,10 +436,10 @@ def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, 
    save_fits( beam_values_2d, test_out_file )
    
    out_beam = numpy.zeros( (x_size,y_size) )
-   for y in range(0,y_size,step):
+   for y in range(0,y_size-1,step):
       # print "i = %d" % (i)
-      for x in range(0,x_size): 
-         print("TEST (x,y) = (%d,%d)" % (x,y))
+      for x in range(0,x_size-1): 
+         # print("TEST (x,y) = (%d,%d)" % (x,y))
          az_zea_ij = az_zea[y,x] # this order of x,y is ok (see makeAZZA)
          za_zea_ij = za_zea[y,x] # this order of x,y is ok (see makeAZZA)
          
@@ -379,11 +461,12 @@ def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, 
              az_zea_ij_deg = az_zea_ij*(180.00/math.pi)
              za_zea_ij_deg = za_zea_ij*(180.00/math.pi)
              
-             az_zea_ij_deg_idx = int( round(az_zea_ij_deg / 0.5) ) + 10
-             za_zea_ij_deg_idx = int( round(za_zea_ij_deg / 0.5) ) + 10
+             az_zea_ij_deg_idx = int( round(az_zea_ij_deg / 0.5) )
+             za_zea_ij_deg_idx = int( round(za_zea_ij_deg / 0.5) )
              
              if az_zea_ij_deg_idx < beam_values_2d.shape[0] and za_zea_ij_deg_idx < beam_values_2d.shape[1] : 
                 beam_value = beam_values_2d[az_zea_ij_deg_idx,za_zea_ij_deg_idx]
+#                if (x+1) < out_beam.shape[0] and (y+1) < out_beam.shape[1] :
                 out_beam[x,y] = beam_value
                   
 
@@ -394,8 +477,8 @@ def beammap2sin( theta_phi, beam_values_2d , x_size=512, step=1, do_test=False, 
 
 # TODO (2020-08-20) : use dictionary to cache all FITS files ! It all works very slow on bighorns ...
 def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/" , postfix="zea" ) :
-   global current_fits_filename
-   global current_fits_beam
+#   global current_fits_filename
+   global current_fits_beams
 #   global azim_map
 #   global za_map
 
@@ -405,20 +488,30 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
       postfix_full = "_" + postfix 
    beam_file_name_template = "%s/%s/%s/%s_%spol_ortho_%03d%s.fits" % (simulation_path,station_name,postfix.upper(),station_name,polarisation_string,int(frequency_mhz),postfix_full)
    beam_file_name = Template( beam_file_name_template ).substitute(os.environ)
+   fits_beam = None
    
-      
-   if current_fits_filename is None or current_fits_beam is None or beam_file_name != current_fits_filename :
+#   if current_fits_filename is None or current_fits_beam is None or beam_file_name != current_fits_filename :
+   cached=False
+   if beam_file_name in current_fits_beams.keys() :
+      print("FITS file %s found in cache -> returning" % (beam_file_name))
+      cached=True
+   else :
       print("Reading fits file %s ..." % (beam_file_name))
            
-      current_fits_beam = pyfits.open( beam_file_name )
-      x_size = current_fits_beam[0].header['NAXIS1']  
-      y_size = current_fits_beam[0].header['NAXIS2']
+      fits_beam = pyfits.open( beam_file_name )
+      x_size = fits_beam[0].header['NAXIS1']  
+      y_size = fits_beam[0].header['NAXIS2']
 
       print() 
       print('# \tRead fits file %s of size %d x %d' % (beam_file_name,x_size,y_size))
-      current_fits_filename = beam_file_name
-   else :
-      print("Fits file name = %s is the same as previous %s -> not updating cache" % (beam_file_name,current_fits_filename))
+      
+      if len(current_fits_beams) < 50 :
+         current_fits_beams[beam_file_name] = copy.copy( fits_beam )
+         cached=True
+      else :
+         print("INFO : exceeded number of cached beams -> no caching for file %s" % (beam_file_name))
+#      fits_beam.close()
+#      current_fits_filename = beam_file_name
       
       
 #   x_size = current_fits_beam[0].header['NAXIS1']  
@@ -427,8 +520,10 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 #      (azim_map,za_map) = makeAZZA( x_size )
 #      print "Generated local AZZA map for size %d x %d pixels" % (x_size,x_size)
   
-
-   return (current_fits_beam,current_fits_filename)
+   if cached :
+      return (current_fits_beams[beam_file_name],beam_file_name)
+   else :
+      return (fits_beam,beam_file_name)
 
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
@@ -476,8 +571,12 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
    
 #   dist_za = numpy.sin( za_deg*(math.pi/180.00) )*(npix/2)
 # 2020-05-30 fix :   
+   is_zea = False
+   if beam_file_name.upper().find("ZEA") >= 0 or beam_file_name.upper().find("AEE") >= 0 : # AEE also in ZEA projection !   
+      is_zea = True
+
    dist_za = None 
-   if beam_file_name.upper().find("ZEA") >= 0 :
+   if is_zea :
       # if files / AZZA map is in ZEA (zenith equal area projection) -> distance from the center has to by calculated in a different way 
       # possibly still division by sqrt(2.00) is needed here as otherwise will go beyond 1 
       dist_za = (npix/2)*numpy.sqrt( 2.00*(1.00 - numpy.cos(za_deg*(math.pi/180.00)) )  ) / math.sqrt(2.00)
@@ -614,7 +713,8 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
                          simulation_path="$HOME/aavs-calibration/BeamModels/",
                          use_isotropic_antenna=False,
                          use_beam_as_is=True,
-                         debug=False, power=False,
+                         debug=False, 
+                         power=False,
                          projection="zea"
                         ) :
    print("DEBUG get_fits_beam_multi : projection = %s" % (projection))
@@ -677,10 +777,13 @@ def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz,
 #   print "Image size = (%d,%d) vs. map size (%d,%d)" % (x_size,y_size,azim_map.shape[0],azim_map.shape[1])
 #   if x_size != azim_map.shape[0] or y_size != azim_map.shape[1] :
 #      raise Exception(  "ERROR : %d != %d or %d != %d -> size mismatch -> cannot continue" % (x_size,y_size,azim_map.shape[0],azim_map.shape[1]) )
-      
+ 
+   is_zea = False
+   if beam_file_name.upper().find("ZEA") >= 0 or beam_file_name.upper().find("AEE") >= 0 : # AEE also in ZEA projection !   
+      is_zea = True            
 
    dist_za = None 
-   if beam_file_name.upper().find("ZEA") >= 0 :
+   if is_zea :
       # if files / AZZA map is in ZEA (zenith equal area projection) -> distance from the center has to by calculated in a different way 
       # possibly still division by sqrt(2.00) is needed here as otherwise will go beyond 1 
       dist_za = (npix/2)*numpy.sqrt( 2.00*(1.00 - numpy.cos(za_deg*(math.pi/180.00)) )  ) / math.sqrt(2.00)
@@ -1236,12 +1339,32 @@ if __name__ == "__main__":
          ( ra, dec, az, alt, za ) = sun_position( options.unix_time )
          print("INFO : sun position calculated (RA,DEC) = (%.4f,%.4f) [deg] , (AZ,ELEV,ZA) = (%.4f,%.4f,%.4f) [deg]" % (ra, dec, az, alt, za))
       
-      beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
-      beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+      beam_x = 0
+      try : 
+         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+      except : 
+         print("ERROR : beam-X cannot be calculated")
+
+      beam_y = 0         
+      try :          
+         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+      except :
+         print("ERROR : beam-Y cannot be calculated")
+         
       print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
       
-      beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' , station_name=options.station_name )
-      beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' , station_name=options.station_name )
+      beam_x_2 = [[0]]
+      try : 
+         beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' , station_name=options.station_name, projection=options.projection )
+      except :
+         print("ERROR : beam-X cannot be calculated using get_fits_beam_multi")
+         
+      beam_y_2 = [[0]] 
+      try :    
+         beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' , station_name=options.station_name, projection=options.projection )
+      except :
+         print("ERROR : beam-Y cannot be calculated using get_fits_beam_multi")
+         
       print("DEBUG2: BEAM_X = %.4f , BEAM_Y = %.4f ( SQUARED = %.4f , %.4f )" % (beam_x_2[0][0],beam_y_2[0][0],(beam_x_2[0][0])**2,(beam_y_2[0][0])**2))
 
       
