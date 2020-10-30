@@ -30,6 +30,9 @@ rsync -avP ${station}:/data/real_time_calibration/${dtm} .
 if [[ -d ${local_dir}/${dtm} ]]; then
    cd ${local_dir}/${dtm}
    
+   echo "gzip -df *.hdf5.gz"
+   gzip -df *.hdf5.gz
+   
    echo "generate_beam_on_sun_file.sh ${beams_name} > beam_on_sun.out 2>&1"
    generate_beam_on_sun_file.sh ${beams_name} > beam_on_sun.out 2>&1
    
