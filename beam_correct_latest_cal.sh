@@ -16,14 +16,19 @@ local_dir=/media/msok/0754e982-0adb-4e33-80cc-f81dda1580c8/${station}/data/real_
 cd ${local_dir}
 pwd
 
-path=`ssh ${station} "ls -dtr /data/real_time_calibration/????_??_??-??:??" | tail -1`
-dtm=`basename $path`
+dtm=2018_01_01-00:00
+if [[ -n "$2" && "$2" != "-" ]]; then
+   dtm=$2
+else
+   path=`ssh ${station} "ls -dtr /data/real_time_calibration/????_??_??-??:??" | tail -1`
+   dtm=`basename $path`
+fi
 
 echo "rsync -avP ${station}:/data/real_time_calibration/${dtm} ."
 rsync -avP ${station}:/data/real_time_calibration/${dtm} .
 
-if [[ -d ${dtm} ]]; then
-   cd ${dtm}
+if [[ -d ${local_dir}/${dtm} ]]; then
+   cd ${local_dir}/${dtm}
    
    echo "generate_beam_on_sun_file.sh ${beams_name} > beam_on_sun.out 2>&1"
    generate_beam_on_sun_file.sh ${beams_name} > beam_on_sun.out 2>&1
@@ -36,6 +41,6 @@ if [[ -d ${dtm} ]]; then
    
    cd -
 else
-   echo "ERROR : directory ${dtm} does not exist"
+   echo "ERROR : directory ${local_dir}/${dtm} does not exist"
 fi
 
