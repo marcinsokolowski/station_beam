@@ -33,6 +33,15 @@ def lfaa_ska( freq_mhz, interpolation_kind='cubic' ) :
    aot_ret = aot_func( freq_mhz )
    return aot_ret
    
+
+def lfaa_sefd( freq_mhz, n_stations=512, interpolation_kind='cubic' ) :
+   aot = lfaa_ska( freq_mhz )
+   aot_one = aot / n_stations
+   
+   return ((2.00*1380.00)/aot_one)
+   
+def aot2sefd( aot ) :
+   return ((2.00*1380.00)/aot)   
    
    
 def lfaa_per_station( freq_mhz , n_stations=512, interpolation_kind='cubic' ) :
@@ -51,7 +60,11 @@ if __name__ == "__main__":
        interpolation_kind = sys.argv[2]
 
     aot_ska = lfaa_ska( freq_mhz , interpolation_kind=interpolation_kind )
+    sefd_ska = aot2sefd( aot_ska )
+    
     aot_ska_station = lfaa_per_station( freq_mhz , interpolation_kind=interpolation_kind )
-    print("A/T_ska         ( %.2f MHz) = %.4f m^2/K" % (freq_mhz,aot_ska))
-    print("A/T_ska_station ( %.2f MHz) = %.4f m^2/K" % (freq_mhz,aot_ska_station))
+    sefd_ska_station = aot2sefd( aot_ska_station )
+    
+    print("A/T_ska         ( %.2f MHz) = %.4f m^2/K  or SEFD_ska     = %.2f Jy" % (freq_mhz,aot_ska,sefd_ska))
+    print("A/T_ska_station ( %.2f MHz) = %.4f m^2/K  or SEFD_station = %.2f Jy" % (freq_mhz,aot_ska_station,sefd_ska_station))
        
