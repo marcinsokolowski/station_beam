@@ -947,14 +947,14 @@ def beam_correct_flux( dt_arr, tm_arr, az_arr, el_arr, ra_arr, dec_arr, flux_arr
       
    out_f.close()
 
-def read_time_azh_file( filename,
-                        dt_index   = 0, 
-                        tm_index   = 1,
-                        az_index   = 2,
-                        el_index   = 3,
-                        ra_index   = 4,
-                        dec_index  = 5,
-                        flux_index = 6,
+def read_time_azh_file( filename, options,
+#                        dt_index   = 0, 
+#                        tm_index   = 1,
+#                        az_index   = 2,
+#                        el_index   = 3,
+#                        ra_index   = 4,
+#                        dec_index  = 5,
+#                        flux_index = 6,
                         
                         default_ra  = 0.00,
                         default_dec = 0.00,
@@ -970,7 +970,7 @@ def read_time_azh_file( filename,
    # print data
 
    if debug_level > 0 :
-      print("DEBUG : %d / %d / %d / %d / %d / %d / %d" % (dt_index,tm_index,az_index,el_index,ra_index,dec_index,flux_index))
+      print("DEBUG : %d / %d / %d / %d / %d / %d / %d" % (options.dt_index,options.tm_index,options.az_index,options.el_index,options.ra_index,options.dec_index,options.flux_index))
 
    # initialisation of empty lists :
    dt=[]
@@ -992,20 +992,20 @@ def read_time_azh_file( filename,
       if line[0] != "#" :
 #         print line[:-1]
 # format : 2020-01-31 04:26:28.9 152.32707214144972 42.232977712074245 1.26869122140846 -62.705127298233535 142.89981842041016     
-         dt1=words[dt_index+0]
-         tm1=words[tm_index+0]
-         az1=float(words[az_index+0])         
-         el1=float(words[el_index+0])
+         dt1=words[options.dt_index+0]
+         tm1=words[options.tm_index+0]
+         az1=float(words[options.az_index+0])         
+         el1=float(words[options.el_index+0])
          
          ra1 = default_ra
-         if ra_index >= 0 :
-            ra1 = float(words[ra_index+0])
+         if options.ra_index >= 0 :
+            ra1 = float(words[options.ra_index+0])
          
          dec1 = default_dec
-         if dec_index >= 0 :      
-            dec1 = float(words[dec_index+0])
+         if options.dec_index >= 0 :      
+            dec1 = float(words[options.dec_index+0])
             
-         f = float(words[flux_index+0])
+         f = float(words[options.flux_index+0])
 
          # format : date; time; azimuth; elevation; right ascension; declination; and peak flux density
          dt.append(dt1)
@@ -1204,13 +1204,13 @@ def parse_options(idx=0):
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
-   parser.add_option("--dt_index"        , dest="dt_index"   , default=None, help="DT index"  , type="int")
-   parser.add_option("--tm_index"        , dest="tm_index"   , default=None, help="TM index"  , type="int")
-   parser.add_option("--az_index"        , dest="az_index"   , default=None, help="AZ index"  , type="int")
-   parser.add_option("--el_index"        , dest="el_index"   , default=None, help="EL index"  , type="int")
-   parser.add_option("--ra_index"        , dest="ra_index"   , default=None, help="RA index"  , type="int")
-   parser.add_option("--dec_index"       , dest="dec_index"  , default=None, help="DEC index" , type="int")
-   parser.add_option("--flux_index"      , dest="flux_index" , default=None, help="Flux index", type="int")
+   parser.add_option("--dt_index"        , dest="dt_index"   , default=0, help="DT index"  , type="int")
+   parser.add_option("--tm_index"        , dest="tm_index"   , default=1, help="TM index"  , type="int")
+   parser.add_option("--az_index"        , dest="az_index"   , default=2, help="AZ index"  , type="int")
+   parser.add_option("--el_index"        , dest="el_index"   , default=3, help="EL index"  , type="int")
+   parser.add_option("--ra_index"        , dest="ra_index"   , default=4, help="RA index"  , type="int")
+   parser.add_option("--dec_index"       , dest="dec_index"  , default=5, help="DEC index" , type="int")
+   parser.add_option("--flux_index"      , dest="flux_index" , default=6, help="Flux index", type="int")
    parser.add_option('--ra','--ra_deg'   , dest="ra_deg",default=0, help="RA [deg] - for lightcurve of RA,DEC object",type="float")
    parser.add_option('--dec','--dec_deg' , dest="dec_deg",default=0, help="DEC [deg] - for lightcurve of RA,DEC object",type="float")
       
@@ -1264,7 +1264,7 @@ if __name__ == "__main__":
 
    elif options.time_azh_file is not None :
       print("Reading file %s ..." % (options.time_azh_file))
-      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file ) 
+      (dt,tm,az,el,ra,dec,flux,cnt) = read_time_azh_file( options.time_azh_file, options ) 
       projection = options.projection
       if projection is None or len(projection) <= 0 :
          projection = "SIN" 
