@@ -24,8 +24,8 @@ else
    dtm=`basename $path`
 fi
 
-echo "rsync -avP ${station}:/data/real_time_calibration/${dtm} ."
-rsync -avP ${station}:/data/real_time_calibration/${dtm} .
+echo "rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} ."
+rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} .
 
 if [[ -d ${local_dir}/${dtm} ]]; then
    cd ${local_dir}/${dtm}
