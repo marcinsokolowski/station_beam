@@ -1177,7 +1177,6 @@ def sun_position( unix_time=None ):
    za = 90.00 - alt
    
    return ( sunpos.ra.degree, sunpos.dec.degree, az, alt, za )
-   
 
 
 def parse_options(idx=0):
@@ -1351,7 +1350,7 @@ if __name__ == "__main__":
       except :
          print("ERROR : beam-Y cannot be calculated")
          
-      print("BEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
+      print("BEAM_X = %.4f , BEAM_Y = %.4f -> BEAM_I = %.4f (only very rough approximation)" % (beam_x,beam_y,(beam_x+beam_y)/2.00))
       
       beam_x_2 = [[0]]
       try : 
