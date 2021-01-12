@@ -1159,6 +1159,27 @@ def fits2beam( fitsfile, options=None ) :
    
    print("BEAM FILES written to files : %s and %s" % (out_bx_fits,out_by_fits))
 
+
+def radec2azh( ra_degree, dec_degree, unix_time=None ):
+   if unix_time is None or unix_time <= 0 :
+      print("ERROR : unix_time parameter not provided to sun_position function -> cannot continue")
+      return (None,None,None,None)       
+      
+   t = Time(unix_time,format='unix')
+   
+   # calculate az,za of the sun :
+   coord = SkyCoord( ra_degree, dec_degree, equinox='J2000',frame='icrs', unit='deg')
+   coord.location = MWA_POS
+   coord.obstime = Time( unix_time, scale='utc', format="unix" )
+   altaz = coord.transform_to('altaz')
+   az, alt = altaz.az.deg, altaz.alt.deg
+   za = 90.00 - alt
+   
+   print("INFO : (RA,DEC) = (%.4f,%.4f) [deg] -> (AZ,ZA) = (%.4f,%.4f) [deg] at unix_time = %.2f" % (ra_degree,dec_degree,az,za,unix_time))
+   
+   return ( ra_degree, dec_degree, az, alt, za )
+
+
 def sun_position( unix_time=None ):
    if unix_time is None or unix_time <= 0 :
       print("ERROR : unix_time parameter not provided to sun_position function -> cannot continue")
@@ -1212,6 +1233,9 @@ def parse_options(idx=0):
    parser.add_option("--flux_index"      , dest="flux_index" , default=6, help="Flux index", type="int")
    parser.add_option('--ra','--ra_deg'   , dest="ra_deg",default=0, help="RA [deg] - for lightcurve of RA,DEC object",type="float")
    parser.add_option('--dec','--dec_deg' , dest="dec_deg",default=0, help="DEC [deg] - for lightcurve of RA,DEC object",type="float")
+   
+   # Paths :
+   parser.add_option("--simulation_path","--path","--simul_path", dest="simulation_path", default="$HOME/aavs-calibration/BeamModels/", help="Simulation path [default %default]")
       
    (options, args) = parser.parse_args(sys.argv[idx:])
    

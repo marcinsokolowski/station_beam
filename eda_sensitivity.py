@@ -129,13 +129,15 @@ def main():
     parser.add_option('-v','--verbose',action="store_true",dest="verbose",default=False,
                       help="Increase verbosity of output")
 
-    parser.add_option('-u','--unixtime',dest='unixtime_start',default=1471305600,help='Unixtime start',type=int)
+    parser.add_option('-u','--unixtime',dest='unixtime_start',default=None,help='Unixtime start',type=int)
     parser.add_option('-i','--interval',dest='interval',default=86400,help='Unixtime start')
     parser.add_option('-s','--step',dest='step',default=1800,help='Step in seconds',type=int)
     parser.add_option('-o','--outfile',dest='out_filename',default='eda_sensitivity',help='Output filename')
     parser.add_option('-x','--outsens_file',dest='out_sensitivity_file',default='eda_sensitivity',help='Output filename for sensitivity')
     parser.add_option('--pointing_za_deg','--za',dest='pointing_za_deg',default=0.00,help='Pointing za [deg]',type=float)
     parser.add_option('--pointing_az_deg','--az',dest='pointing_az_deg',default=0.00,help='Pointing az [deg]',type=float)
+    parser.add_option('--pointing_ra_deg','--ra',dest='pointing_ra_deg',default=None,help='Pointing RA [deg]',type=float)
+    parser.add_option('--pointing_dec_deg','--dec',dest='pointing_dec_deg',default=None,help='Pointing DEC [deg]',type=float)
     parser.add_option('-n','--no_zenith_norm',action="store_false",dest="zenithnorm",default=True,help="Normalise to zenith (default True)")
     parser.add_option('--trcv_budi',action="store_true",dest="trcv_budi",default=False,help="Use EDA receiver temperature as measured by Budi (see ~/Desktop/EDA/loogbook/Cath/Budi_trcv and eda_aeff_cath.odt)")
     parser.add_option('--trcv_fit_data_vs_mode',action="store_true",dest="trcv_fit_data_vs_mode",default=False,help="Use T_rcv fitted to POWER vs. MODEL data in LST range 18-20 hours only see Ill. Illustration 6 in eda_drift_scan_data_201612.odt for details")
@@ -198,6 +200,11 @@ def main():
     # read_antenna_list
     parser.add_option('--antfile','--antenna_locations',dest="antenna_locations",default=None,help="Read antenna locations and flags from this file [default %default]")
 
+    # parameters for sensitivity calculations :
+    parser.add_option('--inttime', dest='inttime', default=1800, type=float, help='Integration time to calculate sensitivity for [default % sec]')
+    parser.add_option('--bandwidth', dest='bandwidth', default=925925.925925926, type=float, help='Bandwidth to calculate sensitivity for [default % Hz]')
+    parser.add_option('-a', '--antnum', dest='antnum', default=256, type=int, help='Number of antennas [default %]')
+
 
     (options, args) = parser.parse_args()
     datetimestring=options.datetimestring
@@ -217,11 +224,25 @@ def main():
     if options.antenna_locations is not None :
        (xs,ys,zs,ant_count) = read_antenna_list( options.antenna_locations , overwrite=True )
        print("Read %d antenna positions from file %s ( starting with (%.2f,%.2f,%.2f) and ending with (%.2f,%.2f,%.2f))" % (ant_count,options.antenna_locations,xs[0],ys[0],zs[0],xs[ant_count-1],ys[ant_count-1],zs[ant_count-1]))
-    
+
+    if options.unixtime_start is not None :
+       if options.gps is None or options.gps <= 0 :
+          options.gps = options.unixtime_start - 315964783
+          
+    if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
+       import fits_beam
+     
+       uxtime = options.unixtime_start
+       if uxtime is None :
+          uxtime = options.gps + 315964783
+       ( ra , dec , options.pointing_az_deg , alt , options.pointing_za_deg ) = fits_beam.radec2azh( options.pointing_ra_deg, options.pointing_dec_deg, uxtime )
+       print("INFO : converted (RA,DEC) = (%.4f,%.4f) [deg] into (AZ,ZA) = (%.4f,%.4f) [deg] for uxtime = %.2f" % (options.pointing_ra_deg, options.pointing_dec_deg, options.pointing_az_deg, options.pointing_za_deg, uxtime ))
+     
     
     print("##################################################")
     print("PARAMETERS:")
     print("##################################################")
+    print("GPS time  = %.2f (uxtime = %.2f)" % (options.gps,options.unixtime_start))
     print("channels  = %s" % (options.channel))
     print("Trcv type = %s" % (options.trcv_type))
     print("Trcv      = %.2f K" % (options.t_rcv))
@@ -476,10 +497,23 @@ def main():
         sens_XX = (aeff_XX) / ( T_sys_XX )
         sens_YY = (aeff_YY) / ( T_sys_YY )
         
+        sefd_XX = (2760.00 / sens_XX)  # 2k/(A/T)
+        sefd_YY = (2760.00 / sens_YY)  # 2k/(A/T)
+        
+        noise_XX = sefd_XX / math.sqrt( options.bandwidth * options.inttime )
+        noise_YY = sefd_YY / math.sqrt( options.bandwidth * options.inttime )
+
+        # WARNING : should be more complicated than this (TO-BE-UPDATED) :
+        noise_I = 0.5*math.sqrt( noise_XX*noise_XX + noise_YY*noise_YY )
+                        
         print("%.2f Hz :" % (freq))        
         print("Corr factor (%.2f MHz) = %.4f" % (freq_mhz,corr))
-        print("\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv))
-        print("\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity=%.20f T_rcv=%.2f" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv))
+        print("\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv=%.2f -> SEFD_XX = %.4f [Jy] , noise_XX = %.4f Jy in %.2f sec , %.2f MHz" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv,sefd_XX,noise_XX,options.inttime,options.bandwidth/1e6))
+        print("\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv=%.2f -> SEFD_YY = %.4f [Jy] , noise_YY = %.4f Jy in %.2f sec , %.2f MHz" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv,sefd_YY,noise_YY,options.inttime,options.bandwidth/1e6))
+        
+        print("Noise expected on XX images = %.4f Jy" % noise_XX)
+        print("Noise expected on YY images = %.4f Jy" % noise_YY)
+        print("Noise expected on Stokes I images = %.4f Jy (simple formula only !)" % noise_I)
         
         out_line_XX="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_XX,T_sys_XX,aeff_XX,T_rcv,Tant_XX,corr)
         out_line_YY="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_YY,T_sys_YY,aeff_YY,T_rcv,Tant_YY,corr)
