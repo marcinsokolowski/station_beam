@@ -21,6 +21,10 @@ dir_path=`dirname $path`
 
 local_time=`basename $dir_path`
 ux_start=`date2date -local2ux=$local_time | awk '{print $1;}'`
+if [[ -n "$4" && "$4" != "-" ]]; then
+   ux_start=$4
+fi
+
 
 # mwa_coarse_channel=`echo $channel | awk '{mwa_cc=$1*((400.00/512.00)/1.28);printf("%d\n",mwa_cc);}'` # this is MWA 1.28-MHz coarse channel ( 107*1.28 = 136.96 MHz )
 mwa_coarse_channel=`echo $channel | awk '
