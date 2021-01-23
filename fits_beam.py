@@ -1364,13 +1364,13 @@ if __name__ == "__main__":
       
       beam_x = 0
       try : 
-         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name, simulation_path=options.simulation_path )   
       except : 
          print("ERROR : beam-X cannot be calculated")
 
       beam_y = 0         
       try :          
-         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name, simulation_path=options.simulation_path )   
       except :
          print("ERROR : beam-Y cannot be calculated")
          
@@ -1378,13 +1378,13 @@ if __name__ == "__main__":
       
       beam_x_2 = [[0]]
       try : 
-         beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' , station_name=options.station_name, projection=options.projection )
+         beam_x_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='X' , station_name=options.station_name, projection=options.projection, simulation_path=options.simulation_path )
       except :
          print("ERROR : beam-X cannot be calculated using get_fits_beam_multi")
          
       beam_y_2 = [[0]] 
       try :    
-         beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' , station_name=options.station_name, projection=options.projection )
+         beam_y_2 = get_fits_beam_multi( numpy.array([[az*(math.pi/180.00)]]) , numpy.array([[za*(math.pi/180.00)]]) , freq_mhz, polarisation='Y' , station_name=options.station_name, projection=options.projection, simulation_path=options.simulation_path )
       except :
          print("ERROR : beam-Y cannot be calculated using get_fits_beam_multi")
          

@@ -105,11 +105,9 @@ def main():
                       help='UT Date')
     parser.add_option('-t','--time',dest='time',default=None,
                       help='UT Time')
-    parser.add_option('-g','--gps',dest='gps',default=0,help='GPS time')
-    parser.add_option('-m','--model',dest='model',default='analytic',
-                      help='beam model: analytic, advanced, full_EE, full_EE_AAVS05')       
-    parser.add_option('-p','--plottype',dest='plottype',default='beamsky',
-                      help='Type of plot: all, beam, sky, beamsky, beamsky_scaled')
+    parser.add_option('-g','--gps',dest='gps',default=0,help='GPS time',type="float")
+    parser.add_option('-m','--model',dest='model',default='analytic', help='beam model: analytic, advanced, full_EE, full_EE_AAVS05')       
+    parser.add_option('-p','--plottype',dest='plottype',default='beamsky', help='Type of plot: all, beam, sky, beamsky, beamsky_scaled')
     parser.add_option('--title',dest='title',default=None,
                       help='Plot title')
     parser.add_option('-e','--ext',dest='extension',default='png',
@@ -224,10 +222,13 @@ def main():
     if options.antenna_locations is not None :
        (xs,ys,zs,ant_count) = read_antenna_list( options.antenna_locations , overwrite=True )
        print("Read %d antenna positions from file %s ( starting with (%.2f,%.2f,%.2f) and ending with (%.2f,%.2f,%.2f))" % (ant_count,options.antenna_locations,xs[0],ys[0],zs[0],xs[ant_count-1],ys[ant_count-1],zs[ant_count-1]))
-
+   
     if options.unixtime_start is not None :
        if options.gps is None or options.gps <= 0 :
           options.gps = options.unixtime_start - 315964783
+    else :
+       options.unixtime_start = options.gps + 315964783
+
           
     if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
        import fits_beam
@@ -237,8 +238,7 @@ def main():
           uxtime = options.gps + 315964783
        ( ra , dec , options.pointing_az_deg , alt , options.pointing_za_deg ) = fits_beam.radec2azh( options.pointing_ra_deg, options.pointing_dec_deg, uxtime )
        print("INFO : converted (RA,DEC) = (%.4f,%.4f) [deg] into (AZ,ZA) = (%.4f,%.4f) [deg] for uxtime = %.2f" % (options.pointing_ra_deg, options.pointing_dec_deg, options.pointing_az_deg, options.pointing_za_deg, uxtime ))
-     
-    
+
     print("##################################################")
     print("PARAMETERS:")
     print("##################################################")
