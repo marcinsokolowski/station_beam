@@ -11,6 +11,8 @@ def parse_options(idx=0):
    usage+='\tSensitivity of the SKA-Low station\n'
    parser = OptionParser(usage=usage,version=1.00)
    parser.add_option('--n_polarisations','--n_pols','--npols',dest="n_polarisations",default=2, help="Number of polarisations [default %default]",metavar="int")
+   parser.add_option('--lofar_rate',dest="lofar_rate",default=False,action="store_true", help="Use LOFAR rate [default %default]")
+   parser.add_option('--lofar_rate_value',dest="lofar_rate_value",default=3, help="Use LOFAR rate value [default %default]",type="int")
    
    (options, args) = parser.parse_args(sys.argv[idx:])
    
@@ -37,6 +39,26 @@ def frb_rate( fluence_min, min_elev_deg=20 ):
    
    return (per_sky_per_day,per_sky_per_year)
 
+# from paper : https://ui.adsabs.harvard.edu/abs/2020arXiv201208348P/abstract
+# combining our results with previous upper-limits on the all-sky FRB rate at 150 MHz, we find that there are 3-450 FRBs/sky/day above 50 Jy ms at 90% confidence.
+def lofar_frb_rate( fluence_min, min_elev_deg=20, lofar_rate=3, cut_off_fluence=50, verb=False, index=-2.1 ):
+
+   per_sky_per_day =  lofar_rate*(pow( (float(fluence_min)/float(cut_off_fluence)) , index ))
+   per_sky_per_year = per_sky_per_day*365
+   
+   if verb :
+      print("per_sky_per_day = %.4f FRBs / sky / day" % (per_sky_per_day))
+      
+
+   # multiply by the fraction of the sky corresponding to elevation range (min_elevation,90) [deg]
+   min_elev_rad = min_elev_deg * (math.pi / 180.00)
+   sky_fraction = 0.5*(1.00 - math.sin( min_elev_rad ) )
+   per_sky_per_day = per_sky_per_day * sky_fraction
+   per_sky_per_year = per_sky_per_year * sky_fraction
+
+   return (per_sky_per_day,per_sky_per_year)
+
+
 if __name__ == "__main__":
     freq_mhz = 160.00
     if len(sys.argv) >= 1 :
@@ -62,6 +84,7 @@ if __name__ == "__main__":
     print("Integration time = %.2f ms" % (inttime))
     print("N_channels       = %d -> %d x %.2f MHz = %.2f MHz" % (n_chan,n_chan,bw_chan,bw))
     print("N polarisations  = %d" % (options.n_polarisations))
+    print("Use LOFAR Pastor-Marazuela (2020) values = %s [value = %d / day / sky]" % (options.lofar_rate,options.lofar_rate_value))
     print("###############################")
            
     
@@ -91,7 +114,11 @@ if __name__ == "__main__":
     
 
           limit_ms_Nsigma = sens_jy*n_sigma*inttime_ms
-          (per_sky_per_day,per_sky_per_year) = frb_rate( limit_ms_Nsigma )
+          
+          if options.lofar_rate :
+             (per_sky_per_day,per_sky_per_year) = lofar_frb_rate( limit_ms_Nsigma, lofar_rate=options.lofar_rate_value )
+          else :
+             (per_sky_per_day,per_sky_per_year) = frb_rate( limit_ms_Nsigma )
           
           print("\t%.1f ms : %.2f mJy -> %dsigma limit = %.2f [Jy msec] -> %.5f / day / sky or %.5f / year / sky" % (inttime_ms,sens_mjy,n_sigma,limit_ms_Nsigma,per_sky_per_day,per_sky_per_year))
           
