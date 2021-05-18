@@ -227,6 +227,93 @@ def trcv_eda2_fem( freq_mhz , use_cubic=False ): # default was power law fit but
    
    return trcv_fem
 
+def interpol( x, x1, y1, x2, y2 ) :
+   delta = 0.00
+   if math.fabs( x2 - x1 ) > 0.000001  : 
+      delta = ((y2-y1)/(x2-x1))*(x-x1)
+   
+   interpol_val = y1 + delta
+   
+   return interpol_val;
+
+
+def interpolate( x_values, y_values, x ) :
+   l = len(x_values)
+
+   if x <= x_values[0] :
+      return y_values[0]
+
+   if x >= x_values[l-1] :
+      return y_values[l-1]
+      
+   prev_idx = 0
+   
+   for i in range(1,l) :
+      if math.fabs( x - x_values[i] ) < 0.00001 :
+         return y_values[i]
+
+      if x > x_values[prev_idx] and x < x_values[i] :
+         return interpol( x, x_values[prev_idx], y_values[prev_idx], x_values[i], y_values[i] )
+       
+      prev_idx = i
+   
+   
+   # error - not found
+   return -1000
+
+# see : /home/msok/Desktop/EDA2/papers/2021/EDA2_paper_Randall/20210518_trcv_recap_and_gain_vs_time.odt 
+# /home/msok/Desktop/SKA/papers/2020/M_Sokolowski/Sensitivity_DB/20200903_EDA2_trcv_fitted_from_drift_scan_data.odt 
+# /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/references/OLD_eda2_analysis/202009_update.odp
+def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X" ) :
+   # /home/msok/Desktop/EDA2/data/Trcv_fitted_from_the_sky/lst13-17hours
+   # awk '{printf("%s , ",$1);}' eda2_fitted_trcv_lst13-17h_X.txt 
+   # awk '{printf("%s , ",$3;;}' eda2_fitted_trcv_lst13-17h_X.txt 
+   x_x_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ]
+   y_x_pol = [ 82760 , 3600 , 820 , 115 , 133 , 252 ]
+ 
+   # /home/msok/Desktop/EDA2/data/Trcv_fitted_from_the_sky/lst13-17hours
+   # awk '{printf("%s , ",$1);}' eda2_fitted_trcv_lst13-17h_Y.txt 
+   # awk '{printf("%s , ",$3;;}' eda2_fitted_trcv_lst13-17h_Y.txt 
+   x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
+   y_y_pol = [ 84630 , 2549 , 810 , 224 , 184 , 465 ] 
+ 
+   l = len(x_x_pol)
+ 
+   if pol == "X" :
+      if freq_mhz >= x_x_pol[0] and freq_mhz <= x_x_pol[l-1] :
+#         trcv_interpol = interp1d( x_x_pol, y_x_pol , kind="linear" ) # , kind='cubic')      
+#         trcv_eda = trcv_interpol( freq_mhz )         
+         trcv_eda = numpy.interp( freq_mhz, x_x_pol, y_x_pol, left=y_x_pol[0], right=y_x_pol[l-1] )
+#         trcv_eda = interpolate( x_x_pol, y_x_pol, freq_mhz )
+       
+         return trcv_eda
+      else :
+         if freq_mhz <  x_x_pol[0] :
+            return y_x_pol[0]
+         else :
+            return y_x_pol[l-1]
+   elif pol == "Y" :
+      if freq_mhz >= x_y_pol[0] and freq_mhz <= x_y_pol[l-1] :
+#         trcv_interpol = interp1d( x_y_pol, y_y_pol , kind="linear" ) # , kind='cubic')
+#         trcv_eda = trcv_interpol( freq_mhz )
+         trcv_eda = numpy.interp( freq_mhz, x_y_pol, y_y_pol, left=y_y_pol[0], right=y_y_pol[l-1] )
+#         trcv_eda = interpolate( x_y_pol, y_y_pol, freq_mhz )
+       
+         return trcv_eda
+      else :
+         if freq_mhz <  x_y_pol[0] :
+            return y_y_pol[0]
+         else :
+            return y_y_pol[l-1]
+          
+   else :
+      print("ERROR : polarisation %s is unknown" % (pol))
+      
+   # error :      
+   return -1000   
+    
+ 
+ 
    
 # This is based on Daniel's paper : Figure 9 in https://arxiv.org/pdf/2003.05116.pdf
 # Digitised : /home/msok/Desktop/MWA/papers/2020/Daniel/images/FINAL/Figure9_Trcv_vs_Freq_EDA2.png   
@@ -240,7 +327,7 @@ def trcv_eda2_single_dipole( freq_mhz , use_cubic=False, add_fem=True ):
    if freq_mhz >= 326 :
       trcv_eda_lna = 63.9264
       
-   if freq_mhz >= 55 and freq_mhz <= 326 :
+   if freq_mhz >= x[0] and freq_mhz <= x[len(x)-1] :
       trcv_interpol = interp1d(x, y, kind='cubic')
       trcv_eda_lna = trcv_interpol( freq_mhz )
       
@@ -343,6 +430,10 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0 ):
       t_rcv = trcv_eda1_single_dipole( freq_mhz, use_cubic=use_cubic )
    elif type.lower() == "trcv_aavs2_vs_za_deg" :
       t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
+   elif type.lower() == "trcv_eda2_single_dipole_fit_x" :
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X" )
+   elif type.lower() == "trcv_eda2_single_dipole_fit_y" :
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y" )
    else :
       print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
       exit(-1)
@@ -352,16 +443,26 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0 ):
 
 
 if __name__ == "__main__":
-    freq_mhz = 160.00
+    start_freq_mhz = 160.00
     if len(sys.argv) >= 1:
-       freq_mhz=float( sys.argv[1] )
+       start_freq_mhz=float( sys.argv[1] )
+
+    end_freq_mhz = 160.00
+    if len(sys.argv) >= 2:
+       end_freq_mhz=float( sys.argv[2] )
+
 
     type="eda2"
-    if len(sys.argv) >= 2:
-       type=sys.argv[2]
+    if len(sys.argv) >= 3:
+       type=sys.argv[3]
 
-    t_rcv = trcv_multi( freq_mhz , type, False )
-    print("%s : T_rcv (%.2f MHz) = %.8f [K]" % (type,freq_mhz,t_rcv))
+    step_mhz = 1.00
+    freq_mhz = start_freq_mhz
+    while freq_mhz <= end_freq_mhz :
+       t_rcv = trcv_multi( freq_mhz , type, False )
+       print("%s : T_rcv ( %.2f MHz) = %.8f [K]" % (type,freq_mhz,t_rcv))
+       
+       freq_mhz += step_mhz
        
        
     
