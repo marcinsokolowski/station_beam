@@ -259,6 +259,7 @@ def main():
        print("External antenna position file %s (read %d ants)" % (options.antenna_locations,ant_count))
     else :
        print("WARNING : antenna position file not provided -> using default antenna locations (for EDA1)")
+    print("Correlator mode = %s" % (options.correlator_mode))       
     print("##################################################")
     
     if options.dir is not None:
@@ -409,18 +410,33 @@ def main():
 #20200811           T_rcv = station_trcv.trcv_eda1( freq_mhz )        
         T_rcv = station_trcv.trcv_multi( freq_mhz, options.trcv_type, za_deg=options.pointing_za_deg )
         print("DEBUG : new code version T_rcv = %.4f [K] from station_trcv.trcv_multi" % (T_rcv))
+        
+        T_rcv_x = T_rcv
+        T_rcv_y = T_rcv
+        
+        if options.trcv_type == "trcv_eda2_single_dipole_fit" :
+           print("WARNING : using fitted values of T_rcv trcv_eda2_single_dipole_fit which are different for X and Y polarisations"
+           T_rcv_x = station_trcv.trcv_multi( freq_mhz, "trcv_eda2_single_dipole_fit", za_deg=options.pointing_za_deg, pol="X" )
+           T_rcv_y = station_trcv.trcv_multi( freq_mhz, "trcv_eda2_single_dipole_fit", za_deg=options.pointing_za_deg, pol="Y" )
+        
 
         # has to be last to overwrite with consant value 
         if options.t_rcv > 1 : # if set external value use it :
            print("Using t_rcv = %.2f K at freq_mhz = %.2f MHz" % (options.t_rcv,freq_mhz))
            T_rcv = options.t_rcv          
+           T_rcv_x = T_rcv
+           T_rcv_y = T_rcv
            
         if options.t_rcv_low > 1 and freq_mhz<options.t_rcv_low_limit :
            print("Using t_rcv_low = %.2f K (freq_mhz = %.2f MHz < %.2f MHz)" % (options.t_rcv_low,freq_mhz,options.t_rcv_low_limit))
            T_rcv = options.t_rcv_low
+           T_rcv_x = T_rcv
+           T_rcv_y = T_rcv
 
         print("Frequency = %.2f [MHz] -> T_rcv = %.2f K -> %.2f K (+%.2fK)" % (freq_mhz,T_rcv,(T_rcv + options.extra_trcv),options.extra_trcv))        
         T_rcv = T_rcv + options.extra_trcv
+        T_rcv_x = T_rcv_x + options.extra_trcv
+        T_rcv_y = T_rcv_y + options.extra_trcv
         
         if options.print_trcv_only :
            print("Only printing T_rcv")
@@ -491,14 +507,17 @@ def main():
             Tant_YY = dip_Tant_YY                                                                                                                                                 
 
         
-        T_sys_XX = ( Tant_XX + T_rcv/corr )
-        T_sys_YY = ( Tant_YY + T_rcv/corr )
+        T_sys_XX = ( Tant_XX + T_rcv_x/corr )
+        T_sys_YY = ( Tant_YY + T_rcv_y/corr )
 
         sens_XX = (aeff_XX) / ( T_sys_XX )
         sens_YY = (aeff_YY) / ( T_sys_YY )
         
         sefd_XX = (2760.00 / sens_XX)  # 2k/(A/T)
         sefd_YY = (2760.00 / sens_YY)  # 2k/(A/T)
+        
+        gain_XX = ( T_sys_XX / sefd_XX )
+        gain_YY = ( T_sys_YY / sefd_YY )
         
         noise_XX = sefd_XX / math.sqrt( options.bandwidth * options.inttime )
         noise_YY = sefd_YY / math.sqrt( options.bandwidth * options.inttime )
@@ -508,15 +527,15 @@ def main():
                         
         print("%.2f Hz :" % (freq))        
         print("Corr factor (%.2f MHz) = %.4f" % (freq_mhz,corr))
-        print("\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv=%.2f -> SEFD_XX = %.4f [Jy] , noise_XX = %.4f Jy in %.2f sec , %.2f MHz" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv,sefd_XX,noise_XX,options.inttime,options.bandwidth/1e6))
-        print("\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv=%.2f -> SEFD_YY = %.4f [Jy] , noise_YY = %.4f Jy in %.2f sec , %.2f MHz" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv,sefd_YY,noise_YY,options.inttime,options.bandwidth/1e6))
+        print("\t\tXX (%.2f MHz) : T_ant_XX = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv_x=%.2f -> SEFD_XX = %.4f [Jy] , noise_XX = %.4f Jy in %.2f sec , %.2f MHz , gain_XX = %.4f [Jy/K]" % (freq_mhz,Tant_XX,beamsky_sum_XX,beam_sum_XX,options.pointing_az_deg,options.pointing_za_deg,beams['XX'],gain_XX,aeff_XX,sens_XX,T_rcv_x,sefd_XX,noise_XX,options.inttime,options.bandwidth/1e6,gain_XX))
+        print("\t\tYY (%.2f MHz) : T_ant_YY = %.2f  = (%.8f / %.8f) -> beam(%.4f,%.4f)=%.8f , gain=%.8f , aeff=%.8f, sensitivity_AoT=%.20f [m^2/K] , T_rcv_y=%.2f -> SEFD_YY = %.4f [Jy] , noise_YY = %.4f Jy in %.2f sec , %.2f MHz , gain_YY = %.4f [Jy/K]" % (freq_mhz,Tant_YY,beamsky_sum_YY,beam_sum_YY,options.pointing_az_deg,options.pointing_za_deg,beams['YY'],gain_YY,aeff_YY,sens_YY,T_rcv_y,sefd_YY,noise_YY,options.inttime,options.bandwidth/1e6,gain_YY))
         
         print("Noise expected on XX images = %.4f Jy" % noise_XX)
         print("Noise expected on YY images = %.4f Jy" % noise_YY)
         print("Noise expected on Stokes I images = %.4f Jy (simple formula only !)" % noise_I)
         
-        out_line_XX="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_XX,T_sys_XX,aeff_XX,T_rcv,Tant_XX,corr)
-        out_line_YY="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_YY,T_sys_YY,aeff_YY,T_rcv,Tant_YY,corr)
+        out_line_XX="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_XX,T_sys_XX,aeff_XX,T_rcv_x,Tant_XX,corr)
+        out_line_YY="%.8f %.8f %.2f %.8f %.8f %.8f %.8f\n" % (freq_mhz,sens_YY,T_sys_YY,aeff_YY,T_rcv_y,Tant_YY,corr)
         f_out_XX.write(out_line_XX)        
         f_out_YY.write(out_line_YY)        
     
