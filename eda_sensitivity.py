@@ -415,7 +415,7 @@ def main():
         T_rcv_y = T_rcv
         
         if options.trcv_type == "trcv_eda2_single_dipole_fit" :
-           print("WARNING : using fitted values of T_rcv trcv_eda2_single_dipole_fit which are different for X and Y polarisations"
+           print("WARNING : using fitted values of T_rcv trcv_eda2_single_dipole_fit which are different for X and Y polarisations")
            T_rcv_x = station_trcv.trcv_multi( freq_mhz, "trcv_eda2_single_dipole_fit", za_deg=options.pointing_za_deg, pol="X" )
            T_rcv_y = station_trcv.trcv_multi( freq_mhz, "trcv_eda2_single_dipole_fit", za_deg=options.pointing_za_deg, pol="Y" )
         
