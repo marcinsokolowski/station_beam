@@ -20,7 +20,7 @@ def eda2_lna_gain_db( freq_mhz ) :
    
    lna_gain_db_cubic = interp1d( freq_arr, lna_gain_db, kind='cubic')
 
-   ret_val = lna_gain_db_cubic( freq_mhz )
+   ret_val = float( lna_gain_db_cubic( freq_mhz ) )
    print("DEBUG : EDA2 LNA GAIN at %.2f MHz = %.4f [dB]" % (freq_mhz,ret_val))
    return ret_val
 
@@ -71,7 +71,7 @@ def trcv_fit_lightcurve_20160703_cubic( freq_mhz ):
       
    tlna_cubic = interp1d(x, y, kind='cubic')
    
-   return tlna_cubic(freq_mhz)
+   return float( tlna_cubic(freq_mhz) )
 
 # EDA/loogbook/haslam_vs_angelica.odt Ill. 24 red curve
 # /home/msok/Desktop/EDA/data/2016-07/20160703/ANGELICA/trcv_vs_freq.selected
@@ -84,7 +84,7 @@ def trcv_angelica_data_vs_time( freq_mhz ):
    
    tlna_cubic = interp1d(x, y, kind='cubic')
    
-   return tlna_cubic(freq_mhz)
+   return float( tlna_cubic(freq_mhz) )
    
 def trcv_angelica_data_vs_time_powerlawfit( freq_mhz ) :
    t_rcv = 384.3 * math.pow((100.00/freq_mhz),3.571)
@@ -105,7 +105,7 @@ def trcv_haslam_data_vs_model( freq_mhz ):
    y=[3849.12,1744.54,1013.68,682.12,473.69,327.36,222.33,81.70,57.44,45.02,35.46,30.50,27.35,31.30,28.75,29.14,45.67]
    
    tlna_cubic = interp1d(x, y, kind='cubic')
-   return tlna_cubic(freq_mhz)
+   return float( tlna_cubic(freq_mhz) )
 
 # as in loogbook/paper/eda_lightcurve_and_trcv.odt Ill. 13:
 # /home/msok/Desktop/EDA/data/2016-07/20160703/HASLAM/WithSun_and_BeamformingErrors/BIGHORNS/images/final/paper/trcv_vs_freq_lst_13-17_hours.png
@@ -123,7 +123,7 @@ def trcv_from_skymodel_with_err( freq_mhz , use_cubic=False ): # default was pow
       x=[55.0,65.0,75.0,85.0,95.0,105.0,115.0,125.0,135.0,145.0,155.0,165.0,175.0,185.0,195.0,205.0]
       y=[3722.55055596,1421.83480972,655.8033454,409.69506365,356.59552554,293.4326318,200.26593869,163.91940732,157.46121101,112.19530177,51.14849704,68.56693587,28.33318976,43.72596282,34.41633474,62.76422256]   
       tlna_cubic = interp1d(x, y, kind='cubic')
-      trcv = tlna_cubic(freq_mhz)
+      trcv = float( tlna_cubic(freq_mhz) )
    else :
       index=3.46114
       trcv = 82.4708*math.pow( (150.00/freq_mhz), index )
@@ -162,7 +162,7 @@ def trcv_aavs2( freq_mhz , use_cubic=True, za_deg=None ): # default was power la
       y=[7107100.0000,654850.0000,206830.0000,376900.0000,361870.0000,361320.0000,384580.0000,408710.0000,370030.0000,257710.0000,194070.0000,108050.0000,55808.0000,29746.0000,17932.0000,11791.0000,7751.7000,5199.5000,3493.5000,2188.8000,1356.3000,747.7300,401.0200,210.2100,118.1100,82.2620,72.2770,68.3100,64.0260,57.4240,49.0060,43.9750,40.7470,41.5500,44.0500,46.5410,48.0550,48.9760,46.7510,42.1360,39.1750,33.6010,32.7680,32.4490,32.4100,35.3490,33.8180,35.4250,36.2200,37.5340,36.2480,36.4220,35.7270,35.0100,35.8200,35.4200,37.2410,37.0950,36.3850,35.0540,33.2270,33.0210,35.3170,36.1650,38.3440,38.6990,36.5530,35.4320,34.9590,34.6170,36.0870,37.4090,38.1410,39.4630,37.1560,36.1880,36.3860,35.1380,35.4160,35.5970,37.9060,38.6590,38.3350,36.6420,37.6530,36.6690,34.2690,34.3780,33.7400,35.3170,36.9150,37.8910,37.6220,36.9020,37.7700,40.9420,35.1330,35.2780,33.5290,32.9030,34.3800,34.4300,37.6530,39.4540,39.4440,41.0410,40.7670,40.4160,40.1550,39.6900,38.7630,36.3620,35.3780,34.3560,33.9780,33.9440,33.6700,32.6710,34.1480,34.1550,34.2700,35.1280,34.9730,34.7650,34.0960,35.0130,35.2690,36.0910,36.1660,38.7710,38.3090,39.7370,39.9530,41.9870,42.0490,37.8430,40.1820,42.6590,40.5190,39.8170,40.5610,38.7800,37.9280,37.0910,37.1220,36.7460,38.1390,37.4310,37.3780,39.4030,39.4210,39.3430,40.6120,41.0690,40.2540,36.9340,40.3270,39.4150,39.3720,39.0670,38.4750,36.8540,36.4600,37.2850,37.3790,37.4560,38.3510,36.9400,38.7410,39.1510,38.8910,42.3500,41.2200,41.3130,40.9190,37.1090,39.4140,40.1410,38.1900,37.2650,37.8390,37.3610,36.5130,36.7570,37.5530,37.1360,39.0620,39.9190,42.8730,44.6690,45.2820,45.9850,47.6020,47.5390,49.5910,47.3790,49.9540,49.2800,49.2160,49.2670,47.3600]
       
       trcv_interpol = interp1d(x, y, kind='cubic')
-      trcv = trcv_interpol( freq_mhz )
+      trcv = float( trcv_interpol( freq_mhz ) )
       using_cubic = True
 
    if za_deg is not None :
@@ -221,7 +221,7 @@ def trcv_eda2_fem( freq_mhz , use_cubic=False ): # default was power law fit but
    trcv_fem = 10000.00 / gain_eda2_lna # Approximately 10000 K / 20 dB of MWA LNA
    if freq_mhz >= 40 and freq_mhz <= 350 :
        trcv_fem_interpol = interp1d(x, y, kind='cubic')
-       trcv_fem = trcv_fem_interpol( freq_mhz ) / gain_eda2_lna
+       trcv_fem = float( trcv_fem_interpol( freq_mhz ) ) / gain_eda2_lna
 
    print("INFO : using trcv_eda2_fem( %.2f MHz) =  %.2f [K]" % (freq_mhz,trcv_fem))
    
@@ -329,13 +329,14 @@ def trcv_eda2_single_dipole( freq_mhz , use_cubic=False, add_fem=True ):
       
    if freq_mhz >= x[0] and freq_mhz <= x[len(x)-1] :
       trcv_interpol = interp1d(x, y, kind='cubic')
-      trcv_eda_lna = trcv_interpol( freq_mhz )
+      trcv_eda_lna = float( trcv_interpol( freq_mhz ) )
       
    trcv_out = trcv_eda_lna
    
    trcv_fem = 0.00
    if add_fem :   
       trcv_fem = trcv_eda2_fem( freq_mhz )
+      print("DEBIG : %.4f (%.f) + %.4f = ???" % (trcv_out,trcv_eda_lna,trcv_fem))     
       trcv_out += trcv_fem
 
    print("INFO : using trcv_eda2_single_dipole( %.2f MHz) = %.2f + %.2f  = %.2f [K]" % (freq_mhz,trcv_eda_lna,trcv_fem,trcv_out))
@@ -367,7 +368,7 @@ def trcv_eda2( freq_mhz , use_cubic=False ): # default was power law fit but I w
    trcv_fem = 10000.00 / gain_eda2_lna # Approximately 10000 K / 20 dB of MWA LNA
    if freq_mhz >= 40 and freq_mhz <= 350 :
        trcv_fem_interpol = interp1d(x, y, kind='cubic')
-       trcv_fem = trcv_fem_interpol( freq_mhz ) / gain_eda2_lna
+       trcv_fem = float( trcv_fem_interpol( freq_mhz ) ) / gain_eda2_lna
 
    # at the moment return the same as for EDA-1 (or EDA-2)
    trcv_eda_lna = trcv_from_skymodel_with_err( freq_mhz , use_cubic )
@@ -390,7 +391,7 @@ def trcv_from_skymodel_with_err_cubic( freq_mhz ) :
     x=[55.0,65.0,75.0,85.0,95.0,105.0,115.0,125.0,135.0,145.0,155.0,165.0,175.0,185.0,195.0,205.0]
     y=[3722.55055596,1421.83480972,655.8033454,409.69506365,356.59552554,293.4326318,200.26593869,163.91940732,157.46121101,112.19530177,51.14849704,68.56693587,28.33318976,43.72596282,34.41633474,62.76422256]
     tlna_cubic = interp1d(x, y, kind='cubic')
-    trcv = tlna_cubic(freq_mhz)
+    trcv = float( tlna_cubic(freq_mhz) )
     
     return trcv
 
