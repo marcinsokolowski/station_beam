@@ -281,10 +281,10 @@ def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X", exact_dist
    # fitted to median signle dipole lightcurves as in : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/20210526_trcv_from_median_single_antenna_lc.odt
    if use_median_fit :
       x_x_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ]
-      y_x_pol = [ 82760 , 3418 , 726 , 103 , 113 , 252 ] # TODO : fix 50 and 320 MHz value 
+      y_x_pol = [ 82760 , 3418 , 726 , 103 , 113 , 174 ] # TODO : fix 50 and 320 MHz value 
       
       x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
-      y_y_pol = [ 84630 , 2523 , 650 , 79 , 73 , 465 ] # TODO : fix 50 and 320 MHz value
+      y_y_pol = [ 84630 , 2523 , 650 , 79 , 73 , 120 ] # TODO : fix 50 and 320 MHz value
 
  
    l = len(x_x_pol)

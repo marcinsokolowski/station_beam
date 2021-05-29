@@ -151,6 +151,7 @@ def main():
     #   trcv_haslam_data_vs_model  : Use T_rcv from data vs. model see GREEN in Ill.25 haslam_vs_angelica.odt for details
     #   trcv_from_skymodel_with_err : Use T_rcv as calculated with errors fitted with curve see eda_lightcurve_and_trcv.odt Ill. 13 
     parser.add_option('--trcv_type',dest='trcv_type',default='lightcurve201612',help="Source of T_rcv possible values = lightcurve201612 (default), lightcurve_20160703_cubic, lightcurve_20160703_polfit, budi, data_vs_model_201612, trcv_angelica_data_vs_time, trcv_angelica_data_vs_time_powerlawfit, trcv_from_skymodel_with_err, trcv_aavs2, trcv_aavs2_vs_za_deg, trcv_eda2, trcv_eda1")
+    parser.add_option('--use_median_fit',dest='use_median_fit',default=False,action="store_true",help="T_rcv from fit to median LC [default %default]")
     
     parser.add_option('--outfile_mode',dest='outfile_mode',default='w',help='Output file mode [default w]')
     parser.add_option('--s11',action="store_true",dest="use_s11",default=True,help="Take into account reflection coefficients of ANT and LNA (from Budi see comment to corr_factor function)")
@@ -408,7 +409,7 @@ def main():
 #20200811           T_rcv = station_trcv.trcv_eda2( freq_mhz )
 #20200811        elif options.trcv_type=="trcv_eda1" :
 #20200811           T_rcv = station_trcv.trcv_eda1( freq_mhz )        
-        T_rcv = station_trcv.trcv_multi( freq_mhz, options.trcv_type, za_deg=options.pointing_za_deg )
+        T_rcv = station_trcv.trcv_multi( freq_mhz, options.trcv_type, za_deg=options.pointing_za_deg,  use_median_fit=options.use_median_fit )
         print("DEBUG : new code version T_rcv = %.4f [K] from station_trcv.trcv_multi" % (T_rcv))
         
         T_rcv_x = T_rcv
