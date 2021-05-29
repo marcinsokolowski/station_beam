@@ -245,7 +245,7 @@ def main():
     print("##################################################")
     print("GPS time  = %.2f (uxtime = %.2f)" % (options.gps,options.unixtime_start))
     print("channels  = %s" % (options.channel))
-    print("Trcv type = %s" % (options.trcv_type))
+    print("Trcv type = %s ( use_median_fit = %s )" % (options.trcv_type,options.use_median_fit))
     print("Trcv      = %.2f K" % (options.t_rcv))
     print("Trcv_low  = %.2f K (below %.2f MHz)" % (options.t_rcv_low,options.t_rcv_low_limit))
     print("Extra T_rcv = %.2f K" % (options.extra_trcv))
