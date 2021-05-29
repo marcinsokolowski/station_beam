@@ -444,7 +444,7 @@ def trcv_fit_lightcurve_20160703_polfit( freq_mhz ):
    return t_lna
 
 
-def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X" ):
+def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X", use_median_fit=False ):
    t_rcv = 0.00
    if type.lower() == "eda2" or type.lower() == "trcv_eda2" :
       t_rcv = trcv_eda2( freq_mhz, use_cubic=use_cubic )
@@ -460,16 +460,16 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X" ):
       t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
    elif type.lower() == "trcv_eda2_single_dipole_fit" :      
       if pol == "X" or pol == "x" :
-         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X" )
+         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit )
       elif pol == "Y" or pol == "y" :
-         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y" )
+         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit )
       else :
          print("ERROR : unknown polarisation %s -> crashin script now (error in code)" % (pol))
          sys,exit(-1)
    elif type.lower() == "trcv_eda2_single_dipole_fit_x" :
-      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X" )
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit )
    elif type.lower() == "trcv_eda2_single_dipole_fit_y" :
-      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y" )
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit )
    else :
       print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
       exit(-1)
