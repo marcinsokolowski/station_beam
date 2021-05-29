@@ -264,7 +264,8 @@ def interpolate( x_values, y_values, x ) :
 # see : /home/msok/Desktop/EDA2/papers/2021/EDA2_paper_Randall/20210518_trcv_recap_and_gain_vs_time.odt 
 # /home/msok/Desktop/SKA/papers/2020/M_Sokolowski/Sensitivity_DB/20200903_EDA2_trcv_fitted_from_drift_scan_data.odt 
 # /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/references/OLD_eda2_analysis/202009_update.odp
-def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X" ) :
+def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X", exact_dist=1.00, use_median_fit=False ) :
+   # FITTED AS IN : /home/msok/Desktop/SKA/papers/2020/M_Sokolowski/Sensitivity_DB/20200903_EDA2_trcv_fitted_from_drift_scan_data.odt
    # /home/msok/Desktop/EDA2/data/Trcv_fitted_from_the_sky/lst13-17hours
    # awk '{printf("%s , ",$1);}' eda2_fitted_trcv_lst13-17h_X.txt 
    # awk '{printf("%s , ",$3;;}' eda2_fitted_trcv_lst13-17h_X.txt 
@@ -276,10 +277,27 @@ def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X" ) :
    # awk '{printf("%s , ",$3;;}' eda2_fitted_trcv_lst13-17h_Y.txt 
    x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
    y_y_pol = [ 84630 , 2549 , 810 , 224 , 184 , 465 ] 
+   
+   # fitted to median signle dipole lightcurves as in : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/20210526_trcv_from_median_single_antenna_lc.odt
+   if use_median_fit :
+      x_x_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ]
+      y_x_pol = [ 82760 , 3418 , 726 , 103 , 113 , 252 ] # TODO : fix 50 and 320 MHz value 
+      
+      x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
+      y_y_pol = [ 84630 , 2523 , 650 , 79 , 73 , 465 ] # TODO : fix 50 and 320 MHz value
+
  
    l = len(x_x_pol)
  
    if pol == "X" :
+      # try exact first +/- exact_dist to try to use the exact fitted values (not the interpolation results which can be strange ...)
+      f_idx = 0
+      for f_mhz in x_x_pol :
+         if math.fabs( f_mhz - freq_mhz ) <= exact_dist :
+            return y_x_pol[f_idx]
+         
+         f_idx += 1
+   
       if freq_mhz >= x_x_pol[0] and freq_mhz <= x_x_pol[l-1] :
 #         trcv_interpol = interp1d( x_x_pol, y_x_pol , kind="linear" ) # , kind='cubic')      
 #         trcv_eda = trcv_interpol( freq_mhz )         
@@ -293,6 +311,15 @@ def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X" ) :
          else :
             return y_x_pol[l-1]
    elif pol == "Y" :
+      # try exact first +/- exact_dist to try to use the exact fitted values (not the interpolation results which can be strange ...)
+      f_idx = 0
+      for f_mhz in x_y_pol :
+         if math.fabs( f_mhz - freq_mhz ) <= exact_dist :
+            return y_y_pol[f_idx]
+         
+         f_idx += 1
+
+
       if freq_mhz >= x_y_pol[0] and freq_mhz <= x_y_pol[l-1] :
 #         trcv_interpol = interp1d( x_y_pol, y_y_pol , kind="linear" ) # , kind='cubic')
 #         trcv_eda = trcv_interpol( freq_mhz )
