@@ -434,7 +434,7 @@ def main():
            T_rcv_x = T_rcv
            T_rcv_y = T_rcv
 
-        print("Frequency = %.2f [MHz] -> T_rcv = %.2f K -> %.2f K (+%.2fK) , T_rcv_x = %.2f K, T_rcv_x = %.2f K" % (freq_mhz,T_rcv,(T_rcv + options.extra_trcv),options.extra_trcv,T_rcv_x,T_rcv_y))        
+        print("Frequency = %.2f [MHz] -> T_rcv = %.2f K -> %.2f K (+%.2fK) , T_rcv_x = %.2f K, T_rcv_y = %.2f K" % (freq_mhz,T_rcv,(T_rcv + options.extra_trcv),options.extra_trcv,T_rcv_x,T_rcv_y))        
         T_rcv = T_rcv + options.extra_trcv
         T_rcv_x = T_rcv_x + options.extra_trcv
         T_rcv_y = T_rcv_y + options.extra_trcv
