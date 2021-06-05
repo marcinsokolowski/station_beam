@@ -5,6 +5,8 @@ import math
 import numpy
 from scipy.interpolate import interp1d
 
+from optparse import OptionParser
+
 def db2num( val_db ) :
    val_num = 10.00**( val_db / 10.0 )
    
@@ -261,10 +263,20 @@ def interpolate( x_values, y_values, x ) :
    # error - not found
    return -1000
 
+#
+# sources :
+#
+# 50 MHz  :
+# 70 MHz  : 
+# 110 MHz :
+# 160 MHz :
+# 230 MHz : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/20210602_Trcv_230MHz_data.odt, Fitted to all and mean : T_rcv_x ~ 133 K , T_rcv_y ~ 140 K 
+# 320 MHz :
+#
 # see : /home/msok/Desktop/EDA2/papers/2021/EDA2_paper_Randall/20210518_trcv_recap_and_gain_vs_time.odt 
 # /home/msok/Desktop/SKA/papers/2020/M_Sokolowski/Sensitivity_DB/20200903_EDA2_trcv_fitted_from_drift_scan_data.odt 
 # /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/references/OLD_eda2_analysis/202009_update.odp
-def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X", exact_dist=1.00, use_median_fit=False ) :
+def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X", exact_dist=1.00, use_median_fit=False, use_eda2_paper=False ) :
    # FITTED AS IN : /home/msok/Desktop/SKA/papers/2020/M_Sokolowski/Sensitivity_DB/20200903_EDA2_trcv_fitted_from_drift_scan_data.odt
    # /home/msok/Desktop/EDA2/data/Trcv_fitted_from_the_sky/lst13-17hours
    # awk '{printf("%s , ",$1);}' eda2_fitted_trcv_lst13-17h_X.txt 
@@ -276,15 +288,31 @@ def trcv_eda2_single_dipole_fit( freq_mhz , use_cubic=False, pol="X", exact_dist
    # awk '{printf("%s , ",$1);}' eda2_fitted_trcv_lst13-17h_Y.txt 
    # awk '{printf("%s , ",$3;;}' eda2_fitted_trcv_lst13-17h_Y.txt 
    x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
-   y_y_pol = [ 84630 , 2549 , 810 , 224 , 184 , 465 ] 
+   y_y_pol = [ 84630 , 2549 , 810 , 224 , 150 , 465 ]  # was [ 84630 , 2549 , 810 , 224 , 184 , 465 ] before : 20210602_Trcv_230MHz_data.odt etc 
    
-   # fitted to median signle dipole lightcurves as in : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/20210526_trcv_from_median_single_antenna_lc.odt
+   # fitted to median signle dipole lightcurves as in : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/20210526_trcv_from_median_single_antenna_lc.odt  
    if use_median_fit :
-      x_x_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ]
+      x_x_pol = [    50 ,   70 , 110 , 160 , 230 , 320 ]
       y_x_pol = [ 82760 , 3418 , 726 , 103 , 113 , 174 ] # TODO : fix 50 and 320 MHz value 
       
-      x_y_pol = [ 50 , 70 , 110 , 160 , 230 , 320 ] 
-      y_y_pol = [ 84630 , 2523 , 650 , 79 , 73 , 120 ] # TODO : fix 50 and 320 MHz value
+      x_y_pol = [    50 ,   70 , 110 , 160 , 230 , 320 ] 
+      y_y_pol = [ 84630 , 2523 , 650 ,  79 ,  73 , 120 ] # TODO : fix 50 and 320 MHz value
+
+   # As in EDA2 paper 2021 : /home/msok/Desktop/SKA/papers/2021/EDA2_paper_Randall/
+   # 50 MHz  :
+   # 70 MHz  : 
+   # 110 MHz : 20200421_ch141_110MHz_analysis_FINAL.odt , 20200421_ch141_110MHz_analysis.odt , in 20210601_Trcv_110MHz_data.odt : T_rcv_x ~ 850 K , T_rcv_y ~ 850 K 
+   # 160 MHz : 20200407_ch204_160MHz_analysis_FINAL.odt 20210603_Trcv_160MHz_data.odt : best fitting sensitivity are :  T_rcv_x=200 K and T_rcv_y = 160 K, but fitted : T_rcv_x ~ 110 K and T_rcv_y ~ 90 K 
+   # 230 MHz : 20210602_Trcv_230MHz_data.odt, Fitted to all and mean : T_rcv_x ~ 133 K , T_rcv_y ~ 140 K 
+   # 320 MHz : 20210601_Trcv_320MHz_data.odt Looks like T_rcv_x ~ 200 K , T_rcv_y ~ 250 K 
+   if use_eda2_paper : 
+      # updated according to /home/msok/Desktop/EDA2/papers/2021/EDA2_paper_Randall/20210601_paper_plots_INIT.odt and references 
+      x_x_pol = [    50 ,   70 , 110 , 160 , 230 , 320 ]
+      y_x_pol = [ 82760 , 1700 , 850 , 200 , 133 , 170 ] # was : [ 82760 , 3418 , 726 , 103 , 113 , 174 ]
+
+      x_y_pol = [    50 ,   70 , 110 , 160 , 230 , 320 ] 
+      y_y_pol = [ 84630 , 5000 , 850 , 160 , 150 , 235 ] # was : [ 84630 , 2523 , 650 , 160 , 150 , 235 ]
+
 
  
    l = len(x_x_pol)
@@ -444,7 +472,7 @@ def trcv_fit_lightcurve_20160703_polfit( freq_mhz ):
    return t_lna
 
 
-def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X", use_median_fit=False ):
+def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X", use_median_fit=False, use_eda2_paper=False ):
    t_rcv = 0.00
    if type.lower() == "eda2" or type.lower() == "trcv_eda2" :
       t_rcv = trcv_eda2( freq_mhz, use_cubic=use_cubic )
@@ -460,16 +488,16 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X", use_median_
       t_rcv = trcv_aavs2( freq_mhz, za_deg=za_deg )
    elif type.lower() == "trcv_eda2_single_dipole_fit" :      
       if pol == "X" or pol == "x" :
-         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit )
+         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit, use_eda2_paper=use_eda2_paper )
       elif pol == "Y" or pol == "y" :
-         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit )
+         t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit, use_eda2_paper=use_eda2_paper )
       else :
          print("ERROR : unknown polarisation %s -> crashin script now (error in code)" % (pol))
          sys,exit(-1)
    elif type.lower() == "trcv_eda2_single_dipole_fit_x" :
-      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit )
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="X", use_median_fit=use_median_fit, use_eda2_paper=use_eda2_paper )
    elif type.lower() == "trcv_eda2_single_dipole_fit_y" :
-      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit )
+      t_rcv = trcv_eda2_single_dipole_fit( freq_mhz, use_cubic=use_cubic, pol="Y", use_median_fit=use_median_fit, use_eda2_paper=use_eda2_paper )
    else :
       print("ERROR : unknown receiver temperature type = %s -> CRITICAL ERROR -> cannot continue" % (type))
       exit(-1)
@@ -478,25 +506,42 @@ def trcv_multi( freq_mhz , type, use_cubic=False, za_deg=0, pol="X", use_median_
    return t_rcv
 
 
+def parse_options(idx=0):
+   usage="Usage: %prog [options]\n"
+   usage+='\tCalculate receiver temperature (T_rcv) for different SKA-Low stations and configurations\n'
+   parser = OptionParser(usage=usage,version=1.00)
+   parser.add_option('-t','--type','--trcv_type',dest="trcv_type",default="eda2",help="Type of receiver temperature (station/configuration) [default %default]",metavar="STRING")
+   parser.add_option('-s','--start_freq','--start_freq_mhz',dest="start_freq_mhz",default=160,help="Start of frequency range to calculate T_rcv [default %default]",type="float")
+   parser.add_option('-e','--end_freq','--end_freq_mhz',dest="end_freq_mhz",default=160,help="End of frequency range to calculate T_rcv [default %default]",type="float")
+   parser.add_option('-m','--use_median_fit','--trcv_fitted_to_median_curve','--trcv_from_median_curve','--trcv_from_median_lc',action="store_true",dest="use_median_fit",default=False, help="Use receiver temperature fitted to median lightcurve of all antennas [default %default]")
+   parser.add_option('-p','--eda2_paper','--use_eda2_paper','--eda2_2021_paper','--paper',action="store_true",dest="use_eda2_paper",default=False, help="Use receiver temperature exactly as used in the calculation of station sensitivity for the 2021 EDA2 paper [default %default]")
+
+   (options, args) = parser.parse_args(sys.argv[idx:])
+
+   return (options, args)
+
+
 if __name__ == "__main__":
-    start_freq_mhz = 160.00
-    if len(sys.argv) >= 1:
-       start_freq_mhz=float( sys.argv[1] )
+    (options, args) = parse_options()
 
-    end_freq_mhz = 160.00
-    if len(sys.argv) >= 2:
-       end_freq_mhz=float( sys.argv[2] )
+#    start_freq_mhz = 160.00
+#    if len(sys.argv) >= 1:
+#       start_freq_mhz=float( sys.argv[1] )
+
+#    end_freq_mhz = 160.00
+#    if len(sys.argv) >= 2:
+#       end_freq_mhz=float( sys.argv[2] )
 
 
-    type="eda2"
-    if len(sys.argv) >= 3:
-       type=sys.argv[3]
+#    type="eda2"
+#    if len(sys.argv) >= 3:
+#       type=sys.argv[3]
 
     step_mhz = 1.00
-    freq_mhz = start_freq_mhz
-    while freq_mhz <= end_freq_mhz :
-       t_rcv = trcv_multi( freq_mhz , type, False )
-       print("%s : T_rcv ( %.2f MHz) = %.8f [K]" % (type,freq_mhz,t_rcv))
+    freq_mhz = options.start_freq_mhz
+    while freq_mhz <= options.end_freq_mhz :
+       t_rcv = trcv_multi( freq_mhz , options.trcv_type, False, use_median_fit=options.use_median_fit, use_eda2_paper=options.use_eda2_paper )
+       print("%s : T_rcv ( %.2f MHz) = %.8f [K]" % (options.trcv_type,freq_mhz,t_rcv))
        
        freq_mhz += step_mhz
        
