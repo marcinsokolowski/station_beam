@@ -1070,6 +1070,26 @@ def save_beam_on_sun_file( options ) :
       print("ERROR : no files in the list file %s" % (hdf5_files_list))
       os.sys.exit(-1)
 
+def fits2txt( outfile, options=None ) :
+   out_f = open( outfile , "w" )
+   
+   line = "# AZ[deg] ZA[deg] BEAM_X BEAM_Y\n"
+   out_f.write( line )
+
+   for az in range(0,361,1) :   
+      for za in range(0,91,1) :
+#         if za==0 and az!=0 :
+#            continue
+      
+         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , options.frequency_mhz, polarisation='X', projection=options.projection, station_name=options.station_name, simulation_path=options.simulation_path )            
+         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , options.frequency_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name, simulation_path=options.simulation_path )   
+         
+         line = "%.4f %.4f %.4f %.4f\n" % (za,az,beam_x,beam_y)
+         out_f.write( line )
+
+   
+   out_f.close()
+
 def fits2beam( fitsfile, options=None ) :
 
    print("Reading fits file %s" % (fitsfile))
@@ -1084,6 +1104,7 @@ def fits2beam( fitsfile, options=None ) :
    out_ra_fits = fitsfile.replace(".fits","_ra.fits")
    hdu = pyfits.PrimaryHDU()
    hdu.data = ra.transpose()
+#   hdu.data = ra # no - tested already !!!
    hdulist = pyfits.HDUList([hdu])
    hdulist.writeto( out_ra_fits ,overwrite=True)
 
@@ -1215,6 +1236,7 @@ def parse_options(idx=0):
    parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
    parser.add_option('--time_azh_file',dest="time_azh_file",default=None, help="File name to convert (AZ,H) [deg] -> Beam X/Y values and multiply flux if available [format :  date; time; azimuth; elevation; right ascension; declination; and peak flux density]")   
    parser.add_option('--fits2beam', dest="fits2beam", default=None, help="Generates beam for a specified FITS file [default %default]",metavar="STRING")
+   parser.add_option('--fits2txt', dest="fits2txt", default=None, help="Saves beam into text file in 1 degree resolution [default %default]",metavar="STRING")
    parser.add_option('--ux','--uxtime','--unix_time','--unixtime',dest="unix_time",default=None, help="Unix time",type="float")
    
    # sun in the beam :
@@ -1270,6 +1292,7 @@ if __name__ == "__main__":
    print("\tBeam on Sun         = %s" % (options.beam_on_sun))
    print("\tinfile_hdf5list     = %s" % (options.infile_hdf5list))
    print("\toutfile_beam_on_sun = %s" % (options.outfile_beam_on_sun))
+   print("fits2txt        = %s" % (options.fits2txt))
    print("######################################################")
 
    if options.do_remapping :
@@ -1341,6 +1364,10 @@ if __name__ == "__main__":
    elif options.fits2beam is not None :
       print("DEBUG : fits2beam for file %s" % (options.fits2beam))      
       fits2beam( options.fits2beam, options )
+
+   elif options.fits2txt is not None :
+      print("DEBUG : fits2txt to output file %s" % (options.fits2txt))      
+      fits2txt( options.fits2txt, options )
       
    elif options.matlab2fits is not None :   
       matlab2sin( options.matlab2fits, x_size=512 )
