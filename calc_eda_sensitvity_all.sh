@@ -33,6 +33,7 @@ freq_cc_list="39 46 54 62 69 70 78 85 93 101 109 117 121 125 132 140 145 148 156
 if [[ -n "$5" && "$5" != "-" ]]; then
    freq_cc_list=$5
 fi
+freq_cc_count=`echo $freq_cc_list | awk '{print $NF;}'`
 
 use_beamf_errors=0
 beamf_err_options=""
@@ -114,7 +115,8 @@ do
           else                                        
              echo "Processing all frequencies for (az,za) = ($az,$za) [deg] , started at :"
              date
-          
+ 
+             ux_start1=`date +%s`         
              for freq_cc in `echo $freq_cc_list`
              do
                  echo "        freq_cc = $freq_cc"
@@ -123,11 +125,19 @@ do
                     header_options="--no-header"
                  fi              
 
+                 ux_start=`date +%s`
                  echo "python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}"
                  python $eda_sensitivity_path -c ${freq_cc} -p None -g ${gps}  -m analytic --az=${az} --za=${za} --outsens_file=${gps}_az${az}_za${za}_${out_basename} --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err ${beamf_err_options} --nos11 --header=HEADER ${header_options} ${options}
+                 ux_end=`date +%s`
+                 ux_diff=`echo "$ux_end $ux_start" | awk '{print $1-$2;}'`
+                 echo "BENCHMARKING : single frequency step took $ux_diff seconds"
           
                  index=$(($index+1))
              done
+             ux_end1=`date +%s`
+             ux_diff1=`echo "$ux_end1 $ux_start1" | awk '{print $1-$2;}'`
+             echo "BENCHMARKING : simulation of $freq_cc_count frequency channels took $ux_diff1 seconds"
+
           fi
           az=$(($az+$az_step))
           
