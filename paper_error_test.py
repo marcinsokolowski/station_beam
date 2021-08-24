@@ -1352,6 +1352,9 @@ def parse_options(idx):
    # providing external values of T_receiver :
    parser.add_option('--receiver_temperature','--receiver_temp','--t_rcv','--T_rcv',dest="receiver_temperature",default=None, help="Externally provided receiver temperature (overwrites the value in the database) [default %default]",metavar="float",type="float")
    parser.add_option('--trcv_file','--receiver_temp_file',dest="receiver_temp_file",default=None, help="Text file with receiver temperature vs. frequency [default %default]")
+   
+   # paper test :
+   parser.add_option('-paper_test',dest="paper_test",default="freq", help="Type of paper test [default %default] other options lst, azza")
 
    (options, args) = parser.parse_args(sys.argv[idx:])
    
@@ -1379,29 +1382,7 @@ def parse_options(idx):
    print("###############################################################")
    print("PARAMATERS : ")
    print("###############################################################")
-   print("Do plotting                = %s" % (options.do_plot))
-   if options.azim_deg is not None and options.za_deg is not None : 
-      print("Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-   else :
-      print("Pointing direction not specified")
-   if options.lst_hours is not None :     
-      print("Specified LST time         = %.4f [deg]" % (options.lst_hours))
-   if options.freq_mhz is not None :
-      print("Frequency                  = %.4f [MHz]" % (options.freq_mhz))
-   else :
-      print("Frequency                  = None") 
-   if options.lst_start_hours is not None and options.lst_end_hours is not None :      
-      print("LST range                  = %.4f - %.4f [MHz]" % (options.lst_start_hours,options.lst_end_hours))
-   else :
-      print("LST range not specified")
-   if options.unixtime_start is not None and options.unixtime_end is not None :
-      print("Unix time range            = %.2f - %.2f ( interval = %.2f seconds )" % (options.unixtime_start,options.unixtime_end,options.unixtime_interval))
-   else :
-      print("Unix time range not specified")
-   if options.ut_start is not None and options.ut_end is not None :
-      print("UTC time range = %s - %s ( interval = %.2f seconds )" % (options.ut_start,options.ut_end,options.unixtime_interval))
-   else :
-      print("UTC time range not specified")
+   print("paper_test = %s" % (options.paper_test))
    print("###############################################################")
 
    return (options, args)
@@ -1481,10 +1462,10 @@ if __name__ == "__main__":
     uxtime = [1578443400,1578445200,1578447000,1578448800,1578450600,1578452400,1578454200,1578456000,1578457800,1578459600,1578461400,1578463200,1578465000,1578466800,1578468600,1578470400,1578472200,1578474000,1578475800,1578477600,1578479400,1578481200,1578483000,1578484800,1578486600,1578488400,1578490200,1578492000,1578493800,1578495600,1578497400,1578499200,1578501000,1578502800,1578504600,1578506400,1578508200,1578510000,1578511800,1578513600,1578515400,1578517200,1578519000,1578520800,1578522600,1578524400,1578526200,1578528000]
     out_f = open("diff_xy_freq.txt","w")
     out_progress_f = open("progress.txt","w")
-    
-    for ux in uxtime :
-        for lst_idx in range(0,48) :
-          out_progress_f.write("%.2f %d\n" % (ux,lst_idx))
+
+    if options.paper_test == "freq" :    
+       for lst_idx in range(0,48) :
+          out_progress_f.write("lst index = %d\n" % (lst_idx))
         
           lst = lst_idx/2.00        
           for za in range(60,0,-5) :
@@ -1499,8 +1480,12 @@ if __name__ == "__main__":
                    line = ("%.8f %.8f\n" % (diff_x,diff_y))
                    out_f.write( line )
                    
-    out_f.close()                   
-    out_progress_f.close()
+       out_f.close()                   
+       out_progress_f.close()
+    elif options.paper_test == "lst" :
+       print("ERROR : not implemented yet !")
+    else :
+       print("ERROR : not implemented yet !")
                 
              
        
