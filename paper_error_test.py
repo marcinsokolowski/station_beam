@@ -1354,7 +1354,7 @@ def parse_options(idx):
    parser.add_option('--trcv_file','--receiver_temp_file',dest="receiver_temp_file",default=None, help="Text file with receiver temperature vs. frequency [default %default]")
    
    # paper test :
-   parser.add_option('-paper_test',dest="paper_test",default="freq", help="Type of paper test [default %default] other options lst, azza")
+   parser.add_option('--paper_test',dest="paper_test",default="freq", help="Type of paper test [default %default] other options lst, azza")
 
    (options, args) = parser.parse_args(sys.argv[idx:])
    
