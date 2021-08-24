@@ -1464,6 +1464,7 @@ if __name__ == "__main__":
     out_progress_f = open("progress.txt","w")
 
     if options.paper_test == "freq" :    
+       out_f = open("diff_xy_freq.txt","w")
        for lst_idx in range(0,48) :
           out_progress_f.write("lst index = %d\n" % (lst_idx))
         
@@ -1481,13 +1482,35 @@ if __name__ == "__main__":
                    out_f.write( line )
                    
        out_f.close()                   
-       out_progress_f.close()
     elif options.paper_test == "lst" :
+       # def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_end_h , 
+       #                     station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+       #                     db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00,
+       #                     receiver_temperature=None ) :
+       out_f = open("diff_xy_lst.txt","w")
+       for freq_mhz in range (50,360,10) :
+          out_progress_f.write("freq = %.2f MHz" % (freq_mhz))
+       
+          for za in range(60,0,-5) :
+             for az in range(0,360,5) :
+                ( out_lst_x , out_aot_x , out_sefd_x, out_lst_y , out_aot_y , out_sefd_y ) = get_sensitivity_azzalstrange( az, za, freq_mhz, 0, 24.00, "AAVS2" )
+                
+                l = len(out_freq_x) 
+                for i in range(0,l-1) :
+                   diff_x = (out_aot_x[i] - out_aot_x[i+1])/((out_aot_x[i] + out_aot_x[i+1])*0.5)
+                   diff_y = (out_aot_y[i] - out_aot_y[i+1])/((out_aot_y[i] + out_aot_y[i+1])*0.5)
+                   print("%.8f %.8f" % (diff_x,diff_y))
+                   line = ("%.8f %.8f\n" % (diff_x,diff_y))
+                   out_f.write( line )
+                   
+       out_f.close()
+    elif options.paper_test == "azza" :
        print("ERROR : not implemented yet !")
     else :
        print("ERROR : not implemented yet !")
                 
              
        
+    out_progress_f.close()
     
     
