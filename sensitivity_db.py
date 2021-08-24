@@ -321,7 +321,9 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
         unixtime    = float( row[6] )
         gpstime     = float( row[7] )
         aot         = float( row[8] )
-        sefd        = (2*1380.00)/aot
+        sefd        = numpy.NaN
+        if aot > 0 :
+           sefd        = (2*1380.00)/aot
         a_eff       = float( row[9] )
         t_rcv       = float( row[10] )
         t_ant       = float( row[11] )
@@ -334,7 +336,9 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
            # in case trcv is provided in the external text file (like a config file) :
            t_rcv = file_trcv_func( freq_mhz )
            aot = a_eff / ( t_ant + t_rcv )                
-           sefd        = (2*1380.00)/aot
+           sefd = 0.00
+           if aot > 0 :
+              sefd        = (2*1380.00)/aot
         
         ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
               
@@ -489,7 +493,9 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
            unixtime_db = float( row[6] ) # when filled 
            gpstime     = float( row[7] )
            aot         = float( row[8] )
-           sefd        = (2*1380.00)/aot
+           sefd        = numpy.NaN
+           if aot > 0 :
+              sefd        = (2*1380.00)/aot
            a_eff       = float( row[9] )
            t_sys       = float( row[10] )
            t_rcv       = float( row[11] )
