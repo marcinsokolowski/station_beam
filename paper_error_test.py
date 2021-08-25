@@ -728,7 +728,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     if conn is None :
        print("ERROR : could not connect to database %s" % (dbname_file))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
 
   
     # select closest LST :
@@ -746,7 +746,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
 
     print("Best LST in database is closer than %.8f [hours]" % (min_lst_distance))
     min_lst_distance = min_lst_distance + 0.01
@@ -765,7 +765,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     
     if min_freq_distance is None :
        print("ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
@@ -786,6 +786,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     out_txt_x_f = None
     out_txt_y_f = None
+    out_txt_i_f = None 
 
     out_txt_filename_X = None
     out_txt_filename_Y = None
@@ -1495,7 +1496,7 @@ if __name__ == "__main__":
              for az in range(0,360,5) :
                 ( out_lst_x , out_aot_x , out_sefd_x, out_lst_y , out_aot_y , out_sefd_y ) = get_sensitivity_azzalstrange( az, za, freq_mhz, 0, 24.00, "AAVS2" )
                 
-                l = len(out_freq_x) 
+                l = len(out_lst_x) 
                 for i in range(0,l-1) :
                    diff_x = (out_aot_x[i] - out_aot_x[i+1])/((out_aot_x[i] + out_aot_x[i+1])*0.5)
                    diff_y = (out_aot_y[i] - out_aot_y[i+1])/((out_aot_y[i] + out_aot_y[i+1])*0.5)
@@ -1505,6 +1506,74 @@ if __name__ == "__main__":
                    
        out_f.close()
     elif options.paper_test == "azza" :
+# get sensitivity map for a given LST and freq_mhz
+#def get_sensitivity_map( freq_mhz, lst_hours, 
+#                             station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
+#                             db_lst_resolution=0.5, db_freq_resolution_mhz=10.00, output_file_base=None,
+#                             out_fitsname_base="sensitivity_map_", output_dir="./", receiver_temperature=None ) :
+
+       # just to calculate indexes of next za value for the same azimuth 
+       ( out_azim_x, out_za_x, out_aot_x, out_sefd_x, out_azim_y, out_za_y, out_aot_y, out_sefd_y, out_azim_y, out_za_y, out_aot_i, out_sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( 150.00, 0.00, "AAVS2" )
+       len_az = len(out_azim_x)
+       len_za = len(out_za_x)
+       
+       if len_az != len_za :
+          printf("ERROR : len_az != len_za ( %d != %d )" % (len_az,len_za))
+          sys.exit(-1)
+
+       print("DEBUG : dimensions (%d,%d)" % (len_az,len_za))
+          
+       next_za_index = numpy.ones( len_za )*(-1)
+       for i in range(0,len_za ):
+          az_val = out_azim_x[i]
+          za_val = out_za_x[i]
+          
+          for k in range(i+1,len_za ):
+             print("DEBUG : looking for (az,za) = (%.2f,%.2f) [deg] , current value (%.2f,%.2f) [deg]" % (az_val,(za_val+5.00),out_azim_x[k],out_za_x[k]))
+             if math.fabs(out_azim_x[k]-az_val)<=0.0001 and math.fabs(out_za_x[k]-(za_val+5.00))<=0.0001 :
+                print("   FOUND at k = %d -> next_za_index[%d] = %d!!!" % (k,i,k))
+                next_za_index[i] = k
+                break
+
+          if next_za_index[i] < 0 :
+             print("ERROR : could not find next ZA value for i = %d at (az,za) = (%.2f,%.2f) [deg]" % (i,az_val,za_val))
+
+       for i in range(0,len_za ):
+          if out_za_x[i] < 84 : 
+             if next_za_index[i] < 0 :
+                print("ERROR : no next za index at i = %d at (az,za) = (%.2f,%.2f) [deg]-> exiting now" % (i,out_azim_x[i],out_za_x[i]))
+                sys.exit(-1)
+
+
+       out_f = open("diff_xy_azza.txt","w")
+       for freq_mhz in range (50,360,10) :
+          for lst_idx in range(0,48) :       
+             out_progress_f.write("freq = %.2f MHz , lst_idx = %d" % (freq_mhz,lst_idx))
+             lst = lst_idx/2.00             
+             ( out_azim_x, out_za_x, out_aot_x, out_sefd_x, out_azim_y, out_za_y, out_aot_y, out_sefd_y, out_azim_y, out_za_y, out_aot_i, out_sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( freq_mhz, lst, "AAVS2" )
+             
+             
+             for i in range(0,len_az-1) :
+                diff_x_az = out_aot_x[i] - out_aot_x[i+1]
+                diff_y_az = out_aot_y[i] - out_aot_y[i+1]
+                   
+                line = ("%.8f %.8f AZIM_DIFF\n" % (diff_x_az,diff_y_az))
+                out_f.write( line )
+                   
+                if next_za_index[i] >= 0 :
+                   next_idx = int(next_za_index[i])
+                   # print("DEBUG : index = %d, value = %.2f" % (next_idx,out_aot_x[next_idx]))
+                   diff_x_za = ( out_aot_x[i] - out_aot_x[ next_idx ] ) / (0.5*(out_aot_x[i] + out_aot_x[ next_idx ]))
+                   diff_y_za = ( out_aot_y[i] - out_aot_y[ next_idx ] ) / (0.5*(out_aot_y[i] + out_aot_y[ next_idx ]))
+                   
+                   line = ("%.8f %.8f ZA_DIFF\n" % (diff_x_za,diff_y_za))
+                   out_f.write( line )
+                                                                                                     
+
+       
+       out_f.close()
+    
+    
        print("ERROR : not implemented yet !")
     else :
        print("ERROR : not implemented yet !")

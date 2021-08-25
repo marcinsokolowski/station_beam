@@ -730,7 +730,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     if conn is None :
        print("ERROR : could not connect to database %s" % (dbname_file))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
 
   
     # select closest LST :
@@ -748,7 +748,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
 
     print("Best LST in database is closer than %.8f [hours]" % (min_lst_distance))
     min_lst_distance = min_lst_distance + 0.01
@@ -767,7 +767,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
     
     if min_freq_distance is None :
        print("ERROR no records in the database exist closer than %.4f MHz in FREQ at LST around %.4f [hours]" % (db_freq_resolution_mhz,lst_hours))
-       return (None,None,None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None,None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
@@ -788,6 +788,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     out_txt_x_f = None
     out_txt_y_f = None
+    out_txt_i_f = None
 
     out_txt_filename_X = None
     out_txt_filename_Y = None
