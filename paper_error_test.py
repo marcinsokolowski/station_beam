@@ -1461,7 +1461,6 @@ if __name__ == "__main__":
 #                             receiver_temp_file=None ) :
 
     uxtime = [1578443400,1578445200,1578447000,1578448800,1578450600,1578452400,1578454200,1578456000,1578457800,1578459600,1578461400,1578463200,1578465000,1578466800,1578468600,1578470400,1578472200,1578474000,1578475800,1578477600,1578479400,1578481200,1578483000,1578484800,1578486600,1578488400,1578490200,1578492000,1578493800,1578495600,1578497400,1578499200,1578501000,1578502800,1578504600,1578506400,1578508200,1578510000,1578511800,1578513600,1578515400,1578517200,1578519000,1578520800,1578522600,1578524400,1578526200,1578528000]
-    out_f = open("diff_xy_freq.txt","w")
     out_progress_f = open("progress.txt","w")
 
     if options.paper_test == "freq" :    
@@ -1545,36 +1544,38 @@ if __name__ == "__main__":
                 sys.exit(-1)
 
 
-       out_f = open("diff_xy_azza.txt","w")
+#       out_f = open("diff_xy_azza.txt","w")
        for freq_mhz in range (50,360,10) :
           for lst_idx in range(0,48) :       
              out_progress_f.write("freq = %.2f MHz , lst_idx = %d" % (freq_mhz,lst_idx))
              lst = lst_idx/2.00             
+
+             outfile = ( "diff_xy_azza_%dMHz_lst%.1fh.txt" % (freq_mhz,lst) )
+             out_f = open( outfile , "w" )
+             
              ( out_azim_x, out_za_x, out_aot_x, out_sefd_x, out_azim_y, out_za_y, out_aot_y, out_sefd_y, out_azim_y, out_za_y, out_aot_i, out_sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( freq_mhz, lst, "AAVS2" )
              
              
              for i in range(0,len_az-1) :
-                diff_x_az = out_aot_x[i] - out_aot_x[i+1]
-                diff_y_az = out_aot_y[i] - out_aot_y[i+1]
+                if out_za_x[i] <= 61 :             
+                   diff_x_az = out_aot_x[i] - out_aot_x[i+1]
+                   diff_y_az = out_aot_y[i] - out_aot_y[i+1]
                    
-                line = ("%.8f %.8f AZIM_DIFF\n" % (diff_x_az,diff_y_az))
-                out_f.write( line )
-                   
-                if next_za_index[i] >= 0 :
-                   next_idx = int(next_za_index[i])
-                   # print("DEBUG : index = %d, value = %.2f" % (next_idx,out_aot_x[next_idx]))
-                   diff_x_za = ( out_aot_x[i] - out_aot_x[ next_idx ] ) / (0.5*(out_aot_x[i] + out_aot_x[ next_idx ]))
-                   diff_y_za = ( out_aot_y[i] - out_aot_y[ next_idx ] ) / (0.5*(out_aot_y[i] + out_aot_y[ next_idx ]))
-                   
-                   line = ("%.8f %.8f ZA_DIFF\n" % (diff_x_za,diff_y_za))
+                   line = ("%.8f %.8f AZIM_DIFF\n" % (diff_x_az,diff_y_az))
                    out_f.write( line )
+                   
+                   if next_za_index[i] >= 0 :
+                      next_idx = int(next_za_index[i])
+                      # print("DEBUG : index = %d, value = %.2f" % (next_idx,out_aot_x[next_idx]))
+                      diff_x_za = ( out_aot_x[i] - out_aot_x[ next_idx ] ) / (0.5*(out_aot_x[i] + out_aot_x[ next_idx ]))
+                      diff_y_za = ( out_aot_y[i] - out_aot_y[ next_idx ] ) / (0.5*(out_aot_y[i] + out_aot_y[ next_idx ]))
+                   
+                      line = ("%.8f %.8f ZA_DIFF %.8f %.8f at (%.8f,%.8f) [deg] | %.8f %.8f at (%.8f,%.8f) [deg]\n" % (diff_x_za,diff_y_za,out_aot_x[i],out_aot_y[i],out_azim_x[i],out_za_x[i],out_aot_x[ next_idx ],out_aot_y[ next_idx ],out_azim_x[next_idx],out_za_x[next_idx]))
+                      out_f.write( line )
                                                                                                      
 
        
-       out_f.close()
-    
-    
-       print("ERROR : not implemented yet !")
+             out_f.close()
     else :
        print("ERROR : not implemented yet !")
                 
