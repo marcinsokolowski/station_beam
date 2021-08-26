@@ -1515,6 +1515,7 @@ if __name__ == "__main__":
 #                             out_fitsname_base="sensitivity_map_", output_dir="./", receiver_temperature=None ) :
 
        # just to calculate indexes of next za value for the same azimuth 
+       out_f2 = open("diff_azza_all.txt","w")
        ( out_azim_x, out_za_x, out_aot_x, out_sefd_x, out_azim_y, out_za_y, out_aot_y, out_sefd_y, out_azim_y, out_za_y, out_aot_i, out_sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( 150.00, 0.00, "AAVS2" )
        len_az = len(out_azim_x)
        len_za = len(out_za_x)
@@ -1575,10 +1576,15 @@ if __name__ == "__main__":
                    
                       line = ("%.8f %.8f ZA_DIFF %.8f %.8f at ( %.8f , %.8f ) [deg] | %.8f %.8f at ( %.8f ,%.8f ) [deg] | %.8f %.8f\n" % (diff_x_za,diff_y_za,out_aot_x[i],out_aot_y[i],out_azim_x[i],out_za_x[i],out_aot_x[ next_idx ],out_aot_y[ next_idx ],out_azim_x[next_idx],out_za_x[next_idx],freq_mhz,lst))
                       out_f.write( line )
+                      
+                      line = ("ZA_DIFF %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f\n" % (diff_x_za,diff_y_za,out_aot_x[i],out_aot_y[i],out_azim_x[i],out_za_x[i],out_aot_x[ next_idx ],out_aot_y[ next_idx ],freq_mhz,lst))
+                      out_f2.write( line )
                                                                                                      
 
        
              out_f.close()
+
+       out_f2.close()      
     else :
        print("ERROR : not implemented yet !")
                 
