@@ -1573,7 +1573,7 @@ if __name__ == "__main__":
                       diff_x_za = ( out_aot_x[i] - out_aot_x[ next_idx ] ) / (0.5*(out_aot_x[i] + out_aot_x[ next_idx ]))
                       diff_y_za = ( out_aot_y[i] - out_aot_y[ next_idx ] ) / (0.5*(out_aot_y[i] + out_aot_y[ next_idx ]))
                    
-                      line = ("%.8f %.8f ZA_DIFF %.8f %.8f at (%.8f,%.8f) [deg] | %.8f %.8f at (%.8f,%.8f) [deg]\n" % (diff_x_za,diff_y_za,out_aot_x[i],out_aot_y[i],out_azim_x[i],out_za_x[i],out_aot_x[ next_idx ],out_aot_y[ next_idx ],out_azim_x[next_idx],out_za_x[next_idx]))
+                      line = ("%.8f %.8f ZA_DIFF %.8f %.8f at ( %.8f , %.8f ) [deg] | %.8f %.8f at ( %.8f ,%.8f ) [deg] | %.8f %.8f\n" % (diff_x_za,diff_y_za,out_aot_x[i],out_aot_y[i],out_azim_x[i],out_za_x[i],out_aot_x[ next_idx ],out_aot_y[ next_idx ],out_azim_x[next_idx],out_za_x[next_idx],freq_mhz,lst))
                       out_f.write( line )
                                                                                                      
 
