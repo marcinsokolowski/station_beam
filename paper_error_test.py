@@ -1516,6 +1516,18 @@ if __name__ == "__main__":
 
        # just to calculate indexes of next za value for the same azimuth 
        out_f2 = open("diff_azza_all.txt","w")
+       # diff_x_za,
+       # diff_y_za,
+       # out_aot_x[i],
+       # out_aot_y[i],
+       # out_azim_x[i],
+       # out_za_x[i],
+       # out_aot_x[ next_idx ],
+       # out_aot_y[ next_idx ],
+       # freq_mhz,
+       # lst
+       out_f2.write("# DIFF_TYPE REL_DIFF_ZA_X REL_DIFF_ZA_Y AoT_X[azza] AoT_Y[azza] AZIM[i] ZA[i] AoT_X[next za/azim] AoT_Y[next za/azim] FREQ[MHz] LST[h]\n")
+       
        ( out_azim_x, out_za_x, out_aot_x, out_sefd_x, out_azim_y, out_za_y, out_aot_y, out_sefd_y, out_azim_y, out_za_y, out_aot_i, out_sefd_i, out_txt_filename_X, out_txt_filename_Y, out_txt_filename_I ) = get_sensitivity_map( 150.00, 0.00, "AAVS2" )
        len_az = len(out_azim_x)
        len_za = len(out_za_x)
