@@ -1465,6 +1465,8 @@ if __name__ == "__main__":
 
     if options.paper_test == "freq" :    
        out_f = open("diff_xy_freq.txt","w")
+       
+       out_f.write( "# REL_DIFF_AoT_X REL_DIFF_AoT_Y AoT_X[ch] AoT_X[ch+1] AoT_Y[ch] AoT_Y[ch+1] FREQ[ch] LST[h] AZIM[deg] ZA[deg]\n" )
        for lst_idx in range(0,48) :
           out_progress_f.write("lst index = %d\n" % (lst_idx))
         
@@ -1478,7 +1480,7 @@ if __name__ == "__main__":
                    diff_x = (out_aot_x[i] - out_aot_x[i+1])/((out_aot_x[i] + out_aot_x[i+1])*0.5)
                    diff_y = (out_aot_y[i] - out_aot_y[i+1])/((out_aot_y[i] + out_aot_y[i+1])*0.5)
                    print("%.8f %.8f" % (diff_x,diff_y))
-                   line = ("%.8f %.8f\n" % (diff_x,diff_y))
+                   line = ("%.8f %.8f %.8f %.8f %.8f %.8f %.4f %.4f %.4f %.4f\n" % (diff_x,diff_y,out_aot_x[i],out_aot_x[i+1],out_aot_y[i],out_aot_y[i+1],out_freq_x[i],lst,az,za))
                    out_f.write( line )
                    
        out_f.close()                   
@@ -1488,6 +1490,7 @@ if __name__ == "__main__":
        #                     db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00,
        #                     receiver_temperature=None ) :
        out_f = open("diff_xy_lst.txt","w")
+       out_f.write( "# REL_DIFF_AoT_X REL_DIFF_AoT_Y AoT_X[lst] AoT_X[lst+1] AoT_Y[lst] AoT_Y[lst+1] FREQ[MHz] LST[i] AZIM[deg] ZA[deg]\n")
        for freq_mhz in range (50,360,10) :
           out_progress_f.write("freq = %.2f MHz" % (freq_mhz))
        
@@ -1500,7 +1503,7 @@ if __name__ == "__main__":
                    diff_x = (out_aot_x[i] - out_aot_x[i+1])/((out_aot_x[i] + out_aot_x[i+1])*0.5)
                    diff_y = (out_aot_y[i] - out_aot_y[i+1])/((out_aot_y[i] + out_aot_y[i+1])*0.5)
                    print("%.8f %.8f" % (diff_x,diff_y))
-                   line = ("%.8f %.8f\n" % (diff_x,diff_y))
+                   line = ("%.8f %.8f %.8f %.8f %.8f %.8f %.4f %.4f %.4f %.4f\n" % (diff_x,diff_y,out_aot_x[i],out_aot_x[i+1],out_aot_y[i],out_aot_y[i+1],freq_mhz,out_lst_x[i],az,za))
                    out_f.write( line )
                    
        out_f.close()
