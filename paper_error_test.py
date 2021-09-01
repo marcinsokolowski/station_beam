@@ -884,7 +884,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_end_h , 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, freq_resolution_mhz=5.00,
-                             receiver_temperature=None ) :
+                             receiver_temperature=None, debug=True ) :
                              
     # connect to the database :                             
     dbname_file = "%s/%s_%s.db" % (db_path,db_base_name,station)       
@@ -898,7 +898,9 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between %.4f and %.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND ABS(frequency_mhz-%.4f)<%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, freq_mhz, freq_resolution_mhz )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between %.4f and %.4f AND ABS(za_deg-%.4f)<%.4f AND ABS(azim_deg-%.4f)<%.4f AND ABS(frequency_mhz-%.4f)<%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, freq_mhz, freq_resolution_mhz )
+    if debug :
+       print("SQL : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
  
@@ -909,6 +911,9 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
     out_lst_y = []
     out_aot_y  = []
     out_sefd_y = []
+    
+    if debug :
+       print("   Fetched %d rows" % (len(rows)))
         
     for row in rows:
         print(row)
