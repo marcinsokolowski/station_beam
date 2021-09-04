@@ -33,6 +33,9 @@ import tpm_mapping
 # receiver temperature module :
 import station_trcv
 
+# configuration:
+import station_beam_config
+
 def mkdir_p(path):
    try:
       os.makedirs(path)
@@ -174,8 +177,10 @@ def main():
     # Beam models using fits file with a single, isolated, dipole pattern :
     # use beam fits files in ~/aavs-calibration/
     # use_beam_fits=options.use_beam_fits, station_name=options.station_name
-    parser.add_option('--use_beam_fits',action="store_true",dest="use_beam_fits",default=False,help="Use fits beam files from ~/aavs-calbration/BeamModels/ [default %default]")
-    parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help="Station name to find beam fits files in ~/aavs-calbration/BeamModels/ [default %default]")
+    help_str=( "Use fits beam files from %s [default %%default]" %  station_beam_config.beam_model_path)
+    parser.add_option('--use_beam_fits',action="store_true",dest="use_beam_fits",default=False,help=help_str)
+    help_str=( "Station name to find beam fits files in %s [default %%default]" % station_beam_config.beam_model_path)
+    parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help=help_str)
 
     
     tpm_list=None

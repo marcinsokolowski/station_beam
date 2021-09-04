@@ -1,6 +1,9 @@
 # station_beam
 SKA-Low station beam models, sensitivity etc
 
+# Web Interface is currently deployed here:
+
+  - sensitivity.skalow.link ( http://3.25.208.103:8000/ )
 
 # local DJANGO webservice can be easily started by doing:
   - cd django/skalow_station_sensitivity/

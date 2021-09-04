@@ -10,7 +10,7 @@ This is the script interface to the functions and modules defined in MWA_Tools/s
 """
 from __future__ import print_function
 
-import pdb
+# import pdb
 # TEMPORARY ??? fails in pawsey 
 try :
    from astropy.utils.iers import conf
@@ -36,6 +36,9 @@ from primarybeammap_local import *
 import errno
 from scipy.interpolate import interp1d
 from eda_beam import read_antenna_list
+
+# configuration:
+import station_beam_config
 
 # receiver temperature models :
 import station_trcv
@@ -191,8 +194,12 @@ def main():
     
     # use beam fits files in ~/aavs-calibration/
     # use_beam_fits=options.use_beam_fits, station_name=options.station_name
-    parser.add_option('--use_beam_fits',action="store_true",dest="use_beam_fits",default=False,help="Use fits beam files from ~/aavs-calbration/BeamModels/ [default %default]")
-    parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help="Station name to find beam fits files in ~/aavs-calbration/BeamModels/ [default %default]")
+    help_str=("Use fits beam files from %s [default %%default]" % station_beam_config.beam_model_path)
+    parser.add_option('--use_beam_fits',action="store_true",dest="use_beam_fits",default=False,help=help_str)
+    
+    help_str=("Station name to find beam fits files in %s [default %%default]" % station_beam_config.beam_model_path)
+    parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help=help_str)
+    
     parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
     
     # antenna locations file :

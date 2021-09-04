@@ -18,7 +18,6 @@ conf.auto_max_age = None
 from astropy.utils import iers
 iers.conf.auto_download = False  
 
-
 # import pyfits
 import astropy.io.fits as pyfits
 try :
@@ -39,6 +38,9 @@ except :
 
 # options :
 from optparse import OptionParser,OptionGroup
+
+# coniguration :
+import station_beam_config
 
 # current_fits_filename = None
 current_fits_beams    = {}
@@ -476,7 +478,7 @@ def beammap2sin_OLD( theta_phi, beam_values_2d , x_size=512, step=1, do_test=Fal
 
 
 # TODO (2020-08-20) : use dictionary to cache all FITS files ! It all works very slow on bighorns ...
-def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/" , postfix="zea" ) :
+def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulation_path=station_beam_config.beam_model_path , postfix="zea" ) :
 #   global current_fits_filename
    global current_fits_beams
 #   global azim_map
@@ -527,7 +529,7 @@ def read_beam_fits( frequency_mhz, polarisation="X", station_name="EDA", simulat
 
 # individual_antenna_beams_path="~/aavs-calibration/
 # EDA_Xpol_ortho_169.fits
-def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path="$HOME/aavs-calibration/BeamModels/", projection="zea", debug_level=0 ) :
+def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_name="EDA", simulation_path=station_beam_config.beam_model_path, projection="zea", debug_level=0 ) :
    print("get_fits_beam : requestion beam model for azza map of size (%d x %d) pixels , projection = %s" % (azim_deg.shape[0],azim_deg.shape[1],projection))
 
    (current_fits_beam,beam_file_name) = read_beam_fits( frequency_mhz, polarisation, station_name, simulation_path, postfix=projection )
@@ -710,7 +712,7 @@ def makeAZZA(npix=256,projection='ZEA'):
 def get_fits_beam_multi( azim_rad, za_rad, frequency_mhz, 
                          polarisation="X", 
                          station_name="EDA", 
-                         simulation_path="$HOME/aavs-calibration/BeamModels/",
+                         simulation_path=station_beam_config.beam_model_path,
                          use_isotropic_antenna=False,
                          use_beam_as_is=True,
                          debug=False, 
@@ -1257,7 +1259,7 @@ def parse_options(idx=0):
    parser.add_option('--dec','--dec_deg' , dest="dec_deg",default=0, help="DEC [deg] - for lightcurve of RA,DEC object",type="float")
    
    # Paths :
-   parser.add_option("--simulation_path","--path","--simul_path", dest="simulation_path", default="$HOME/aavs-calibration/BeamModels/", help="Simulation path [default %default]")
+   parser.add_option("--simulation_path","--path","--simul_path", dest="simulation_path", default=station_beam_config.beam_model_path, help="Simulation path [default %default]")
       
    (options, args) = parser.parse_args(sys.argv[idx:])
    
