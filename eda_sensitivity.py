@@ -200,6 +200,9 @@ def main():
     help_str=("Station name to find beam fits files in %s [default %%default]" % station_beam_config.beam_model_path)
     parser.add_option('--beam_fits_station','--station_name',dest="station_name",default="EDA",help=help_str)
     
+    help_str=("Path to location of FITS files with beam models of individual station dipole [default %s]" % (station_beam_config.beam_model_path))
+    parser.add_option('--beam_models_path','--models_path',dest="beam_model_path",default=station_beam_config.beam_model_path,help=help_str)
+    
     parser.add_option('--projection',dest="projection",default="zea", help="Projection [default %default]")
     
     # antenna locations file :
@@ -213,6 +216,7 @@ def main():
 
 
     (options, args) = parser.parse_args()
+    station_beam_config.beam_model_path=options.beam_model_path    
     datetimestring=options.datetimestring
     set_sun( options.add_sun, options.sun_ra, options.sun_dec )
 
@@ -268,6 +272,7 @@ def main():
     else :
        print("WARNING : antenna position file not provided -> using default antenna locations (for EDA1)")
     print("Correlator mode = %s" % (options.correlator_mode))       
+    print("Beam model path = %s" % (station_beam_config.beam_model_path))
     print("##################################################")
     
     if options.dir is not None:
