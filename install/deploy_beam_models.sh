@@ -32,11 +32,11 @@ echo "beam_url_skala4 = $beam_url_skala4"
 echo "############################################################################"
 
 
-echo "mkdir -p /tmp/station_beam/BeamModels/ ${beam_dir}/BeamModels/"
-mkdir -p /tmp/station_beam/BeamModels/ ${beam_dir}/BeamModels/
+echo "mkdir -p ${TMPDIR}/station_beam/BeamModels/ ${beam_dir}/BeamModels/"
+mkdir -p ${TMPDIR}/station_beam/BeamModels/ ${beam_dir}/BeamModels/
 
 # download / unpack / move :
-cd /tmp/station_beam/BeamModels/
+cd ${TMPDIR}/station_beam/BeamModels/
 echo "rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz"
 rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz 
 
@@ -80,13 +80,13 @@ cd ../
 
 if [[ $update_config -gt 0 ]]; then
    # update config file :
-   awk -v beam_dir=${beam_dir} -F "=" '{if($1=="beam_model_path"){print $1"="beam_dir;}else{print $0;}}' ~/github/station_beam/station_beam_config.py > /tmp/station_beam/station_beam_config.py
+   awk -v beam_dir=${beam_dir} -F "=" '{if($1=="beam_model_path"){print $1"="beam_dir;}else{print $0;}}' ~/github/station_beam/station_beam_config.py > ${TMPDIR}/station_beam/station_beam_config.py
 
    echo "cp ~/github/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py.backup"
    cp ~/github/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py.backup
 
-   echo "cp /tmp/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py"
-   cp /tmp/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py
+   echo "cp ${TMPDIR}/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py"
+   cp ${TMPDIR}/station_beam/station_beam_config.py ~/github/station_beam/station_beam_config.py
 else
    echo "INFO : update of config file ~/github/station_beam/station_beam_config.py is not required (no change to default path to beam directory = $beam_dir)"
 fi   
