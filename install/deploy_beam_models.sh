@@ -32,46 +32,51 @@ echo "beam_url_skala4 = $beam_url_skala4"
 echo "############################################################################"
 
 
-mkdir -p /tmp/station_beam/BeamModels/
-cd /tmp/station_beam/BeamModels/
+echo "mkdir -p /tmp/station_beam/BeamModels/ ${beam_dir}/BeamModels/"
+mkdir -p /tmp/station_beam/BeamModels/ ${beam_dir}/BeamModels/
 
+# download / unpack / move :
+cd /tmp/station_beam/BeamModels/
 echo "rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz"
 rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz 
 
+# EDA : download / untar / remove .tar.gz :
 echo "wget ${beam_url_eda} -O EDA.tar.gz"
 wget ${beam_url_eda} -O EDA.tar.gz
-
-echo "wget ${beam_url_skala2} -O SKALA2.tar.gz"
-wget ${beam_url_skala2} -O SKALA2.tar.gz
-
-echo "wget ${beam_url_skala4} -O SKALA4.tar.gz"
-wget ${beam_url_skala4} -O SKALA4.tar.gz
-
-# EDA untar / remove .tar.gz :
 echo "tar zxvf EDA.tar.gz"
 tar zxvf EDA.tar.gz
 ln -s EDA EDA2
 echo "rm -f EDA.tar.gz"
 rm -f EDA.tar.gz 
+echo "mv EDA* ${beam_dir}/BeamModels/"
+mv EDA* ${beam_dir}/BeamModels/
 
-# EDA untar / remove .tar.gz :
+# SKALA2 : download / untar / remove .tar.gz :
+echo "wget ${beam_url_skala2} -O SKALA2.tar.gz"
+wget ${beam_url_skala2} -O SKALA2.tar.gz
 echo "tar zxvf SKALA2.tar.gz"
 tar zxvf SKALA2.tar.gz
 echo "rm -f SKALA2.tar.gz"
 rm -f SKALA2.tar.gz 
+echo "mv SKALA2 ${beam_dir}/BeamModels/"
+mv SKALA2 ${beam_dir}/BeamModels/
 
-# EDA untar / remove .tar.gz :
+# SKALA4 : download / untar / remove .tar.gz :
+echo "wget ${beam_url_skala4} -O SKALA4.tar.gz"
+wget ${beam_url_skala4} -O SKALA4.tar.gz
 echo "tar zxvf SKALA4.tar.gz"
 tar zxvf SKALA4.tar.gz
 echo "rm -f SKALA4.tar.gz"
 rm -f SKALA4.tar.gz 
+echo "mv SKALA4 ${beam_dir}/BeamModels/"
+mv SKALA4 ${beam_dir}/BeamModels/
 
+
+# OLD for full tar.gz file :
 # echo "tar zxvf BeamModels.tar.gz"
 # tar zxvf BeamModels.tar.gz
 
 cd ../
-echo "mv BeamModels ${beam_dir}/"
-mv BeamModels ${beam_dir}/
 
 if [[ $update_config -gt 0 ]]; then
    # update config file :
