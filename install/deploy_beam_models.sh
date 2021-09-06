@@ -38,14 +38,14 @@ cd /tmp/station_beam/BeamModels/
 echo "rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz"
 rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz 
 
-echo "wget ${beam_url_eda}"
-wget ${beam_url_eda}
+echo "wget ${beam_url_eda} -o EDA.tar.gz"
+wget ${beam_url_eda} -o EDA.tar.gz
 
-echo "wget ${beam_url_skala2}"
-wget ${beam_url_skala2}
+echo "wget ${beam_url_skala2} -o SKALA2.tar.gz"
+wget ${beam_url_skala2} -o SKALA2.tar.gz
 
-echo "wget ${beam_url_skala4}"
-wget ${beam_url_skala4}
+echo "wget ${beam_url_skala4} -o SKALA4.tar.gz"
+wget ${beam_url_skala4} -o SKALA4.tar.gz
 
 echo "tar zxvf EDA.tar.gz"
 tar zxvf EDA.tar.gz
