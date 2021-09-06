@@ -47,18 +47,24 @@ wget ${beam_url_skala2} -O SKALA2.tar.gz
 echo "wget ${beam_url_skala4} -O SKALA4.tar.gz"
 wget ${beam_url_skala4} -O SKALA4.tar.gz
 
+# EDA untar / remove .tar.gz :
 echo "tar zxvf EDA.tar.gz"
 tar zxvf EDA.tar.gz
 ln -s EDA EDA2
+echo "rm -f EDA.tar.gz"
+rm -f EDA.tar.gz 
 
+# EDA untar / remove .tar.gz :
 echo "tar zxvf SKALA2.tar.gz"
 tar zxvf SKALA2.tar.gz
+echo "rm -f SKALA2.tar.gz"
+rm -f SKALA2.tar.gz 
 
+# EDA untar / remove .tar.gz :
 echo "tar zxvf SKALA4.tar.gz"
 tar zxvf SKALA4.tar.gz
-
-echo "rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz"
-rm -f EDA.tar.gz SKALA.tar.gz SKALA4.tar.gz 
+echo "rm -f SKALA4.tar.gz"
+rm -f SKALA4.tar.gz 
 
 # echo "tar zxvf BeamModels.tar.gz"
 # tar zxvf BeamModels.tar.gz
