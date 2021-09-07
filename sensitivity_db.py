@@ -961,7 +961,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
                               uxtime_i=None, aot_i=None , point_i='b+' ,
-                              fig_size_x=20, fig_size_y=10, info=None ) :
+                              fig_size_x=20, fig_size_y=10, info=None, save_output_path="./" ) :
                      
    legend_location = "upper center" # "upper right"
 
@@ -1041,7 +1041,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    plt.grid()
    
    if output_file_base is not None :
-      outfile = ( "%s.png" % (output_file_base) )
+      outfile = ( "%s/%s.png" % (save_output_path,output_file_base) )
       plt.savefig( outfile )
    
    plt.show()
@@ -1119,9 +1119,10 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    return (png_image_path)
 
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx', freq_i=None, aot_i=None, point_i='b+', min_ylimit=0.00, max_ylimit=2.00, info=None,
-                      fig_size_x=20, fig_size_y=10 ):
+                      fig_size_x=20, fig_size_y=10, save_output_path="./" ):
 
    global web_interface_initialised
+   print("DEBUG : inside plot_sensitivity")
    
    max_aot = 0.00
    min_freq = min(freq_x)
@@ -1179,7 +1180,8 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    outfile = None
    if output_file_base is not None :
-      outfile = ( "%s.png" % (output_file_base) )
+      outfile = ( "%s/%s.png" % (save_output_path,output_file_base) )
+      print("Saving file %s ..." % (outfile))
       plt.savefig( outfile )
 
       print("Saved output image to file %s" % (outfile))
