@@ -16,12 +16,25 @@ SKA-Low station beam models, sensitivity etc
   - mkdir ~/github/
   - cd ~/github/
   - git clone https://github.com/marcinsokolowski/station_beam.git
-  - Execute ~/github/station_beam/install/deploy_beam_models.sh this scripts assumes that the package is installed in ~/github/station_beam/
-  - or do it manually : download beam models of individual dipoles from ... Unpack the file:
+  - Execute ~/github/station_beam/install/deploy_beam_models.sh this scripts assumes that the package is installed in ~/github/station_beam/ , parameters are :
+     - first parameter is final location where BeamModel files are copied, default ~/aavs-calibration/BeamModels/
+     - parameters 2, 3, 4 are URLs to EDA.tar.gz, SKALA2.tar.gz, SKALA4.tar.gz currently on my Dropbox
+
+    It can also be done manually : download beam models of individual dipoles from ... Unpack the file:
       - tar zxvf BeamModels.tar.gz
       - move BeamModels to final location
       - modify file ~/github/station_beam/station_beam_config.py so that parameter beam_model_path is set to full path to BeamModels/"
 
+
+
+
+  - deployment of databases use script install/deploy_databases.sh which takes 3 parameters:
+    - parameter 1 is the location of database file on the target system (default ~/github/station_beam/sql/)
+    - parameter 2 is the URL to the EDA2 SQLite database (currently on my Dropbox)
+    - parameter 3 is the URL to the AAVS2 SQLite database (currently on my Dropbox)
+
+
+    
 
 
 
