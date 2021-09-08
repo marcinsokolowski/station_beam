@@ -26,12 +26,12 @@ SKA-Low station beam models, sensitivity etc
      - first parameter is final location where BeamModel files are copied, default ~/aavs-calibration/BeamModels/
      - parameters 2, 3, 4 are URLs to EDA.tar.gz, SKALA2.tar.gz, SKALA4.tar.gz currently on my Dropbox
 
-    It can also be done manually : download beam models of individual dipoles from ... Unpack the file:
-      - tar zxvf BeamModels.tar.gz
-      - move BeamModels to final location
+    It can also be done manually : download beam models of individual dipoles from https://www.dropbox.com/sh/imb2002vwhmoyxo/AAB36xD5UYGE5PblAiEkWYLma?dl=0 to BeamModels directory, unpack the files:
+      - tar zxvf EDA.tar.gz
+      - tar zxvf SKALA2.tar.gz
+      - tar zxvf SKALA4.tar.gz    
+      - move BeamModels to final location, for example : mv BeamModels ~/aavs-calibration/
       - modify file ~/github/station_beam/station_beam_config.py so that parameter beam_model_path is set to full path to BeamModels/"
-
-
 
 
   - deployment of databases use script install/deploy_databases.sh which takes 3 parameters:
