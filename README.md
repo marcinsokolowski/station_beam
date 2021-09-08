@@ -5,13 +5,13 @@ SKA-Low station beam models, sensitivity etc
 
   - sensitivity.skalow.link ( http://3.25.208.103 )
 
-# local DJANGO webservice can be easily started by doing:
+# Local DJANGO webservice can be easily started by doing:
   - cd django/skalow_station_sensitivity/
   - python manage.py runserver
   - then open http://127.0.0.1:8000/ in the browser on local computer or use IP of the computer
     to open from other machine. Port 8000 might have to be opened to enable access.
 
-# deployment procedure :
+# Deployment procedure for the python package :
 
   - requirements : python3 from anaconda package (https://www.anaconda.com/products/individual-d) usually includes all the requirement packages (astropy, h5py, numpy etc), but when 
     using other python distributions (including standard package included in Linux distributions) the following steps may be required:
