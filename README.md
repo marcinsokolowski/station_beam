@@ -13,6 +13,12 @@ SKA-Low station beam models, sensitivity etc
 
 # deployment procedure :
 
+  - requirements : python3 from anaconda package (https://www.anaconda.com/products/individual-d) usually includes all the requirement packages (astropy, h5py, numpy etc), but when 
+    using other python distributions (including standard package included in Linux distributions) the following steps may be required:
+    - pip install astropy
+    - pip install h5py
+    - pip install numpy
+
   - mkdir ~/github/
   - cd ~/github/
   - git clone https://github.com/marcinsokolowski/station_beam.git
