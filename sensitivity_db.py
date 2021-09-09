@@ -248,7 +248,8 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
   
     # select closest LST :
     cur = conn.cursor()
-    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f or %.4f<0.1)" %  (lst_hours,lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg )
     print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -272,7 +273,8 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
  
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f" %  (lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f or %.4f<0.1)" %  (lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg , za_deg )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -286,7 +288,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
        za_deg_db   = float( row[2] )
        
        # CalcDistRADEC( ra1, dec1, ra2, dec2 )
-       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
+       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg )
        
        if dist_value_deg < min_angular_distance_deg :
           min_angular_distance_deg = dist_value_deg
@@ -340,7 +342,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
            if aot > 0 :
               sefd        = (2*1380.00)/aot
         
-        ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) )
+        ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db, az_deg, za_deg )
               
         print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg))
         
@@ -405,7 +407,8 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
   
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f or %.4f<0.1) AND polarisation='%s'" %  (freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -421,7 +424,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        za_deg_db   = float( row[2] )
        
        # CalcDistRADEC( ra1, dec1, ra2, dec2 )
-       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
+       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg )
        
        if dist_value_deg < min_angular_distance_deg :
           min_angular_distance_deg = dist_value_deg
@@ -444,10 +447,11 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
 #       print("DEBUG : ux=%.2f -> lst=%.2f" % (unixtime,lst_hours))
     
        cur = conn.cursor()       
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s'" %  \
+       # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s'" %  \
                  ( (lst_hours-db_lst_resolution),(lst_hours+db_lst_resolution),\
                    (freq_mhz-(db_freq_resolution_mhz+0.01)), (freq_mhz+(db_freq_resolution_mhz+0.01)),\
-                   za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol\
+                   za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol\
                   )
        if debug_level >= 2 :
           print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
@@ -514,7 +518,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
            print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
            if best_rec_id < 0 or id == best_rec_id : 
-              ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
+              ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg ) 
         
               if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
                   if debug_level >= 4 :
@@ -562,7 +566,8 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
 
     # select closest FREQUENCT :
     cur = conn.cursor()
-    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol, lst_start, lst_end )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
     print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -577,7 +582,8 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
   
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol, lst_start, lst_end )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -593,7 +599,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
        za_deg_db   = float( row[2] )
        
        # CalcDistRADEC( ra1, dec1, ra2, dec2 )
-       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00-za_deg_db) , az_deg, (90.00 - za_deg) )
+       dist_value_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg )
        
        if dist_value_deg < min_angular_distance_deg :
           min_angular_distance_deg = dist_value_deg
@@ -610,7 +616,8 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
 
     
     cur = conn.cursor()       
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND (azim_deg-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f ORDER BY LST ASC" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, pol, lst_start, lst_end )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f ORDER BY LST ASC" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
     if debug_level >= 2 :
        print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
     cur.execute( szSQL )
@@ -648,14 +655,14 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
            
         print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
                 
-        ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, (90.00 - za_deg_db) , az_deg, (90.00 - za_deg) ) 
+        ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg ) 
         
         if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
             out_lst.append( lst_db )
             out_aot.append( aot )
             out_sefd.append( sefd ) 
         else :
-            print("\t\tDB Record ignored due to angular distance too large")
+            print("\t\tDB Record (azim,za) = (%.4f,%.4f) [deg] ignored due to angular distance too large ( %.4f deg )" % (azim_deg_db,za_deg_db,ang_distance_deg))
  
     return (out_lst, out_aot, out_sefd)
 
@@ -900,7 +907,8 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
 
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between %.4f and %.4f AND ABS(za_deg-%.4f)<%.4f AND ABS(azim_deg-%.4f)<%.4f AND ABS(frequency_mhz-%.4f)<%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, freq_mhz, freq_resolution_mhz )
+    # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between %.4f and %.4f AND ABS(za_deg-%.4f)<%.4f AND (ABS(azim_deg-%.4f)<%.4f OR %.4f<0.1) AND ABS(frequency_mhz-%.4f)<%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, freq_mhz, freq_resolution_mhz )
     cur.execute( szSQL )
     rows = cur.fetchall()
  
