@@ -372,6 +372,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 
 
 def unixtime2lst( unixtime ) :
+    print("DEBUG : unixtime2lst( %d )" % (unixtime))
     utc_str = datetime.utcfromtimestamp( unixtime ).strftime('%Y-%m-%d %H:%M:%S')
     t_utc = Time( utc_str, scale='utc', location=(MWA_POS.lon.value, MWA_POS.lat.value ))
 
@@ -1285,11 +1286,20 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       ax2=fig.add_subplot(1,1,1,polar=True, frameon=False)
       ax2.set_theta_zero_location("N")
       ax2.set_theta_direction(-1)
-      ax2.patch.set_alpha(0.0)
-      ax2.tick_params(color='0.5', labelcolor='0.5')
+      ax2.patch.set_alpha(0.0) # 0.0 -> 1.0?
+      ax2.tick_params(color='0.5', labelcolor='0.5') # color='0.5', labelcolor='0.5'
       for spine in ax2.spines.values():
           spine.set_edgecolor('0.5')
-      ax2.grid(which='major', color='0.5') 
+          
+      # WARNING : 2021-11-15 :
+      # Grid is not really SIN projection -> turned off for now            
+#      ax2.grid(which='major', color='0.5') 
+      ax2.grid(b=None)
+
+      # hide distance from the center
+      # WARNING : 2021-11-15 : Grid is not really SIN projection -> turned off for now 
+      for xlabel_i in ax2.get_yticklabels():
+         xlabel_i.set_visible(False)
     
       #Beamsky example:
 #      vmax = 1.00
@@ -1300,6 +1310,10 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
       cbar=fig.colorbar(im, cax=cbar_ax)
       cbar.set_label("A / T [m$^2$/K]")
+      
+      # ticks :
+      # ax1.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
+      # ax1.set_rticks([])
  
       title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
       ax1.set_title( title , fontsize=8 )
