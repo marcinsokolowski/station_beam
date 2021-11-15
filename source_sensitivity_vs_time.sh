@@ -126,11 +126,11 @@ ls ${object}_eda_tsys_vs_azim_XX.txt ${object}_eda_tsys_vs_azim_YY.txt > ${objec
 
 # plots may not work without root package installed :
 mkdir -p images/
-root -b -q -l "plotNfiles_AoT_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_sensitivity_vs_azim.list\",${freq})"
-root -b -q -l "plotNfiles_AoT_vs_elev_PAPER_LFAAREQ_TEST.C(\"${object}_eda_sensitivity_vs_elev.list\",${freq})"
+root -b -q -l "plotNfiles_AoT_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_sensitivity_vs_azim.list\",${freq_mhz},\"${object}_elev_vs_azimuth.txt\")"
+root -b -q -l "plotNfiles_AoT_vs_elev_PAPER_LFAAREQ_TEST.C(\"${object}_eda_sensitivity_vs_elev.list\",${freq_mhz})"
 
-root -b -q -l "plotNfiles_Aeff_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_aeff_vs_azim.list\",${freq})"
-root -b -q -l "plotNfiles_Tsys_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_tsys_vs_azim.list\",${freq})"
+root -b -q -l "plotNfiles_Aeff_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_aeff_vs_azim.list\",${freq_mhz})"
+root -b -q -l "plotNfiles_Tsys_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_tsys_vs_azim.list\",${freq_mhz})"
 
 # checks :
 awk -v cnt=0 -v mean=0.00 -v elev=-1 -v azim=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(elev>=45){mean+=$2;cnt+=1;print azim" "elev" "$2" "mean/cnt;}}}' ${object}_eda_sensitivity_XX.txt
