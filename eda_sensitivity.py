@@ -363,8 +363,9 @@ def main():
     
 
     if options.print_header :
-       if options.header is not None :
-          out_line = "# %s : gps = %.2f , az = %.8f [deg] , za = %.8f [deg]\n" % (options.header,float(options.gps),options.pointing_az_deg,options.pointing_za_deg)
+       if options.header is not None : 
+          lst = get_LST( float(options.gps) )
+          out_line = "# %s : gps = %.2f , az = %.8f [deg] , za = %.8f [deg] , lst = %.8f [hours]\n" % (options.header,float(options.gps),options.pointing_az_deg,options.pointing_za_deg,lst)
           f_out_XX.write(out_line)
           f_out_YY.write(out_line)
 

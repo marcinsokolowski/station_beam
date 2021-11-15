@@ -13,6 +13,7 @@ object_radec()
    if [[ $object == "eor0" || $object == "EOR0" || $object == "EoR0" ]]; then  
       ra=0
       dec=-27
+      eor_field=1
    fi
    
    if [[ $object == "eor1" || $object == "EOR1" || $object == "EoR1" ]]; then  
@@ -52,6 +53,7 @@ fi
 # setup RA,DEC by the source name as default :
 ra=333.607249950 # degree
 dec=-17.02661111 # degree
+eor_field=0
 object_radec $object
 
 # Can overwrite RA,DEC with parameters:
@@ -101,38 +103,47 @@ do
    gps=$(($gps+$step))
 done   
 
-# elev vs. azimuth :
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(azim>=-120 && azim<=120){print azim" "elev;}}}' ${object}_${station}_sensitivity_XX.txt > ${object}_elev_vs_azimuth.txt
+if [[ $eor_field -le 0 ]]; then
+   # elev vs. azimuth :
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(azim>=-120 && azim<=120){print azim" "elev;}}}' ${object}_${station}_sensitivity_XX.txt > ${object}_elev_vs_azimuth.txt
 
-# get A/T vs. azimuth 
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$2;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_${station}_sensitivity_vs_azim_XX.txt
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$2;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_${station}_sensitivity_vs_azim_YY.txt
-ls ${object}_${station}_sensitivity_vs_azim_XX.txt ${object}_${station}_sensitivity_vs_azim_YY.txt > ${object}_${station}_sensitivity_vs_azim.list
+   # get A/T vs. azimuth 
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$2;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_${station}_sensitivity_vs_azim_XX.txt
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$2;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_${station}_sensitivity_vs_azim_YY.txt
 
-# get A/T vs. elevation :
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=90.00-$15;}}else{if(elev>0){print elev" "$2;}}}' ${object}_${station}_sensitivity_XX.txt > ${object}_${station}_sensitivity_vs_elev_XX.txt
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=90.00-$15;}}else{if(elev>0){print elev" "$2;}}}' ${object}_${station}_sensitivity_YY.txt > ${object}_${station}_sensitivity_vs_elev_YY.txt
-ls ${object}_${station}_sensitivity_vs_elev_XX.txt ${object}_${station}_sensitivity_vs_elev_YY.txt > ${object}_${station}_sensitivity_vs_elev.list
+   ls ${object}_${station}_sensitivity_vs_azim_XX.txt ${object}_${station}_sensitivity_vs_azim_YY.txt > ${object}_${station}_sensitivity_vs_azim.list
 
-# get A vs. azimuth 
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$4;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_eda_aeff_vs_azim_XX.txt
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$4;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_eda_aeff_vs_azim_YY.txt
-ls ${object}_eda_aeff_vs_azim_XX.txt ${object}_eda_aeff_vs_azim_YY.txt > ${object}_eda_aeff_vs_azim.list
+   # get A/T vs. elevation :
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=90.00-$15;}}else{if(elev>0){print elev" "$2;}}}' ${object}_${station}_sensitivity_XX.txt > ${object}_${station}_sensitivity_vs_elev_XX.txt
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=90.00-$15;}}else{if(elev>0){print elev" "$2;}}}' ${object}_${station}_sensitivity_YY.txt > ${object}_${station}_sensitivity_vs_elev_YY.txt
+   ls ${object}_${station}_sensitivity_vs_elev_XX.txt ${object}_${station}_sensitivity_vs_elev_YY.txt > ${object}_${station}_sensitivity_vs_elev.list
 
-# get T_sys vs. azimuth 
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$3;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_eda_tsys_vs_azim_XX.txt
-awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$3;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_eda_tsys_vs_azim_YY.txt
-ls ${object}_eda_tsys_vs_azim_XX.txt ${object}_eda_tsys_vs_azim_YY.txt > ${object}_eda_tsys_vs_azim.list
+   # get A vs. azimuth 
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$4;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_eda_aeff_vs_azim_XX.txt
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$4;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_eda_aeff_vs_azim_YY.txt
+   ls ${object}_eda_aeff_vs_azim_XX.txt ${object}_eda_aeff_vs_azim_YY.txt > ${object}_eda_aeff_vs_azim.list
 
-# plots may not work without root package installed :
-mkdir -p images/
-root -b -q -l "plotNfiles_AoT_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_${station}_sensitivity_vs_azim.list\",${freq_mhz},\"${object}_elev_vs_azimuth.txt\")"
-root -b -q -l "plotNfiles_AoT_vs_elev_PAPER_LFAAREQ_TEST.C(\"${object}_${station}_sensitivity_vs_elev.list\",${freq_mhz})"
+   # get T_sys vs. azimuth 
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$3;}}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_eda_tsys_vs_azim_XX.txt
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){elev=$10;}}else{if(elev>180){elev=elev-360;}if(elev>=-120 && elev<=120){print elev" "$3;}}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_eda_tsys_vs_azim_YY.txt
+   ls ${object}_eda_tsys_vs_azim_XX.txt ${object}_eda_tsys_vs_azim_YY.txt > ${object}_eda_tsys_vs_azim.list
 
-root -b -q -l "plotNfiles_Aeff_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_aeff_vs_azim.list\",${freq_mhz})"
-root -b -q -l "plotNfiles_Tsys_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_tsys_vs_azim.list\",${freq_mhz})"
+   # plots may not work without root package installed :
+   mkdir -p images/
+   root -b -q -l "plotNfiles_AoT_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_${station}_sensitivity_vs_azim.list\",${freq_mhz},\"${object}_elev_vs_azimuth.txt\")"
+   root -b -q -l "plotNfiles_AoT_vs_elev_PAPER_LFAAREQ_TEST.C(\"${object}_${station}_sensitivity_vs_elev.list\",${freq_mhz})"
 
-# checks :
-awk -v cnt=0 -v mean=0.00 -v elev=-1 -v azim=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(elev>=45){mean+=$2;cnt+=1;print azim" "elev" "$2" "mean/cnt;}}}' ${object}_${station}_sensitivity_XX.txt
+   root -b -q -l "plotNfiles_Aeff_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_aeff_vs_azim.list\",${freq_mhz})"
+   root -b -q -l "plotNfiles_Tsys_vs_azim_PAPER_LFAAREQ_TEST.C(\"${object}_eda_tsys_vs_azim.list\",${freq_mhz})"
 
+   # checks :
+   awk -v cnt=0 -v mean=0.00 -v elev=-1 -v azim=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(elev>=45){mean+=$2;cnt+=1;print azim" "elev" "$2" "mean/cnt;}}}' ${object}_${station}_sensitivity_XX.txt
+else
+   # elev vs. azimuth :
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){lst=$20;elev=(90.00-$15);}}else{print lst" "elev;}}' ${object}_${station}_sensitivity_XX.txt > ${object}_elev_vs_lst.txt
+
+   # get A/T vs. azimuth 
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){lst=($20);}}else{print lst" "$2;}}' ${object}_${station}_sensitivity_XX.txt | sort -n > ${object}_${station}_sensitivity_vs_lst_XX.txt
+   awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){lst=($20);}}else{print lst" "$2;}}' ${object}_${station}_sensitivity_YY.txt | sort -n > ${object}_${station}_sensitivity_vs_lst_YY.txt
+fi
 
