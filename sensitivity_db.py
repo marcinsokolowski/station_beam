@@ -75,9 +75,11 @@ MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height
 #   t_now.gps
 #   t_now.unix
 # 
-
 debug_level = 0 
 
+# plot SKA-Low requirements 
+plot_requirements = True
+import lfaa_requirements
 
 # path where images are saved, by default local directory :
 # save_output_path = "./"
@@ -1131,21 +1133,25 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
                       fig_size_x=20, fig_size_y=10, save_output_path="./" ):
 
    global web_interface_initialised
-   print("DEBUG : inside plot_sensitivity")
+   global plot_requirements
+   print("DEBUG : inside plot_sensitivity , plot_requirements = %s" % (plot_requirements))
    
    max_aot = 0.00
    min_freq = min(freq_x)
    
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
    ax = None
+   legend_list = []
    if freq_x is not None and aot_x is not None :
       plt.plot( freq_x, aot_x, point_x )
+      legend_list.append( 'X polarisation' )
       
       if max(aot_x) > max_aot :
          max_aot = max(aot_x)
    
    if freq_y is not None and aot_y is not None :
       plt.plot( freq_y, aot_y, point_y )
+      legend_list.append( 'Y polarisation' )
       
       if max(aot_y) > max_aot :
          max_aot = max(aot_y)
@@ -1153,20 +1159,46 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
 
    if freq_i is not None and aot_i is not None :
       plt.plot( freq_i, aot_i, point_i )
+      legend_list.append( 'Stokes I' )
 
       if max(aot_i) > max_aot :
          max_aot = max(aot_i)
+         
+   if plot_requirements :
+      freq_req = []
+      sens_req = []
+      
+      for freq_mhz in freq_x :
+         print("DEBUG : getting requirement for freq = %.4f MHz" % (freq_mhz))
+         sens = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
+         print("DEBUG : getting requirement DONE")
+         
+         freq_req.append( freq_mhz )
+         sens_req.append( sens )
+         
+         print("DEBUG : appended")
+         
+      freq_req = numpy.array( freq_req )   
+      sens_req = numpy.array( sens_req )
+
+      # 
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH ...")         
+      plt.plot( freq_req, sens_req, linestyle='dashed', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH DONE")
+      legend_list.append('SKA-Low requirement at zenith')
+      
+      # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
 
 
    # legend :
    if freq_x is not None and aot_x is not None and freq_y is not None and aot_y is not None :
       if freq_i is not None and aot_i is not None :
-         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20)    
+         plt.legend(legend_list, loc='upper right' , fontsize=20)    
       else :
-         plt.legend(('X polarisation','Y polarisation'), loc='upper right' , fontsize=20)
+         plt.legend(legend_list, loc='upper right' , fontsize=20)
    else :
       if freq_x is not None and aot_x is not None :
-         plt.legend(('X polarisation'), loc='upper right' , fontsize=20)
+         plt.legend(legend_list, loc='upper right' , fontsize=20)
       else :
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[freq_y, aot_y],fontsize=20)
    
