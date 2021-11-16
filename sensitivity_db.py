@@ -1205,6 +1205,32 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    return( outfile , None )
 
+def get_radius_list( za_rad, za_list ) :
+   size_x = za_rad.shape[0]
+   size_y = za_rad.shape[1]
+   
+   radius_px_list = []
+   for za_radius in za_list :
+      min_diff = 1e10
+      pixel_radius = -1
+      for x in range(size_x/2,size_x) :
+         za_deg = za_rad[x,size_y/2]*(180.00/math.pi)
+         
+         diff = math.fabs(za_deg - za_radius)
+         if diff < min_diff :
+            min_diff = diff
+            pixel_radius = x - size_x/2
+            
+      if pixel_radius > 0 :
+         print("DEBUG : for za=%.4f [deg] radius in pixels = %d" % (za_radius,pixel_radius))
+      else :
+         print("ERROR : for za=%.4f [deg] radius in pixels is %d" % (za_radius,pixel_radius))
+         
+      radius_px_list.append( pixel_radius )
+         
+   return radius_px_list
+      
+
 def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5 ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
    global web_interface_initialised
@@ -1305,6 +1331,25 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
 #      vmax = 1.00
       vmax = max_sens
       im=ax1.imshow( sensitivity , interpolation='none', vmax=vmax )
+
+      # https://matplotlib.org/stable/api/_as_gen/matplotlib.patches.Circle.html      
+      # add circles with za=15, 30, 45, 75 degrees :
+      za_circle_list = (15,30,45,75)
+      radius_list = get_radius_list( za_rad, za_circle_list )
+#      radius_list = get_radius_list( za_rad, (10,20,30,40,50) )
+      circle_index = 0
+      for radius in radius_list :
+         circ = Circle((az_rad.shape[0]/2,az_rad.shape[1]/2),radius,color="lightgrey",fill=False,linewidth=0.3,linestyle="--")
+         ax1.add_patch(circ)
+         
+         str = "$%d^o$" % (za_circle_list[circle_index])
+#         plt.text( az_rad.shape[0]/2,az_rad.shape[1]/2 + za_circle_list[circle_index], str )
+         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2, str, color="lightgrey" )
+         circle_index += 1
+
+      # TEST :          
+#      circ = Circle((az_rad.shape[0]/2,az_rad.shape[1]/2),120,color="red",fill=False,linewidth=0.3)
+#      ax1.add_patch(circ)   
 
       #Add colorbar on own axis
       cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
