@@ -1166,26 +1166,33 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
          
    if plot_requirements :
       freq_req = []
-      sens_req = []
+      sens_req_zenith = []
+      sens_req_avg45 = []
       
       for freq_mhz in freq_x :
          print("DEBUG : getting requirement for freq = %.4f MHz" % (freq_mhz))
-         sens = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
+         sens_zenith = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
+         sens_avg45  =  lfaa_requirements.lfaa_per_station( freq_mhz, subversion="AvgAboveElev45deg" )
          print("DEBUG : getting requirement DONE")
          
          freq_req.append( freq_mhz )
-         sens_req.append( sens )
+         sens_req_zenith.append( sens_zenith )
+         sens_req_avg45.append( sens_avg45 )
          
          print("DEBUG : appended")
          
       freq_req = numpy.array( freq_req )   
-      sens_req = numpy.array( sens_req )
+      sens_req_zenith = numpy.array( sens_req_zenith )
+      sens_req_avg45 = numpy.array( sens_req_avg45 )
 
       # 
       print("DEBUG : plotting SKA-Low requrirements at ZENITH ...")         
-      plt.plot( freq_req, sens_req, linestyle='dashed', linewidth=2, markersize=12 ) # marker='o'
+      plt.plot( freq_req, sens_req_zenith, linestyle='dashed', color='orange', linewidth=2, markersize=12 ) # marker='o'
       print("DEBUG : plotting SKA-Low requrirements at ZENITH DONE")
       legend_list.append('SKA-Low requirement at zenith')
+      
+      plt.plot( freq_req, sens_req_avg45, linestyle='dotted', color='red', linewidth=2, markersize=12 ) # marker='o'
+      legend_list.append('SKA-Low requirement (average above $45^o$)')
       
       # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
 
