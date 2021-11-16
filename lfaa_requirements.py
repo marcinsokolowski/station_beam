@@ -50,6 +50,7 @@ def lfaa_ska( freq_mhz, interpolation_kind='cubic' , version="v12" , subversion=
       return None         
    
    aot_ret = aot_func( freq_mhz )
+   print("DEBUG : lfaa_ska( %.2f MHz) returning %.4f [m^2/K]" % (freq_mhz,aot_ret))
    return aot_ret
    
 
