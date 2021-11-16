@@ -1213,13 +1213,13 @@ def get_radius_list( za_rad, za_list ) :
    for za_radius in za_list :
       min_diff = 1e10
       pixel_radius = -1
-      for x in range(size_x/2,size_x) :
-         za_deg = za_rad[x,size_y/2]*(180.00/math.pi)
+      for x in range(int(size_x/2),int(size_x)) :
+         za_deg = za_rad[x,int(size_y/2)]*(180.00/math.pi)
          
          diff = math.fabs(za_deg - za_radius)
          if diff < min_diff :
             min_diff = diff
-            pixel_radius = x - size_x/2
+            pixel_radius = x - int(size_x/2)
             
       if pixel_radius > 0 :
          print("DEBUG : for za=%.4f [deg] radius in pixels = %d" % (za_radius,pixel_radius))
@@ -1338,13 +1338,14 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       radius_list = get_radius_list( za_rad, za_circle_list )
 #      radius_list = get_radius_list( za_rad, (10,20,30,40,50) )
       circle_index = 0
+      circle_color="red" # was lightgrey
       for radius in radius_list :
-         circ = Circle((az_rad.shape[0]/2,az_rad.shape[1]/2),radius,color="lightgrey",fill=False,linewidth=0.3,linestyle="--")
+         circ = Circle((az_rad.shape[0]/2,az_rad.shape[1]/2),radius,color=circle_color,fill=False,linewidth=0.3,linestyle="--")
          ax1.add_patch(circ)
          
          str = "$%d^o$" % (za_circle_list[circle_index])
 #         plt.text( az_rad.shape[0]/2,az_rad.shape[1]/2 + za_circle_list[circle_index], str )
-         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2, str, color="lightgrey" )
+         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2, str, color=circle_color )
          circle_index += 1
 
       # TEST :          
