@@ -1141,6 +1141,8 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
 
    global web_interface_initialised
    global plot_requirements
+   global plot_braun2019
+   
    print("DEBUG : inside plot_sensitivity , plot_requirements = %s" % (plot_requirements))
    
    max_aot = 0.00
@@ -1413,7 +1415,12 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
          
          str = "$%d^o$" % (za_circle_list[circle_index])
 #         plt.text( az_rad.shape[0]/2,az_rad.shape[1]/2 + za_circle_list[circle_index], str )
-         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2, str, color=circle_color )
+#         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2 - (circle_index+1)*5 , str, color=circle_color )
+
+         x_offset = radius_list[circle_index]*math.cos( 30.00*math.pi/180.00 )
+         y_offset = radius_list[circle_index]*math.sin( 30.00*math.pi/180.00 )
+
+         ax1.text( az_rad.shape[0]/2 + x_offset, az_rad.shape[1]/2 - y_offset , str, color=circle_color )
          circle_index += 1
 
       # TEST :          
