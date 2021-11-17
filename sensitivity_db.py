@@ -1344,14 +1344,14 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    max_ylimit = max_ylimit*1.1 # + 10%
 
    # have at least 0.5 buffer at the top :
-   if max_ylimit < max_aot :
-      max_ylimit = max_aot + 0.5
+   if max_aot > ( max_ylimit - 0.8 ) :
+      max_ylimit = max_aot + 0.8
    
    plt.ylim(( min_ylimit,  max_ylimit )) 
    
    if info is not None :
       # place a text box in upper left in axes coords
-      text( min_freq*0.75, max_ylimit0*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( min_freq*0.75, max_ylimit*0.95, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
 
    
    outfile = None
