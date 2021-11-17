@@ -60,6 +60,10 @@ import matplotlib.dates as md  # to convert unix time to date on X-axis
 import os
 from scipy.interpolate import interp1d # for interpolation 
 
+import matplotlib
+matplotlib.rc('xtick', labelsize=25) 
+matplotlib.rc('ytick', labelsize=25) 
+
 # local packages :
 import beam_tools
 import fits_beam
@@ -80,6 +84,9 @@ debug_level = 0
 # plot SKA-Low requirements 
 plot_requirements = True
 import lfaa_requirements
+
+plot_braun2019 = True
+import sensitivity_braun2019
 
 # path where images are saved, by default local directory :
 # save_output_path = "./"
@@ -1196,6 +1203,28 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
       
       # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
 
+   if plot_braun2019 :
+      freq_braun = []
+      sens_braun = []
+      
+      for freq_mhz in freq_x :
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019) for freq = %.4f MHz" % (freq_mhz))
+         sens_value = sensitivity_braun2019.lfaa_per_station( freq_mhz )
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019)  DONE , A/T = %.4f [m^2/K]" % (sens_value))
+
+         freq_braun.append( freq_mhz )
+         sens_braun.append( sens_value )
+         print("DEBUG : appended")
+
+      freq_braun = numpy.array( freq_braun )   
+      sens_braun = numpy.array( sens_braun )
+
+      # 
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun ...")
+      plt.plot( freq_braun, sens_braun, linestyle='dashed', color='magenta', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun DONE")
+      legend_list.append('Table 9 in Braun et al. (2019)')
+
 
    # legend :
    if freq_x is not None and aot_x is not None and freq_y is not None and aot_y is not None :
@@ -1209,8 +1238,8 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
       else :
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[freq_y, aot_y],fontsize=20)
    
-   plt.xlabel('Frequency (MHz)' , fontsize=20 )
-   plt.ylabel('Sensitivity A/T [m$^2$/K]' , fontsize=20 )
+   plt.xlabel('Frequency (MHz)' , fontsize=30 )
+   plt.ylabel('Sensitivity A/T [m$^2$/K]' , fontsize=30 )
    plt.grid()
 
 #   if max_aot < 0.5 :
@@ -1223,7 +1252,7 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    
    if info is not None :
       # place a text box in upper left in axes coords
-      text( min_freq, max_ylimit0*1.05, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( min_freq*0.75, max_ylimit0*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
 
    
    outfile = None

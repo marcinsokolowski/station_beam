@@ -33,7 +33,7 @@ freq_cc_list="39 46 54 62 69 70 78 85 93 101 109 117 121 125 132 140 145 148 156
 if [[ -n "$5" && "$5" != "-" ]]; then
    freq_cc_list=$5
 fi
-freq_cc_count=`echo $freq_cc_list | awk '{print $NF;}'`
+freq_cc_count=`echo $freq_cc_list | awk '{print NF;}'`
 
 use_beamf_errors=0
 beamf_err_options=""
