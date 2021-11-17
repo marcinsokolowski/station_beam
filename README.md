@@ -41,6 +41,14 @@ SKA-Low station beam models, sensitivity etc
 
 
     
+# Example commands :
+
+  - Example commands using sensitivity databases for AAVS2 and EDA2 stations are provided in the header of sensitivity_db.py script 
+
+  - Example command to generated sensitivity at a specified time (GPS time), frequency (160 MHz), for AAVS2 station at the position of Hydra-A
+    radio-galaxy, using Average Embedded Element (AEE) pattern of SKALA4 antenna in the AAVS2 station:
+
+     - python ./eda_sensitivity.py --freq=160 -p None -g 1320891467  -m analytic --ra=333.607249950 --dec=-17.02661111 --outsens_file=HydA_aavs2_sensitivity --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err  --nos11 --header=HEADER  --use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt --projection=aee
 
 
 
