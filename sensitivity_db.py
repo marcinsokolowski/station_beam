@@ -1068,11 +1068,25 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
                               do_show = True, save_output_path="./",
-                              lst_i=None, aot_i=None, point_i='b+' ) :
+                              lst_i=None, aot_i=None, point_i='b+',
+                              fig_size_x=20, fig_size_y=10 ) :
 
    global web_interface_initialised
+
+   max_aot = 0.00   
+   if aot_x is not None :
+      if max(aot_x) > max_aot :
+         max_aot = max(aot_x)
+
+   if aot_y is not None :
+      if max(aot_y) > max_aot :
+         max_aot = max(aot_y)
+
+   if aot_i is not None :
+      if max(aot_i) > max_aot :
+         max_aot = max(aot_i)
    
-   plt.figure()
+   plt.figure( figsize=( fig_size_x , fig_size_y ) )
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( lst_x, aot_x, point_x )
    
@@ -1083,29 +1097,33 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
       ax_i = plt.plot( lst_i, aot_i, point_i )
       
       max_i = max( aot_i )
-      if max_i > max_ylimit :
-         max_ylimit = max_i * 1.1 # max_i + 10% of max_i
+#      if max_i > max_ylimit :
+#         max_ylimit = max_i * 1.1 # max_i + 10% of max_i
 
    # legend :
    if lst_x is not None and aot_x is not None and lst_y is not None and aot_y is not None :
       if lst_i is None and aot_i is None :      
-         plt.legend(('X polarisation','Y polarisation'), loc='upper right')
+         plt.legend(('X polarisation','Y polarisation'), loc='upper right' , fontsize=20 )
       else :
-         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right')
+         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20 )
    else :
       if lst_x is not None and aot_x is not None :
-         plt.legend(('X polarisation'), loc='upper right')
+         plt.legend(('X polarisation'), loc='upper right' , fontsize=20 )
       else :
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[lst_y, lst_y])
    
-   plt.xlabel('Local sidereal time [hours]')
-   plt.ylabel('Sensitivity A / T [m$^2$/K]')
+   plt.xlabel('Local sidereal time [hours]' , fontsize=30 )
+   plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=30 )
    plt.gcf().autofmt_xdate()
 #   ax=plt.gca()
 #   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
 #   xfmt = md.DateFormatter('%H:%M:%S')
 #   ax.xaxis.set_major_formatter(xfmt)
 #   ax.set_ylim(( min_ylimit,  max_ylimit ))
+
+   if max_aot > (max_ylimit-0.5) :
+      max_ylimit = max_aot + 0.5
+      
    plt.ylim(( min_ylimit,  max_ylimit ))  
    
    plt.grid()
@@ -1249,6 +1267,10 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
       
    max_ylimit0 = max_ylimit
    max_ylimit = max_ylimit*1.1 # + 10%
+
+   # have at least 0.5 buffer at the top :
+   if max_ylimit < max_aot :
+      max_ylimit = max_aot + 0.5
    
    plt.ylim(( min_ylimit,  max_ylimit )) 
    
@@ -1417,8 +1439,9 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
 #         plt.text( az_rad.shape[0]/2,az_rad.shape[1]/2 + za_circle_list[circle_index], str )
 #         ax1.text( az_rad.shape[0]/2 + radius_list[circle_index] - 10, az_rad.shape[1]/2 - (circle_index+1)*5 , str, color=circle_color )
 
-         x_offset = radius_list[circle_index]*math.cos( 30.00*math.pi/180.00 )
-         y_offset = radius_list[circle_index]*math.sin( 30.00*math.pi/180.00 )
+         angle_deg=30.00         
+         x_offset = radius_list[circle_index]*math.cos( angle_deg*math.pi/180.00 )
+         y_offset = radius_list[circle_index]*math.sin( angle_deg*math.pi/180.00 )
 
          ax1.text( az_rad.shape[0]/2 + x_offset, az_rad.shape[1]/2 - y_offset , str, color=circle_color )
          circle_index += 1
@@ -1471,14 +1494,14 @@ def parse_options(idx):
    parser.add_option('-p','--plot','--do_plot','--do_plots',action="store_true",dest="do_plot",default=False, help="Plot")
    parser.add_option('-a','--azim','--azim_deg',dest="azim_deg",default=None, help="Pointing direction azimuth in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
-   parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidreal time in hours [default %default]",metavar="float",type="float")
+   parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidereal time in hours [default %default]",metavar="float",type="float")
 
    # specific frequency in MHz 
    parser.add_option('-f','--freq_mhz','--frequency_mhz',dest="freq_mhz",default=None, help="Specific frequency in MHz [default %default]",metavar="float",type="float")
 
    # specify lst range :
-   parser.add_option('--lst_start','--lst_start_hours',dest="lst_start_hours",default=None, help="Start time in Local sidreal time in hours [default %default]",metavar="float",type="float")
-   parser.add_option('--lst_end','--lst_end_hours',dest="lst_end_hours",default=None, help="End time in Local sidreal time in hours [default %default]",metavar="float",type="float")
+   parser.add_option('--lst_start','--lst_start_hours',dest="lst_start_hours",default=None, help="Start time in Local sidereal time in hours [default %default]",metavar="float",type="float")
+   parser.add_option('--lst_end','--lst_end_hours',dest="lst_end_hours",default=None, help="End time in Local sidereal time in hours [default %default]",metavar="float",type="float")
 
    # specify Unix time range :
    parser.add_option('--ux_start','--unixtime_start',dest="unixtime_start",default=None, help="Start time in unixtime [default %default]",metavar="float",type="float")
