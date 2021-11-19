@@ -1023,80 +1023,169 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
                               uxtime_i=None, aot_i=None , point_i='b+' ,
                               fig_size_x=20, fig_size_y=10, info=None, save_output_path="./", save_text_file=False, out_dir="./" ) :
                      
-   legend_location = "upper center" # "upper right"
+   global plot_requirements
+   global plot_braun2019
+
+   legend_list = []
+
+#   legend_location = "upper center" # "upper right"
+   legend_location = "upper right"
+   
+   # MAX A/T :
+   max_aot = 0.00    
+   if aot_x is not None :
+      if max(aot_x) > max_aot :
+         max_aot = max(aot_x)
+
+   if aot_y is not None :
+      if max(aot_y) > max_aot :
+         max_aot = max(aot_y)
+
+   if aot_i is not None :
+      if max(aot_i) > max_aot :
+         max_aot = max(aot_i)
+
 
    # conversion of unix time to UTC :                               
    x_utc = []
    y_utc = []
    for ux in uxtime_x :
-      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+#      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+      utc = datetime.utcfromtimestamp(ux)
+      print("DEBUG : %d -> %s" % (ux,utc))
       x_utc.append( utc )
             
    for ux in uxtime_y :
-      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+#      utc = datetime.utcfromtimestamp(ux).strftime('%Y-%m-%dT%H:%M')
+      utc = datetime.utcfromtimestamp(ux)
       y_utc.append( utc )
    
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
    fig = plt.gcf()
+#   fig.axes[0].xaxis.set_major_formatter( md.DateFormatter('%Y') )
    
    if uxtime_x is not None and aot_x is not None :
       ax_x =  plt.plot( x_utc, aot_x, point_x )
+      legend_list.append( 'X polarisation' )
+
       # ax_x.tick_params(which='major', length=10, width=20, direction='inout')
 #      ax_x.set_ylim(( min_ylimit,  max_ylimit ))
    
    if uxtime_y is not None and aot_y is not None :
       ax_y = plt.plot( y_utc, aot_y, point_y )
+      legend_list.append( 'Y polarisation' )
 
    if uxtime_i is not None and aot_i is not None :
       ax_i = plt.plot( x_utc, aot_i, point_i )
+      legend_list.append( 'Stokes I' )
       
       max_i = max(aot_i)
       if max_i > max_ylimit :
          max_ylimit = max_i*1.1 # max_i + 10% max_i
 #      ax_y.set_ylim(( min_ylimit,  max_ylimit ))
+ 
+   if plot_requirements :
+      sens_req_zenith = []
+      sens_req_avg45 = []
+
+      for ux in uxtime_x :
+         print("DEBUG : getting requirement for uxtime = %.2f" % (ux))
+         sens_zenith = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
+         sens_avg45  =  lfaa_requirements.lfaa_per_station( freq_mhz, subversion="AvgAboveElev45deg" )
+         print("DEBUG : getting requirement DONE")
+         
+         sens_req_zenith.append( sens_zenith )
+         sens_req_avg45.append( sens_avg45 )
+         
+         print("DEBUG : appended")
+         
+      sens_req_zenith = numpy.array( sens_req_zenith )
+      sens_req_avg45 = numpy.array( sens_req_avg45 )
+
+      # 
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH (%d data points)..." % (len(uxtime_x)))
+      # sens_req_zenith,
+      plt.plot( x_utc, sens_req_zenith, linestyle='dashed', color='orange', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH DONE")
+      legend_list.append('SKA-Low requirement at zenith')
+      
+      plt.plot( x_utc, sens_req_avg45, linestyle='dotted', color='red', linewidth=2, markersize=12 ) # marker='o'
+      legend_list.append('SKA-Low requirement (average above $45^o$)')
+ 
+      # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
+
+   if plot_braun2019 :
+      sens_braun = []
+ 
+      for utc in x_utc :
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019) for utc = %s" % (utc))
+         sens_value = sensitivity_braun2019.lfaa_per_station( freq_mhz )
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019)  DONE , A/T = %.4f [m^2/K]" % (sens_value))
+
+         sens_braun.append( sens_value )
+         print("DEBUG : appended")
+
+      sens_braun = numpy.array( sens_braun )
+
+      # 
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun ...")
+      plt.plot( x_utc, sens_braun, linestyle='dashed', color='magenta', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun DONE")
+      legend_list.append('Table 9 in Braun et al. (2019)')
+
 
    # legend :
    if uxtime_x is not None and aot_x is not None and uxtime_y is not None and aot_y is not None :
       if uxtime_i is not None and aot_i is not None :
-         plt.legend(('X polarisation','Y polarisation','Stokes I'), loc=legend_location, fontsize=20)
+         plt.legend( legend_list, loc=legend_location, fontsize=20)
       else :
-         plt.legend(('X polarisation','Y polarisation'), loc=legend_location,  fontsize=20 )
+         plt.legend( leged_list, loc=legend_location,  fontsize=20 )
    else :
       if uxtime_x is not None and aot_x is not None :
-         plt.legend(('X polarisation'), loc=legend_location,  fontsize=20 )
+         plt.legend( legend_list, loc=legend_location,  fontsize=20 )
       else :
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=legend_location,handles=[uxtime_y, uxtime_y])
    
-   plt.xlabel('Time [UTC]' , fontsize=20 )
-   plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=20 )
+   plt.xlabel('Time [UTC]' , fontsize=30 )
+   plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=30 )
+
+   ax_list = fig.axes
    plt.gcf().autofmt_xdate()
    
-   ax_list = fig.axes
    ticks = plt.xticks
    x_start, x_end = ax_list[0].get_xlim()
    print("DEBUG : x_start = %.8f , x_end = %.8f" % (x_start,x_end))
-#   ax_list[0].xaxis.set_ticks(numpy.arange(x_start, x_end, 10.00))
-#   ax_list[0].xaxis.set_major_locator(md.MinuteLocator(interval=1))
-#   ax_list[0].xaxis.set_major_locator(md.MinuteLocator(interval=10))
-   if ( x_end - x_start ) >= 20.00 :
-      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 4))
-   else :
-      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 2))
+   print("DEBUG : x_end - x_start= %.2f" % (x_end - x_start))
+   
+   # change format of the date in X-axis :
+   xaxis_fmt = md.DateFormatter('%d/%m %H:%M')
+   ax_list[0].xaxis.set_major_formatter(xaxis_fmt)
+#   ax_list[0].xaxis.set_major_locator(md.MinuteLocator(interval=60))
+   ax_list[0].xaxis.set_major_locator(md.HourLocator(interval=4))   
+
+#   if ( x_end - x_start ) >= 20.00 :
+#      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 8)) # 4 -> 8
+#   else :
+#      ax_list[0].xaxis.set_ticks(numpy.arange( x_start, x_end, 2))
    
    
 #   ax=plt.gca()
 #   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
-#   xfmt = md.DateFormatter('%H:%M:%S')
-#   ax.xaxis.set_major_formatter(xfmt)
+#   xfmt = md.DateFormatter('%H:%M')
+#   ax_list[0].xaxis.set_major_formatter(xfmt)
 #   ax.set_ylim(( min_ylimit,  max_ylimit ))
    max_ylimit0 = max_ylimit
    max_ylimit = max_ylimit*1.1 # + 10%
+   
+   if max_aot > (max_ylimit-1.8) :
+      max_ylimit = max_aot + 1.8
+   
    plt.ylim(( min_ylimit,  max_ylimit ))  
    
    if info is not None :
       # place a text box in upper left in axes coords
       min_x = min( x_utc )
-      text( x_start, max_ylimit0, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( min_x, max_ylimit*0.85, info , fontsize=30 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
