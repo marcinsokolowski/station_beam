@@ -79,7 +79,11 @@ MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height
 #   t_now.gps
 #   t_now.unix
 # 
-debug_level = 0 
+
+# code version
+code_version = 1.00
+
+debug_level = 2
 
 # plot SKA-Low requirements 
 plot_requirements = True
@@ -146,6 +150,15 @@ def calc_anglular_distance_degrees( azim1_deg, za1_deg, azim2_deg , za2_deg ) :
     dist_value_deg = math.acos( cos_value )*(180.00/math.pi)
     
     return dist_value_deg
+
+def aotxy2aoti( aot_x , aot_y ):
+   k_b = 1380.00
+   sefd_x = (2*k_b)/aot_x
+   sefd_y = (2*k_b)/aot_y
+   sefd_i = 0.5*math.sqrt( sefd_x*sefd_x + sefd_y*sefd_y )
+   aot_i = (2*k_b)/sefd_i
+   
+   return (aot_i,sefd_i)
 
 
 def read_text_file( filename , do_fit=True ) : 
@@ -237,6 +250,8 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
                              receiver_temp_file=None ) :
         
     global debug_level
+    
+    print("DEBUG : get_sensitivity_azzalst")
     
     
     # 
@@ -369,7 +384,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
             else :
                print("ERROR : unknown polarisation = %s" % (pol))
         else :
-           print("\t\tDB Record ignored due to angular distance too large")
+           print("\t\tDB Record ignored due to angular distance %.4f [deg] > limit = %.4f [deg]" % (ang_distance_deg,(min_angular_distance_deg+0.01)))
  
 
     # calculate SEFD_I - if possible (same sizes of arrays):
@@ -395,6 +410,8 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=5.00, 
                              receiver_temperature=None) :
+
+    print("DEBUG : get_sensitivity_timerange_single_pol")
 
     out_uxtime = []
     out_aot    = []
@@ -458,7 +475,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
     
        cur = conn.cursor()       
        # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND (za_deg-%.4f)<%.4f AND ((azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s'" %  \
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND ABS(za_deg-%.4f)<%.4f AND (ABS(azim_deg-%.4f)<%.4f OR %.4f<0.1) AND polarisation='%s'" %  \
                  ( (lst_hours-db_lst_resolution),(lst_hours+db_lst_resolution),\
                    (freq_mhz-(db_freq_resolution_mhz+0.01)), (freq_mhz+(db_freq_resolution_mhz+0.01)),\
                    za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol\
@@ -470,8 +487,9 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        
        min_lst_distance = db_lst_resolution
        best_rec_id = -1
+       best_rec_id_list = []
        if len(rows) > 1 :               
-          # TODO : should only be one row for both polarisations (select the closest in time)
+           # TODO : should only be one row for both polarisations (select the closest in time)
            for row in rows :
               id = int( row[0] )
               azim_deg_db = float( row[1] )
@@ -483,6 +501,23 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
               if math.fabs( lst_db - lst_hours ) < min_lst_distance :
                  min_lst_distance = math.fabs( lst_db - lst_hours )
                  best_rec_id = id
+                 
+                 if debug_level >= 2 :
+                    print("DEBUG : lst_db = %.4f h, lst requested = %.4f h -> min_lst_distance = %.4f h (azim,za) = (%.4f,%.4f) [deg] -> best_rec_id = %d" % (lst_db,lst_hours,min_lst_distance,azim_deg_db,za_deg_db,best_rec_id))
+
+           # Repeat the loop again because there may be records with the same exact LST which we should use because they have the smallest angular distance from out pointing direction:
+           for row in rows :
+              id = int( row[0] )
+              azim_deg_db = float( row[1] )
+              za_deg_db   = float( row[2] )
+              freq_mhz    = float( row[3] )
+              pol         = row[4]
+              lst_db      = float( row[5] )
+
+              if math.fabs( lst_db - lst_hours ) <= (min_lst_distance+0.1) :
+                 best_rec_id_list.append( id )
+
+           
                  
        if debug_level >= 2 or min_lst_distance < db_lst_resolution :
           print("DEBUG : closest in time is min_lst_diff = %.4f [h] (id = %d)" % (min_lst_distance,best_rec_id))
@@ -525,9 +560,9 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
               aot = a_eff / ( t_ant + t_rcv )
               sefd        = (2*1380.00)/aot
            
-           print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg))
+           print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg] (id = %d vs. best_rec_id = %d)" % (id,freq_mhz,azim_deg_db,za_deg_db,min_angular_distance_deg,az_deg,za_deg,id,best_rec_id))
                 
-           if best_rec_id < 0 or id == best_rec_id : 
+           if best_rec_id < 0 or id in best_rec_id_list : 
               ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg ) 
         
               if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
@@ -543,7 +578,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
                   
                   used_db_record_id.append( id ) 
               else :
-                 print("\t\tDB Record ignored due to angular distance too large")
+                 print("\t\tDB Record ignored due to angular distance = %.4f [deg] larger than limit of %.4f [deg]" % (ang_distance_deg,(min_angular_distance_deg+0.01)))
              
            if out_f is not None :
               line = "%.4f %.4f\n" % (unixtime,t_ant) 
@@ -553,6 +588,11 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
  
     if out_f is not None :
        out_f.close()
+       
+    if debug_level >= 2 :
+       print("DEBUG information on sensitivity :")
+       for i in range(0,len(out_uxtime)) :
+          print("%.2f %.4f %.4f" % (out_uxtime[i],out_aot[i],out_sefd[i]))   
 
     return (out_uxtime, out_aot, out_sefd)
 
@@ -561,6 +601,8 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
                              receiver_temperature=None) :
+
+    print("DEBUG : get_sensitivity_lstrange_single_pol")
 
     out_lst = []
     out_aot    = []
@@ -979,7 +1021,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
                               uxtime_i=None, aot_i=None , point_i='b+' ,
-                              fig_size_x=20, fig_size_y=10, info=None, save_output_path="./" ) :
+                              fig_size_x=20, fig_size_y=10, info=None, save_output_path="./", save_text_file=False, out_dir="./" ) :
                      
    legend_location = "upper center" # "upper right"
 
@@ -1063,6 +1105,25 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
       plt.savefig( outfile )
    
    plt.show()
+   
+      # save txt file :
+   out_txt_filename = None
+   if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
+      out_txt_filename = out_dir + "/" + output_file_base + "_X.txt"
+      out_txt_f = open( out_txt_filename , "w" )
+      line = "# UXTIME A/T_X[m^2/K] A/T_Y[m^2/K] A/T_I[m^2/K]\n"
+      out_txt_f.write( line )
+      
+      if len(uxtime_x) == len(uxtime_y) :      
+         for i in range(0,len(uxtime_x)) :
+            (aot_i,sefd_i) = aotxy2aoti( aot_x[i], aot_y[i] )
+            line = "%.2f %.8f %.8f %.8f\n" % (uxtime_x[i],aot_x[i],aot_y[i],aot_i)
+            out_txt_f.write( line )
+         
+      out_txt_f.close()
+ 
+      print("Sensitivity map saved to text file %s" % (out_txt_filename))
+
    
 def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
@@ -1569,6 +1630,8 @@ def parse_options(idx):
    parser.add_option('-p','--plot','--do_plot','--do_plots',action="store_true",dest="do_plot",default=False, help="Plot")
    parser.add_option('-a','--azim','--azim_deg',dest="azim_deg",default=None, help="Pointing direction azimuth in degrees [default %default]",metavar="float",type="float")
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
+   parser.add_option('--pointing_ra_deg','--ra',dest='pointing_ra_deg',default=None,help='Pointing RA [deg]',type=float)
+   parser.add_option('--pointing_dec_deg','--dec',dest='pointing_dec_deg',default=None,help='Pointing DEC [deg]',type=float)
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidereal time in hours [default %default]",metavar="float",type="float")
 
    # specific frequency in MHz 
@@ -1621,15 +1684,27 @@ def parse_options(idx):
    if options.unixtime_start is not None and  options.unixtime_end is not None :
       if options.unixtime_interval is None :
          options.unixtime_interval = ( options.unixtime_end - options.unixtime_start )
+
+   if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
+      uxtime = options.unixtime_start
+      if uxtime is None :
+         uxtime = options.gps + 315964783
+      ( ra , dec , options.azim_deg , alt , options.za_deg ) = fits_beam.radec2azh( options.pointing_ra_deg, options.pointing_dec_deg, uxtime )
+      print("INFO : converted (RA,DEC) = (%.4f,%.4f) [deg] into (AZ,ZA) = (%.4f,%.4f) [deg] for uxtime = %.2f" % (options.pointing_ra_deg, options.pointing_dec_deg, options.azim_deg, options.za_deg, uxtime ))
    
    print("###############################################################")
    print("PARAMATERS : ")
    print("###############################################################")
    print("Do plotting                = %s" % (options.do_plot))
+   if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
+      print("Pointing direction (ra,dec) = (%.4f,%.4f) [deg]" % (options.pointing_ra_deg,options.pointing_dec_deg))
+   else :
+      print("Pointing direction in RADEC not specified")   
+      
    if options.azim_deg is not None and options.za_deg is not None : 
       print("Pointing direction (az,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
    else :
-      print("Pointing direction not specified")
+      print("Pointing direction in AZEL not specified")
    if options.lst_hours is not None :     
       print("Specified LST time         = %.4f [deg]" % (options.lst_hours))
    if options.freq_mhz is not None :
@@ -1785,9 +1860,10 @@ if __name__ == "__main__":
               if options.do_plot :
                  info = "Freq. = %.3f [MHz]\n(azim,za) = (%.2f,%.2f) [deg]" % ( options.freq_mhz,options.azim_deg,options.za_deg)
               
-                 out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
+                 out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
                  plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg,\
-                                            options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, uxtime_i=uxtime_i, aot_i=aot_i, info=info )
+                                           options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, uxtime_i=uxtime_i, aot_i=aot_i, info=info,\
+                                           save_text_file = options.save_text_file  )
               
               
            else :
