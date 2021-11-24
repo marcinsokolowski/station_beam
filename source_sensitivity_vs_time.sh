@@ -9,22 +9,33 @@ object_radec()
       ra=333.607249950
       dec=-17.02661111
    fi 
+
+   if [[ $object == "GalCentre" || $object == "GalacticCentre" || $object == "galactic_centre" ]]; then
+      ra=266.4168333000
+      dec=-29.00780556
+      use_lst=1
+   fi 
  
    if [[ $object == "eor0" || $object == "EOR0" || $object == "EoR0" ]]; then  
       ra=0
       dec=-27
-      eor_field=1
+      use_lst=1
    fi
    
    if [[ $object == "eor1" || $object == "EOR1" || $object == "EoR1" ]]; then  
       ra=60
       dec=-27
-      eor_field=1
+      use_lst=1
    fi
 
    if [[ $object == "hyda" || $object == "HYDA" || $object == "HYDRAA" || $object == "HYDRA-A" || $object == "hydra-a" ]]; then  
       ra=139.52374995
       dec=-12.09555556
+   fi
+
+   if [[ $object == "pupa" || $object == "PUPA" || $object == "PUP-A" || $object == "pup-a" ]]; then  
+      ra=126.030700005
+      dec=-42.9963
    fi
 
    if [[ $object == "vira" || $object == "VIRA" || $object == "VIRGOA" || $object == "VIRGO-A" || $object == "virgo-a" ]]; then  
@@ -54,7 +65,7 @@ fi
 # setup RA,DEC by the source name as default :
 ra=333.607249950 # degree
 dec=-17.02661111 # degree
-eor_field=0
+use_lst=0
 object_radec $object
 
 # Can overwrite RA,DEC with parameters:
@@ -72,6 +83,9 @@ if [[ -n "$6" && "$6" != "-" ]]; then
    re_generate_data=$6
 fi
 
+if [[ -n "$7" && "$7" != "-" ]]; then
+   use_lst=$7
+fi
 
 # Hardcoded (for now)
 duration=86400
@@ -93,6 +107,7 @@ echo "GPS START = $gps_start"
 echo "Duration  = $duration [seconds]"
 echo "Step      = $step [seconds]"
 echo "re_generate_data = $re_generate_data"
+echo "Use LST   = $use_lst"
 echo "############################################################"
 
 if [[ ! -s antenna_locations_${station}.txt ]]; then
@@ -119,7 +134,7 @@ fi
 
 mkdir -p images/
 
-if [[ $eor_field -le 0 ]]; then
+if [[ $use_lst -le 0 ]]; then
    # elev vs. azimuth :
    awk -v elev=-1 '{if($1=="#"){if($2=="HEADER"){azim=$10;elev=(90.00-$15);}}else{if(azim>180){azim=azim-360;}if(azim>=-120 && azim<=120){print azim" "elev;}}}' ${object}_${station}_sensitivity_XX.txt > ${object}_elev_vs_azimuth.txt
 
