@@ -1,11 +1,21 @@
 <h1>SKA-Low station sensitivity</h1>
 This service allows to calculate SKA-Low station sensitivity (A/T [m^2/K]) using EDA2 and AAVS2 prototype station simulations.<br>
-Please, select from the following options:
+Please, select from the following options (LST is local sidereal time):
 
 <ul>
-  <li><a href="sensitivity_vs_freq">Sensitivity vs. frequency at a given pointing direction and LST</a></li>
-  <li><a href="sensitivity_map">All-sky sensitivity map for a given frequency and LST</a></li>
-  <li><a href="sensitivity_vs_lst">Sensitivity A/T [m^2/K] vs. lst</a></li>
+  <li><b>Sensitivity A/T [m^2/K] vs. frequency at a given pointing direction and LST:</b></li>
+      <ul>
+         <li><a href="sensitivity_vs_freq">Sensitivity A/T [m^2/K] vs. frequency at a specified LST and pointing direction specified as (Azimuth,Elevation [deg]):</a></li>
+         <li><a href="sensitivity_radec_vs_freq">Sensitivity A/T [m^2/K] vs. frequency at a specified LST and pointing direction specified as (Right ascension,Declination [deg]):</a></li>
+      </ul><br><br>
+
+  <li><b>Sensitivity A/T [m^2/K] at a specified frequency and pointing direction vs. LST:</b></li>
+      <ul>
+      <li><a href="sensitivity_vs_lst">Sensitivity A/T [m^2/K] at a specified frequency and pointing direction (Azimuth,Elevation [deg]) vs. LST:</a></li>      
+      <li><a href="sensitivity_radec_vs_lst">Sensitivity A/T [m^2/K] at a specified frequency and pointing direction (Right ascension,Declination [deg]) vs. LST:</a></li>
+      </ul><br><br>
+
+  <li><a href="sensitivity_map">All-sky sensitivity map for a given frequency and LST</a></li><br><br>
 </ul> 
 
 
