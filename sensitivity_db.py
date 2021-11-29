@@ -90,6 +90,7 @@ MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height
 
 # code version
 code_version = 1.00
+code_version_line = "# Data generated with code version 1.00\n"
 
 debug_level = 2
 
@@ -981,10 +982,14 @@ def get_sensitivity_map( freq_mhz, lst_hours,
        
        print("DEBUG : saving output text files to %s and %s" % (out_txt_filename_X,out_txt_filename_Y))
        
+       out_txt_x_f.write( code_version_line )
+       out_txt_y_f.write( code_version_line )
+       out_txt_i_f.write( code_version_line )
+       
        line = "# AZIM[deg] ZA[deg] A/T[m^2/K]"
        out_txt_x_f.write( line + "    for X polarisation\n" )
        out_txt_y_f.write( line + "    for Y polarisation\n" )
-       out_txt_i_f.write( line + "    for Stokes I polarisation\n" )
+       out_txt_i_f.write( line + "    for Stokes I polarisation\n" )              
         
     for row in rows:
         if debug_level >= 2 :
@@ -1318,6 +1323,8 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
    if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
       out_txt_filename = out_dir + "/" + output_file_base + "_X.txt"
       out_txt_f = open( out_txt_filename , "w" )
+      out_txt_f.write( code_version_line )
+      
       line = "# UXTIME A/T_X[m^2/K] A/T_Y[m^2/K] A/T_I[m^2/K]\n"
       out_txt_f.write( line )
       
@@ -1717,6 +1724,7 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
    if save_text_file : # saving of full (interpolated) map as in FITS file is turned of as the files are too large :
       out_txt_filename = out_dir + "/" + out_fitsname_base + pol_string + ".txt"
       out_txt_f = open( out_txt_filename , "w" )
+      out_txt_f.write( code_version_line )
       line = "# AZIM[deg] ZA[deg] A/T[m^2/K]\n"
       out_txt_f.write( line )
       for i in range(0,za_rad.shape[0]) :
@@ -1954,6 +1962,7 @@ def parse_options(idx):
 def save_output_file( freq, aot, pol, out_file_base ) :
    outfile_pol = ( "%s_%s.txt" % (out_file_base,pol) ) 
    out_f = open( outfile_pol , "w" )
+   out_f.write( code_version_line )
    
    header_line = "# Frequency[MHz]  A/T[m^2/K]\n"
    out_f.write( header_line )
@@ -1973,6 +1982,7 @@ def save_output_file( freq, aot, pol, out_file_base ) :
 def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_base ) :
    outfile = ( "%s.txt" % (out_file_base) ) 
    out_f = open( outfile , "w" )
+   out_f.write( code_version_line )
    
    header_line = "#  LST[h] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy]\n"
    out_f.write( header_line )
@@ -1993,6 +2003,7 @@ def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y, out_file_
 def save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_file_base ) :
    outfile = ( "%s.txt" % (out_file_base) ) 
    out_f = open( outfile , "w" )
+   out_f.write( code_version_line )
    
    header_line = "#  FREQ[MHz] A/T_x[m^2/K] SEFD_x[Jy] A/T_y[m^2/K] SEFD_y[Jy] A/T_i[m^2/K] SEFD_i[Jy]\n"
    out_f.write( header_line )
