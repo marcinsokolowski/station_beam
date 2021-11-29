@@ -14,7 +14,10 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMP = os.path.join(BASE_DIR,'templates')
+STAT = os.path.join(BASE_DIR,'static')
 
+print("BASE_DIR = %s , TEMP = %s , STAT = %s" % (BASE_DIR,TEMP,STAT))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -25,7 +28,7 @@ SECRET_KEY = '%f&1_ew#pxir04qlgek-ssp2vvgz_6-cyc*crdnsg!-*sy+3mj'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,7 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'sensitivity_vs_lst'
+    'sensitivity_vs_lst',
+    'hello_world',
+    'sensitivity_vs_lst_show',
+    'sensitivity_vs_freq',
+    'sensitivity_vs_freq_show',
+    'sensitivity_map',
+    'sensitivity_map_show'
 ]
 
 MIDDLEWARE = [
@@ -119,3 +128,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [ 
+   STAT,
+]
