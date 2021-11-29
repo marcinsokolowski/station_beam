@@ -27,6 +27,8 @@ urlpatterns = [
     path('', include('sensitivity_vs_lst_show.urls')),
     path('', include('sensitivity_vs_freq.urls')),
     path('', include('sensitivity_vs_freq_show.urls')),
+    path('', include('sensitivity_radec_vs_freq.urls')),
+    path('', include('sensitivity_radec_vs_freq_show.urls')),
     path('', include('sensitivity_map.urls')),
     path('', include('sensitivity_map_show.urls')),
 ]
