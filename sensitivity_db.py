@@ -161,6 +161,44 @@ def aotxy2aoti( aot_x , aot_y ):
    return (aot_i,sefd_i)
 
 
+def ha2range_deg( ha ) :
+  if ha < 0.00 :
+     ha = ha + 360.00;
+  elif ha > 360.00 :
+     ha = ha - 360.00 
+     
+  return ha 
+
+# based on /opt/pi/dev/pisys/daq/src/ccd/ccdastro/AstroCCD.cpp void AstroCCD::calculateHourAngleBase( double ra, double dec, double& sid_time, double& ha )
+# 
+#  calculates (AZIM,ELEVATION) from (RA,DEC) using LST 
+# 
+def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
+   DEG2RAD = (math.pi/180.00)
+   RAD2DEG = (180.00/math.pi)
+
+   ha_deg = lst_hours*15.00 - ra_deg
+   ha_deg = ha2range_deg( ha_deg )
+   if debug : 
+      print("DEBUG : ha := %.4f [deg]" % (ha_deg))
+         
+   sin_alt = math.sin( geo_lat*DEG2RAD ) * math.sin( dec_deg*DEG2RAD )  + math.cos( geo_lat*DEG2RAD ) * math.cos( dec_deg*DEG2RAD ) * math.cos( ha_deg*DEG2RAD )
+   alt_rad = math.asin( sin_alt )
+   alt_deg = alt_rad * RAD2DEG
+   
+   up = ( math.cos( dec_deg*DEG2RAD ) * math.sin( ha_deg*DEG2RAD ) ) 
+   bottom =  ( math.sin( geo_lat*DEG2RAD )*math.cos( dec_deg*DEG2RAD )*math.cos( ha_deg*DEG2RAD ) - math.cos( geo_lat*DEG2RAD )*math.sin( dec_deg*DEG2RAD ) ) 
+   azim_rad = math.atan2( up, bottom )
+   azim_deg = azim_rad*RAD2DEG
+   
+   if astro_azim : 
+      azim_deg = (180.00 + azim_deg)
+   
+   print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
+   
+   return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
+
+
 def read_text_file( filename , do_fit=True ) : 
    print("read_data(%s) ..." % (filename))
 
@@ -247,12 +285,20 @@ def calc_sefd_i( out_sefd_x, out_freq_x, out_sefd_y, out_freq_y, out_file=None )
 def get_sensitivity_azzalst( az_deg , za_deg , lst_hours , 
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00,
-                             receiver_temp_file=None ) :
+                             receiver_temp_file=None, 
+                             ra_deg=None, dec_deg=None ) :
         
     global debug_level
     
     print("DEBUG : get_sensitivity_azzalst")
     
+    if ra_deg is not None and dec_deg is not None :
+       # def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
+       # return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
+       
+       (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=MWA_POS.lat.value )
+       za_deg = (90.00 - alt_deg )
+       print("DEBUG : calculated horizontal coordinates (az,za,ha) = (%.4f,%.4f,%.4f) [deg] from (ra,dec) = (%.4f,%.4f) [deg] at LST = %.4f [h]" % (az_deg, za_deg, ha_deg, ra_deg, dec_deg, lst_hours)) 
     
     # 
     file_freq_mhz = None
@@ -600,7 +646,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
 def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, lst_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
-                             receiver_temperature=None) :
+                             receiver_temperature=None ) :
 
     print("DEBUG : get_sensitivity_lstrange_single_pol")
 
@@ -614,7 +660,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
     
     if conn is None :
        print("ERROR : could not connect to database %s" % (dbname_file))
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None)              
 
     # select closest FREQUENCT :
     cur = conn.cursor()
@@ -750,7 +796,7 @@ def get_sensitivity_timerange( az_deg , za_deg , freq_mhz, ux_start, ux_end, tim
 def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
-                             receiver_temperature=None) :
+                             receiver_temperature=None ) :
 
     global debug_level
                                  
@@ -1723,6 +1769,7 @@ def parse_options(idx):
    parser.add_option('-z','--za','--za_deg',dest="za_deg",default=None, help="Pointing direction zenith distance in degrees [default %default]",metavar="float",type="float")
    parser.add_option('--pointing_ra_deg','--ra',dest='pointing_ra_deg',default=None,help='Pointing RA [deg]',type=float)
    parser.add_option('--pointing_dec_deg','--dec',dest='pointing_dec_deg',default=None,help='Pointing DEC [deg]',type=float)
+   parser.add_option('--object','--object_name',dest='object_name',default=None,help='Object name [default not specified')
    parser.add_option('-l','--lst','--lst_hours',dest="lst_hours",default=None, help="Local sidereal time in hours [default %default]",metavar="float",type="float")
 
    # specific frequency in MHz 
@@ -1779,9 +1826,14 @@ def parse_options(idx):
    if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
       uxtime = options.unixtime_start
       if uxtime is None :
-         uxtime = options.gps + 315964783
-      ( ra , dec , options.azim_deg , alt , options.za_deg ) = fits_beam.radec2azh( options.pointing_ra_deg, options.pointing_dec_deg, uxtime )
-      print("INFO : converted (RA,DEC) = (%.4f,%.4f) [deg] into (AZ,ZA) = (%.4f,%.4f) [deg] for uxtime = %.2f" % (options.pointing_ra_deg, options.pointing_dec_deg, options.azim_deg, options.za_deg, uxtime ))
+         if options.lst_hours is None :
+            print("ERROR : not unixtime nor LST not specified use option --unixtime_start or --uxtime_start or --lst")
+            sys.exit(-1)
+#         uxtime = options.gps + 315964783
+      
+      if uxtime is not None :
+         ( ra , dec , options.azim_deg , alt , options.za_deg ) = fits_beam.radec2azh( options.pointing_ra_deg, options.pointing_dec_deg, uxtime )
+         print("INFO : converted (RA,DEC) = (%.4f,%.4f) [deg] into (AZ,ZA) = (%.4f,%.4f) [deg] for uxtime = %.2f" % (options.pointing_ra_deg, options.pointing_dec_deg, options.azim_deg, options.za_deg, uxtime ))
    
    print("###############################################################")
    print("PARAMATERS : ")
@@ -1885,10 +1937,14 @@ def save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_fi
 if __name__ == "__main__":
     (options, args) = parse_options(1)
         
-    if options.azim_deg is not None and options.za_deg is not None and options.lst_hours is not None :
+    if ((options.azim_deg is not None and options.za_deg is not None) or (options.pointing_ra_deg is not None and options.pointing_dec_deg is not None)) and options.lst_hours is not None :
        # plotting A/T vs. frequency for a given pointing direction and LST :
-       print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
-       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y,out_freq_i,out_aot_i,out_sefd_i) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file, station=options.station_name )
+       if options.azim_deg is not None and options.za_deg is not None :
+          print("(Azim,Za) and LST specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ...")
+       else :
+          print("(RA,DEC) = (%.4f,%.4f) [deg] and LST = %.4f [h] specified -> getting A/T vs. frequency data and creating A/T vs. frequency plot ..." % (options.pointing_ra_deg,options.pointing_dec_deg,options.lst_hours))
+
+       (out_freq_x,out_aot_x,out_sefd_x,out_freq_y,out_aot_y,out_sefd_y,out_freq_i,out_aot_i,out_sefd_i) = get_sensitivity_azzalst( options.azim_deg, options.za_deg, options.lst_hours, receiver_temp_file=options.receiver_temp_file, station=options.station_name, ra_deg=options.pointing_ra_deg, dec_deg=options.pointing_dec_deg )
        
        if (out_freq_x is not None and out_aot_x is not None) or (out_freq_y is not None and out_aot_y is not None ) :
           if options.output_file is not None :
@@ -1902,8 +1958,13 @@ if __name__ == "__main__":
                 save_output_file( out_freq_i , out_aot_i, "I" , options.output_file )
 
           if options.do_plot :
-             info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.azim_deg,options.za_deg)
+             if options.azim_deg is not None and options.za_deg is not None :
+                info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.azim_deg,options.za_deg)
+             else :
+                info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.pointing_ra_deg,options.pointing_dec_deg)
+                
              plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file, freq_i=out_freq_i, aot_i=out_aot_i, info=info )
+             
           # do plot AoT vs. Freq :
     elif options.lst_hours is not None and options.freq_mhz is not None :
        # plotting sensitivity map of the whole sky for a given frequnecy and pointing direction :
@@ -1974,11 +2035,17 @@ if __name__ == "__main__":
        if options.freq_mhz is not None :
            print("\tSENS_vs_LST : Plotting for specific frequency = %.2f MHz" % (options.freq_mhz))
            
-           if options.azim_deg is not None and options.za_deg is not None :
-              print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
-              (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i ) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
-                                                                                   time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
+           if ( options.azim_deg is not None and options.za_deg is not None ) or  ( options.pointing_ra_deg is not None and options.pointing_dec_deg is not None ) :
+              
+              if options.azim_deg is not None and options.za_deg is not None :
+                 print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
+                 (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i ) = get_sensitivity_lstrange( options.azim_deg, options.za_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
+                                                                                 time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
 
+              else :
+                 print("\tSENS_vs_LST : Plotting for pointing direction (ra,dec) = (%.4f,%.4f) [deg]" % (options.pointing_ra_deg,options.pointing_dec_deg))
+                 printf("TO BE IMPLEMENTED SOON !!!")
+                    
               if options.do_plot :
                  out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.azim_deg,options.za_deg,options.freq_mhz)          
                  plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i )
