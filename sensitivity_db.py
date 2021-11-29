@@ -1963,7 +1963,7 @@ if __name__ == "__main__":
              else :
                 info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.pointing_ra_deg,options.pointing_dec_deg)
                 if options.object_name is not None :
-                   info += "\nobject = %s" % (options.object_name)
+                   info += "\nObject = %s" % (options.object_name)
                 
              plot_sensitivity( out_freq_x,out_aot_x, out_freq_y, out_aot_y, output_file_base=options.output_file, freq_i=out_freq_i, aot_i=out_aot_i, info=info )
              
