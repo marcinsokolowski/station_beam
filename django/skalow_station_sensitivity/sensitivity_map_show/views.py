@@ -86,9 +86,9 @@ def sensitivity_map_show(request):
    output_file_base = out_fitsname_base
 #   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base )
 #   def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown" ) :
-   ( lut_x , sensitivity_x, sens_fits_file_x , azim_fits_file_x , za_fits_file_x , out_txt_filename_x , pngfile_x, buf_x )  = sensitivity_db.plot_sensitivity_map( azim_x, za_x, aot_x, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="X", out_dir=config.save_output_path )
-   ( lut_y , sensitivity_y, sens_fits_file_y , azim_fits_file_y , za_fits_file_y , out_txt_filename_y , pngfile_y, buf_y )  = sensitivity_db.plot_sensitivity_map( azim_y, za_y, aot_y, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="Y", out_dir=config.save_output_path )
-   ( lut_i , sensitivity_i, sens_fits_file_i , azim_fits_file_i , za_fits_file_i , out_txt_filename_i , pngfile_i, buf_i )  = sensitivity_db.plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="I", out_dir=config.save_output_path )
+   ( lut_x , sensitivity_x, sens_fits_file_x , azim_fits_file_x , za_fits_file_x , out_txt_filename_x , pngfile_x, buf_x )  = sensitivity_db.plot_sensitivity_map( azim_x, za_x, aot_x, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="X", out_dir=config.save_output_path, station=station )
+   ( lut_y , sensitivity_y, sens_fits_file_y , azim_fits_file_y , za_fits_file_y , out_txt_filename_y , pngfile_y, buf_y )  = sensitivity_db.plot_sensitivity_map( azim_y, za_y, aot_y, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="Y", out_dir=config.save_output_path, station=station )
+   ( lut_i , sensitivity_i, sens_fits_file_i , azim_fits_file_i , za_fits_file_i , out_txt_filename_i , pngfile_i, buf_i )  = sensitivity_db.plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=output_file_base, save_text_file=False, do_plot=True, freq_mhz=frequency_mhz, lst_h=lst_hours, pol="I", out_dir=config.save_output_path, station=station )
 
 #   return render(request,"sensitivity_vs_freq_show/index.html"  )
    

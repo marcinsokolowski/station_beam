@@ -1838,7 +1838,7 @@ def get_radius_list( za_rad, za_list ) :
    return radius_px_list
       
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5, vmax_value=2.00 ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5, vmax_value=2.00, station=None ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
    global web_interface_initialised
 
@@ -1978,6 +1978,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
       # ax1.set_rticks([])
  
       title = "Sensitivity map at frequency = %.2f MHz at lst = %.2f [h] (%s)" % (freq_mhz,lst_h,pol)
+      if station is not None :
+         title += (" for %s " % station) 
       ax1.set_title( title , fontsize=17, pad=15 )
       pol_str = "_%s" % (pol)
       pngfile = out_dir + "/" + out_fitsname_base + pol_str + ".png"
