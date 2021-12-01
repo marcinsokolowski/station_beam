@@ -1503,7 +1503,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
                               do_show = True, save_output_path="./",
                               lst_i=None, aot_i=None, point_i='b+',
                               fig_size_x=20, fig_size_y=10, info=None,
-                              ra_deg=None, dec_deg=None ) :
+                              ra_deg=None, dec_deg=None, station_name=None ) :
 
    global web_interface_initialised
    global plot_requirements
@@ -1519,6 +1519,9 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
          info = "Frequency %.2f MHz, (RA,Dec) = (%.2f$^o$, %.2f$^o$)" % (freq_mhz,ra_deg,dec_deg)
       else :
          info = "Frequency %.2f MHz, Azimuth = %.2f$^o$, ZA = %.2f$^o$" % (freq_mhz,azim_deg,za_deg)
+         
+      if station_name is not None :
+         info += (" for %s" % station_name )
    
    if lst_x is not None :
       min_lst = min(lst_x)
@@ -2213,9 +2216,9 @@ if __name__ == "__main__":
 
           if options.do_plot :
              if options.azim_deg is not None and options.za_deg is not None :
-                info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.azim_deg,options.za_deg)
+                info = "LST = %.1f h , (azim,za) = (%.2f,%.2f) [deg] for %s" % (options.lst_hours,options.azim_deg,options.za_deg,options.station_name)
              else :
-                info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg]" % (options.lst_hours,options.pointing_ra_deg,options.pointing_dec_deg)
+                info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg] for %s" % (options.lst_hours,options.pointing_ra_deg,options.pointing_dec_deg,options.station_name)
                 if options.object_name is not None :
                    info += "\nObject = %s" % (options.object_name)
                 
@@ -2278,11 +2281,11 @@ if __name__ == "__main__":
               if options.do_plot :
                  info = ""
                  if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
-                    info = "Freq. = %.3f [MHz]\n(ra,dec) = (%.4f,%.4f) [deg]" % ( options.freq_mhz,options.pointing_ra_deg,options.pointing_dec_deg)
+                    info = "Freq. = %.3f [MHz]\n(ra,dec) = (%.4f,%.4f) [deg] for %s" % ( options.freq_mhz,options.pointing_ra_deg,options.pointing_dec_deg,options.station_name)
                     if options.object_name is not None :
                        info += "\nObject = %s" % (options.object_name)
                  else :
-                    info = "Freq. = %.3f [MHz]\n(azim,za) = (%.2f,%.2f) [deg]" % ( options.freq_mhz,options.azim_deg,options.za_deg)
+                    info = "Freq. = %.3f [MHz]\n(azim,za) = (%.2f,%.2f) [deg] for %s" % ( options.freq_mhz,options.azim_deg,options.za_deg,options.station_name)
               
                  out_fitsname_base = "sensitivity_uxtimerange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz" % (options.unixtime_start,options.unixtime_end,options.azim_deg,options.za_deg,options.freq_mhz)          
                  plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y, options.unixtime_start, options.unixtime_end, options.azim_deg,\
@@ -2310,7 +2313,7 @@ if __name__ == "__main__":
 
                  if options.do_plot :                 
                     out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_ra%.4fdeg_dec%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.pointing_ra_deg,options.pointing_dec_deg,options.freq_mhz)          
-                    plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, -1000, -1000, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i, ra_deg=options.pointing_ra_deg, dec_deg=options.pointing_dec_deg )
+                    plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, -1000, -1000, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i, ra_deg=options.pointing_ra_deg, dec_deg=options.pointing_dec_deg, station_name=options.station_name )
 
               elif options.azim_deg is not None and options.za_deg is not None :
                  print("\tSENS_vs_LST : Plotting for pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (options.azim_deg,options.za_deg))
@@ -2319,7 +2322,7 @@ if __name__ == "__main__":
 
                  if options.do_plot :                 
                     out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_az%.4fdeg_za%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.azim_deg,options.za_deg,options.freq_mhz)          
-                    plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i )
+                    plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, options.lst_start_hours, options.lst_end_hours, options.azim_deg, options.za_deg, options.freq_mhz, output_file_base=out_fitsname_base, lst_i=lst_i,aot_i=aot_i, station_name=options.station_name )
 
               else :
                  print("\tSENS_vs_LST : Plotting for pointing direction (ra,dec) = (%.4f,%.4f) [deg]" % (options.pointing_ra_deg,options.pointing_dec_deg))
