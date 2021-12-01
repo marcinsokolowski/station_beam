@@ -13,6 +13,10 @@ if [[ $station != "eda2" ]]; then
 fi
 
 local_dir=/media/msok/0754e982-0adb-4e33-80cc-f81dda1580c8/${station}/data/real_time_calibration/
+if [[ -n "$3" && "$3" != "-" ]]; then
+   local_dir=$3
+fi
+
 cd ${local_dir}
 pwd
 
@@ -24,8 +28,28 @@ else
    dtm=`basename $path`
 fi
 
-echo "rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} ."
-rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} .
+do_copy=0
+if [[ -n "$4" && "$4" != "-" ]]; then
+   do_copy=$4
+fi
+
+echo "####################################################################"
+echo "PARAMETERS:"
+echo "####################################################################"
+echo "station = $station"
+echo "beam_name = $beam_name"
+echo "local_dir = $local_dir"
+echo "do_copy = $do_copy"
+echo "####################################################################"
+date
+
+
+if [[ $do_copy -gt 0 ]]; then
+   echo "rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} ."
+   rsync --exclude 'cal.out' --exclude 'NoSunBeamCorr' -avP ${station}:/data/real_time_calibration/${dtm} .
+else
+   echo "WARNING : data copying is not required"
+fi   
 
 if [[ -d ${local_dir}/${dtm} ]]; then
    cd ${local_dir}/${dtm}
