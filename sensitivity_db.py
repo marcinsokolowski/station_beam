@@ -101,6 +101,7 @@ debug_level = 2
 # plot SKA-Low requirements 
 plot_requirements = True
 import lfaa_requirements
+import lfaa_sensitivity
 
 plot_braun2019 = True
 import sensitivity_braun2019
@@ -341,7 +342,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
        if row[0] is not None :
           min_lst_distance = float( row[0] )
        else :
-          print("ERROR : not data close to lst = %.2f h at (az,za) = (%.4f,%.4f) [deg] in the database" % (lst_hours,az_deg,za_deg))
+          print("ERROR : no data close to lst = %.2f h at (az,za) = (%.4f,%.4f) [deg] in the database" % (lst_hours,az_deg,za_deg))
 
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST at (az,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg))
@@ -750,9 +751,26 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
        if row[0] is not None :
           min_freq_distance = float( row[0] )
        else :
-          print("ERROR : not data close to frequency = %.2f [MHz] at (az,za) = (%.4f,%.4f) [deg] in the database" % (freq_mhz,az_deg,za_deg))
-
-    print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+          print("ERROR : no data close to frequency = %.2f [MHz] at (az,za) = (%.4f,%.4f) [deg] in the database" % (freq_mhz,az_deg,za_deg))
+    
+    if min_freq_distance is not None :
+       print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+    else :
+       print("WARNING : no records found for lst range = %.8f - %.8f [hours]" % (lst_start, lst_end))
+       
+       szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND ABS(lst-%.8f)<=0.5" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, (lst_start+lst_end)/2.00 )
+       print("DEBUG SQL1 : %s" % (szSQL))
+       cur.execute( szSQL )
+       rows = cur.fetchall()
+       min_freq_distance = None
+       for row in rows:
+          if row[0] is not None :
+             min_freq_distance = float( row[0] )
+          else :
+             print("ERROR : no data close to frequency = %.2f [MHz] at (az,za) = (%.4f,%.4f) [deg] in the database" % (freq_mhz,az_deg,za_deg))
+             
+       print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+       
   
     # get requested data :
     cur = conn.cursor()
@@ -873,9 +891,27 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
        if row[0] is not None :
           min_freq_distance = float( row[0] )
        else :
-          print("ERROR : not data close to frequency = %.2f [MHz] in LST range %.4f - %.4f [h] the database" % (freq_mhz,lst_start, lst_end))
+          print("ERROR : no data close to frequency = %.2f [MHz] in LST range %.4f - %.4f [h] the database" % (freq_mhz,lst_start, lst_end))
 
-    print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+    if min_freq_distance is not None :
+       print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+    else :
+       print("WARNING : no records found for lst range = %.8f - %.8f [hours]" % (lst_start, lst_end))
+       
+       szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND polarisation='%s' AND ABS(lst-%.8f)<0.5" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), pol, (lst_start+lst_end)/2.00 )
+       print("DEBUG SQL1 : %s" % (szSQL))
+       cur.execute( szSQL )
+       rows = cur.fetchall()
+       min_freq_distance = None
+       for row in rows:
+          if row[0] is not None :
+             min_freq_distance = float( row[0] )
+          else :
+             print("ERROR : no data close to frequency = %.2f [MHz] at (az,za) = (%.4f,%.4f) [deg] in the database" % (freq_mhz,az_deg,za_deg))
+             
+       print("DEBUG : minimum frequency distance = %.2f MHz" % (min_freq_distance))
+       
+    
   
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
     different_lsts = []
@@ -889,6 +925,19 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
        lst_value = float( row[0] )
        different_lsts.append( lst_value )
        print("\t%.4f" % (lst_value))
+       
+    if len(different_lsts) == 0 :
+       szSQL = "SELECT DISTINCT(lst) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND polarisation='%s' AND ABS(lst-%.8f)<0.5" %  (freq_mhz,(min_freq_distance+0.01), pol, (lst_start+lst_end)/2.00 )
+       print("DEBUG SQL2 : %s" % (szSQL))
+       cur.execute( szSQL )
+       rows = cur.fetchall()
+
+       print("Different LSTs:")    
+       for row in rows:
+          lst_value = float( row[0] )
+          different_lsts.append( lst_value )
+          print("\t%.4f" % (lst_value))
+       
 
     # loop over LSTs in the range : 
     for lst in different_lsts :         
@@ -911,57 +960,60 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
        best_aot = -1
        best_sefd = -1
        
-       for row in rows :
-           if debug_level > 0 : 
-              print(row)
+       if alt_deg >= 0 :
+          for row in rows :
+              if debug_level > 0 : 
+                 print(row)
         
-           id = int( row[0] )
-           azim_deg_db = float( row[1] )
-           za_deg_db   = float( row[2] )
-           freq_mhz    = float( row[3] )
-           pol         = row[4]
-           lst_db      = float( row[5] )
-           unixtime    = float( row[6] )
-           gpstime     = float( row[7] )
-           aot         = float( row[8] )
-           if aot != 0 :
-              sefd        = (2*1380.00)/aot
-           else :
-              sefd     = 1e20
-           a_eff       = float( row[9] )
-           t_rcv       = float( row[10] )
-           t_ant       = float( row[11] )
-           array_type  = int( row[12] )
-           timestamp   = row[13]
-           creator     = row[14]
-           code_version = row[15]
+              id = int( row[0] )
+              azim_deg_db = float( row[1] )
+              za_deg_db   = float( row[2] )
+              freq_mhz    = float( row[3] )
+              pol         = row[4]
+              lst_db      = float( row[5] )
+              unixtime    = float( row[6] )
+              gpstime     = float( row[7] )
+              aot         = float( row[8] )
+              if aot != 0 :
+                 sefd        = (2*1380.00)/aot
+              else :
+                 sefd     = 1e20
+              a_eff       = float( row[9] )
+              t_rcv       = float( row[10] )
+              t_ant       = float( row[11] )
+              array_type  = int( row[12] )
+              timestamp   = row[13]
+              creator     = row[14]
+              code_version = row[15]
         
-           if receiver_temperature is not None and receiver_temperature >= 0.00 :
-              t_rcv = receiver_temperature
-              aot = a_eff / ( t_ant + t_rcv )
-              sefd        = (2*1380.00)/aot
+              if receiver_temperature is not None and receiver_temperature >= 0.00 :
+                 t_rcv = receiver_temperature
+                 aot = a_eff / ( t_ant + t_rcv )
+                 sefd        = (2*1380.00)/aot
            
-           ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg )
+              ang_distance_deg = calc_anglular_distance_degrees( azim_deg_db, za_deg_db , az_deg, za_deg )
            
-           print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg] vs. limit = %.4f [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg,min_angular_distance_deg))
-                        
-           if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
-               best_lst  = lst_db 
-               best_aot  = aot 
-               best_sefd = sefd
-               best_id   = id
-               min_angular_distance_deg = ang_distance_deg
-           else :
-               print("\t\tDB Record (azim,za) = (%.4f,%.4f) [deg] ignored due to angular distance too large ( %.4f deg )" % (azim_deg_db,za_deg_db,ang_distance_deg))
+              print("TEST : %d , freq_mhz = %.4f [MHz] , (azim_deg_db,za_deg_db) = (%.4f,%.4f) [deg] in %.8f [deg] distance from requested (azim_deg,za_deg) = (%.4f,%.4f) [deg] vs. limit = %.4f [deg]" % (id,freq_mhz,azim_deg_db,za_deg_db,ang_distance_deg,az_deg,za_deg,min_angular_distance_deg))
+                           
+              if ang_distance_deg <= (min_angular_distance_deg+0.01) :        
+                  best_lst  = lst_db 
+                  best_aot  = aot 
+                  best_sefd = sefd
+                  best_id   = id
+                  min_angular_distance_deg = ang_distance_deg
+              else :
+                  print("\t\tDB Record (azim,za) = (%.4f,%.4f) [deg] ignored due to angular distance too large ( %.4f deg )" % (azim_deg_db,za_deg_db,ang_distance_deg))
  
-       if best_id > 0 :
-          out_lst.append( best_lst )
-          out_aot.append( best_aot )
-          out_sefd.append( best_sefd ) 
-          print("Use best matching record ID = %d (lst = %.4f [h], aot = %.4f , sefd = %.4f (minimum angular distance = %.4f [deg] , lst difference = %.4f [h])" % (best_id,best_lst,best_aot,best_sefd,min_angular_distance_deg,(best_lst-lst)))
+          if best_id > 0 :
+             out_lst.append( best_lst )
+             out_aot.append( best_aot )
+             out_sefd.append( best_sefd ) 
+             print("Use best matching record ID = %d (lst = %.4f [h], aot = %.4f , sefd = %.4f (minimum angular distance = %.4f [deg] , lst difference = %.4f [h])" % (best_id,best_lst,best_aot,best_sefd,min_angular_distance_deg,(best_lst-lst)))
+          else :
+             print("ERROR : no record found for lst = %.4f [h] and (ra,dec) = (%.4f,%.4f) [deg] -> (az,za) = (%.4f,%.4f) [deg]" % (lst_db,ra_deg, dec_deg, az_deg, za_deg)) 
        else :
-          print("ERROR : no record found for lst = %.4f [h] and (ra,dec) = (%.4f,%.4f) [deg] -> (az,za) = (%.4f,%.4f) [deg]" % (lst_db,ra_deg, dec_deg, az_deg, za_deg))
- 
+          print("DEBUG : alt_deg = %.4f [deg] is below horizon -> ignored")
+          
     return (out_lst, out_aot, out_sefd)
 
 
@@ -1023,10 +1075,13 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
              numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
              numpy.array(out_lst_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i) )
 
+# INFORMATION :
+# time_step can also be used as integration time (exposure time of individual snapshot observations - for example 120 seconds)
+# TODO : add image_i calculation here and add to the returned results (update all calls of this function)
 def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
-                             receiver_temperature=None ) :
+                             receiver_temperature=None, bandwidth_hz=30720000, n_stations=512 ) :
 
     global debug_level
                                  
@@ -1045,10 +1100,82 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
     # calculate SEFD_I - if possible (same sizes of arrays):
     ( out_lst_i , out_sefd_i , out_aot_i ) = calc_sefd_i( out_sefd_x, out_lst_x, out_sefd_y, out_lst_y )
 
+    # time_step is used as integration_time 
+    noise_x = []
+    noise_y = []
+    noise_i = []
+
+    noise_x_total = 0
+    noise_y_total = 0
+    noise_i_total = 0
+    
+    if len(out_lst_x) > 0 :
+       # TODO : this is currently wrong - it needs to be in steps on time_step !!!!
+       #        I can do it by doing simple interpolation !
+       # def imaging_sensitivity( sefd_station, bandwidth_hz=30720000, inttime_sec=120, antnum=512, efficiency=1.00 ) :
+       lst_step_h = time_step / 3600.00 # step in hours :
+       lst = lst_start + lst_step_h/2.00
+       if lst_end < lst_start :
+          lst_end += 24
+
+       kind='linear' # or 'cubic'
+       print("DEBUG : creating interpolation function for %d elements (kind = %s) to be used in LST RANGE %.8f - %.8f [h] with LST_step = %.8f [h]" % (len(out_lst_x),kind,lst_start,lst_end,lst_step_h))       
+       print("Based on these LST and SEFD_X values:")
+       for i in range(0,len(out_lst_x)) :
+          print("\t\t%.8f %.8f" % (out_lst_x[i],out_sefd_x[i]))
+
+       sefd_x_interpol = None 
+       sefd_y_interpol = None
+       sefd_i_interpol = None
+       if len(out_sefd_x) >= 2 :
+          sefd_x_interpol = interp1d( out_lst_x, out_sefd_x, kind=kind, bounds_error=False, fill_value=(out_sefd_x[0],out_sefd_x[len(out_sefd_x)-1]) )   
+          sefd_y_interpol = interp1d( out_lst_y, out_sefd_y, kind=kind, bounds_error=False, fill_value=(out_sefd_y[0],out_sefd_y[len(out_sefd_y)-1]) )   
+          sefd_i_interpol = interp1d( out_lst_i, out_sefd_i, kind=kind, bounds_error=False, fill_value=(out_sefd_i[0],out_sefd_i[len(out_sefd_i)-1]) )   
+   
+       # add noise in each snapshot in quadrature :
+       while lst < lst_end : # or < (lst_end-(1.00/3600.00)) :
+           print("DEBUG : lst = %.8f [h]" % (lst))
+           sefd_x = out_sefd_x[0]
+           if len(out_lst_x) >= 2 :
+              sefd_x = sefd_x_interpol( lst )
+           image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_x, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
+           noise_x.append( image_noise )
+           noise_x_total += (image_noise*image_noise)
+           print("DEBUG : sefd_x = %.8f [Jy] -> image_noise = %.8f [Jy] -> noise_x_total = %.16f [Jy]" % (sefd_x,image_noise,noise_x_total))
+        
+           sefd_y = out_sefd_y[0]
+           if len(out_lst_y) >= 2 :
+              sefd_y = sefd_y_interpol( lst )
+           image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_y, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
+           noise_y.append( image_noise )
+           noise_y_total += (image_noise*image_noise)
+   
+           sefd_i = out_sefd_i[0] 
+           if len(out_lst_i) >= 2 :     
+              sefd_i = sefd_i_interpol( lst )
+           image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_i, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
+           noise_i.append( image_noise )
+           noise_i_total += (image_noise*image_noise)                        
+                   
+           lst += lst_step_h
+    
+#       print("DEBUG : %.8f / %.8f / %.8f vs. %d / %d / %d" % (noise_x_total,noise_y_total,noise_i_total,len(noise_x),len(noise_y),len(noise_i)))
+       noise_x_total = math.sqrt( noise_x_total ) / len(noise_x) 
+       noise_y_total = math.sqrt( noise_y_total ) / len(noise_y) 
+       noise_i_total = math.sqrt( noise_i_total ) / len(noise_i) 
+   
+       if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
+          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] images is : noise_x = %.16f [mJy], noise_y = %.16f [mJy] , noise_i = %.16f [mJy]" % (len(noise_x),time_step,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00))
+       else :
+          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] images is : noise_x = %.6f [Jy], noise_y = %.6f [Jy] , noise_i = %.6f [Jy]" % (len(noise_x),time_step,noise_x_total,noise_y_total,noise_i_total))
+
+    else :
+       print("WARNING : no data found")       
 
     return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
-             numpy.array(out_lst_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i) )
+             numpy.array(out_lst_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i),
+             noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total )
 
 
 
@@ -1080,7 +1207,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
        if row[0] is not None :
           min_lst_distance = float( row[0] )
        else :
-          print("ERROR : not data close to frequency = %.2f MHz and lst = %.2f h in the database" % (freq_mhz,lst_hours))
+          print("ERROR : no data close to frequency = %.2f MHz and lst = %.2f h in the database" % (freq_mhz,lst_hours))
     
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST at frequency %.2f MHz" % (db_lst_resolution,freq_mhz))
@@ -2038,7 +2165,8 @@ def parse_options(idx):
    parser.add_option('--ut_end','--utc_end','--end_utc',dest="ut_end",default=None, help="End time in UTC [default %default]")
 
    # time step for ranges :   
-   parser.add_option('--timestep','--step_seconds','--step_sec',dest="step_seconds",default=300, help="Time step in seconds for both unix/utc-string time ranges [default %default]",metavar="float",type="float")
+   # also snapshot integration time :
+   parser.add_option('--timestep','--step_seconds','--step_sec','--inttime','--integration_time',dest="step_seconds",default=120, help="Time step in seconds for both unix/utc-string time ranges [default %default]",metavar="float",type="float")
 
    # output file :
    parser.add_option('-o','--out_file','--outfile','--outout_file',dest="output_file",default=None, help="Full path to output text file basename (X or Y is added at the end) [default %default]" )
@@ -2051,6 +2179,11 @@ def parse_options(idx):
    
    # debug / verbose level :
    parser.add_option('--debug_level','--verb_level','--verb','--debug',dest="debug_level",default=0, help="Debug / verbosity level [default %default]",type="int")
+   
+   # SKA-Low parameters and observing parameters :
+   parser.add_option('--n_stations','--n_ant','--stations',dest="n_stations",default=512, help="Number of stations [default %default]",type="int")
+   parser.add_option('-b','--bw_mhz','--bw','--bandwidth_mhz','--bandwidth',dest="bandwidth_mhz",default=3072000, help="Observing bandwidth in MHz [default %default]",metavar="float",type="float")
+#   parser.add_option('--inttime','--integration_time',dest='integration_time',dest='integration_time',default=120,help="Integration time [default %default]",metavar="float",type="float")
       
 
    (options, args) = parser.parse_args(sys.argv[idx:])
@@ -2310,8 +2443,8 @@ if __name__ == "__main__":
               
               if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
                  print("\tSENS_vs_LST RADEC : Plotting for pointing direction (ra,dec) = (%.4f,%.4f) [deg]" % (options.pointing_ra_deg,options.pointing_dec_deg))
-                 (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i ) = get_sensitivity_radec_lstrange( options.pointing_ra_deg, options.pointing_dec_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
-                                                                                 time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature )
+                 (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = get_sensitivity_radec_lstrange( options.pointing_ra_deg, options.pointing_dec_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
+                                                                                 time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature, n_stations=options.n_stations, bandwidth_hz=options.bandwidth_mhz*1000000.00 )
 
                  if options.do_plot :                 
                     out_fitsname_base = "sensitivity_lstrange%.2f-%.2f_ra%.4fdeg_dec%.4fdeg_freq%06.2fMHz_X" % (options.lst_start_hours, options.lst_end_hours,options.pointing_ra_deg,options.pointing_dec_deg,options.freq_mhz)          

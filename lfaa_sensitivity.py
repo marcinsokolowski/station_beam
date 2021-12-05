@@ -22,6 +22,19 @@ def parse_options(idx=0):
    return (options, args)
 
 
+# see equation 6 in Sensitivity DB paper (Sokolowski et al. (2021))
+# sens_jy = sefd_station / math.sqrt( bw_hz * inttime_sec * options.n_polarisations )
+def imaging_sensitivity( sefd_station, bandwidth_hz=30720000, inttime_sec=120, antnum=512, efficiency=1.00 ) :
+    image_noise = -1000
+    if antnum >= 2 :
+       image_noise = (efficiency * sefd_station) / math.sqrt(bandwidth_hz * inttime_sec * antnum * (antnum - 1))
+    else :
+       image_noise = (efficiency * sefd_station) / math.sqrt(bandwidth_hz * inttime_sec )
+       
+    
+    return image_noise
+
+
 def frb_rate( fluence_min, min_elev_deg=20, scaling_index=-2.1, verb=False ):
    # Shannon et al. 2018 
    # 37 +/- 8 /day/sky 
