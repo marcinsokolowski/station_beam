@@ -1,0 +1,31 @@
+<html>
+
+<head>
+
+        <link rel="stylesheet" media="all" type="text/css" href="{{ STATIC_URL }}css/jquery-ui-1.8.6.custom.css" />
+        <style type="text/css">
+            /* css for timepicker */
+            .ui-timepicker-div .ui-widget-header{ margin-bottom: 8px; }
+            .ui-timepicker-div dl{ text-align: left; }
+            .ui-timepicker-div dl dt{ height: 26px; }
+            .ui-timepicker-div dl dd{ margin: -25px 10px 10px 65px; }
+            .ui-timepicker-div td { font-size: 50%; }
+        </style>
+        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.4.4.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.6.custom.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-timepicker-addon.js"></script>
+        <script type="text/javascript">
+            $(function() {
+                $( "#id_startTime" ).timepicker();
+                $( "#id_endTime" ).timepicker();
+            });
+         </script>
+</head>
+
+
+<h1>Test sensitivity_vs_lst_show</h1>
+
+<img src={{image}} alt="Sensitivity_vs_lst"/>
+
+</body>
+</html>

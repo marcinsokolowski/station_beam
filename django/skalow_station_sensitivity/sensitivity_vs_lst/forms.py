@@ -9,6 +9,8 @@ class ParametersForm(forms.Form):
     frequency_mhz = forms.FloatField( label='Frequency [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
     azimuth_deg   = forms.FloatField( label='Azimuth [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
     elevation_deg = forms.FloatField( label='Elevation [deg]' , min_value=0.0 , max_value=90.0, initial=90.00 ) # ,max_digits=5,decimal_places=1)
+#    lst_start_h = forms.FloatField( label='Start LST [hours]' , min_value=0.0 , max_value=24.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+#    lst_end_h = forms.FloatField( label='End LST [hours]' , min_value=0.0 , max_value=24.0, initial=24.00 ) # ,max_digits=5,decimal_places=1)
 
     STATION_CHOICES = [
        ('EDA2', 'EDA2'),

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+   <meta charset="utf-8">
+   <title>Sensitivity vs LST</title>
+</head>
+
+
+<h1>Test sensitivity_vs_lst_show</h1>
+
+<img src={{image.url}} style="position:absolute;top:3000;left:2000;height:50%;width:50%" alt="no_image.png"  title="Sensitivity vs. LST"/>
+
+</body>
+</html>

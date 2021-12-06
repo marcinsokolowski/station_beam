@@ -43,7 +43,7 @@ def mkdir_p(path):
 
 
 # Create your views here.
-def sensitivity_radec_vs_lst_show(request):
+def sensitivity_radec_astro_show(request):
    zipfile = False
    post = Post.objects.all()
 
@@ -59,10 +59,12 @@ def sensitivity_radec_vs_lst_show(request):
    frequency_mhz = float( params['frequency_mhz'] )
    ra_deg   = float( params['ra_deg'] )
    dec_deg = float( params['dec_deg'] )
-   mode          = int( params['mode'] )
+   ha_start_h = float( params['ha_start_h'] )
+   ha_end_h = float( params['ha_end_h'] )
+   bw_mhz = float( params['bw_mhz'] )
+   n_stations = int( params['n_stations'] )
    inttime = float( params['inttime'] )
-   lst_start_h = float( params['lst_start_h'] )
-   lst_end_h = float( params['lst_end_h'] )
+   mode          = int( params['mode'] )
    return_zip_file = False
    if mode >= 2 :
        zipfile = True
@@ -72,9 +74,21 @@ def sensitivity_radec_vs_lst_show(request):
    print("DEBUG : station = %s" % (station))
    db_path = ( "%s/" % (config.sensitivity_db_path) )
    
-   print("Parameters = %s -> %.4f MHz, (ra,dec) = (%.4f,%.4f) [deg] , station = %s, db_path = %s , mode = %d ( return_zip_file = %s), LST range = %.4f - %.4f [h]" % (params,frequency_mhz,ra_deg,dec_deg,station,db_path,mode,return_zip_file,lst_start_h,lst_end_h))
+   print("Parameters = %s -> %.4f MHz, (ra,dec) = (%.4f,%.4f) [deg] , HA range = %.4f - %.4f [h], BW = %.4f [MHz], Inttime = %.2f [s], N_stations = %d, station = %s, db_path = %s , mode = %d ( return_zip_file = %s)" %  (params,frequency_mhz,ra_deg,dec_deg,ha_start_h,ha_end_h,bw_mhz,inttime,n_stations,station,db_path,mode,return_zip_file))
    
-   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start_h, lst_end=lst_end_h, time_step=inttime, station=station , db_path=db_path )
+   lst_start = ha_start_h + ra_deg/15.00
+   lst_end = ha_end_h + ra_deg/15.00
+   
+   if lst_start <= lst_end :
+      print("DEBUG : OK lst_start = %.8f [h] < lst_end = %.8f [h]" % (lst_start,lst_end))
+   else :
+      # lst_end < lst_start -> adding 24 hours to lst_end, but it has to be dealt later inside this function below :
+      lst_end += 24 
+      
+   print("DEBUG : sensitivity_radec_astro_show LST range = %.8f - %.8f [hours]" % (lst_start,lst_end))
+   
+   # TODO : add a single number inside this functions !!!   
+   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start, lst_end=lst_end, time_step=inttime, station=station , db_path=db_path, bandwidth_hz=bw_mhz*1e6, n_stations=n_stations )
 
    
    # 

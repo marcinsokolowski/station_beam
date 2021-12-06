@@ -560,8 +560,18 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
     
        cur = conn.cursor()       
        # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst>=%.4f AND lst<=%.4f AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' ORDER BY za_deg,azim_deg,lst" %  \
-                 ( (lst_hours-db_lst_resolution),(lst_hours+db_lst_resolution),\
+       
+       # check if LST_end < LST_start :
+       lst_start = (lst_hours-db_lst_resolution)
+       lst_end = (lst_hours+db_lst_resolution)
+       if lst_end > 24.00 :
+          lst_end = lst_end - 24.00
+       szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
+       if lst_end < lst_start :
+          szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
+       
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,a_eff,t_sys,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE %s AND frequency_mhz>=%.4f AND frequency_mhz<=%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' ORDER BY za_deg,azim_deg,lst" %  \
+                 ( szLST_Condition,\
                    (freq_mhz-(db_freq_resolution_mhz+0.01)), (freq_mhz+(db_freq_resolution_mhz+0.01)),\
                    za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol\
                   )
@@ -739,10 +749,16 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
        print("ERROR : could not connect to database %s" % (dbname_file))
        return (None,None,None,None,None,None)              
 
+    if lst_end > 24.00 :
+       lst_end = lst_end - 24.00
+    szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
+    if lst_end < lst_start :
+       szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
+
     # select closest FREQUENCT :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
+    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND %s" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, szLST_Condition )
     print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -775,7 +791,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
     # get requested data :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND %s" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, szLST_Condition )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -809,7 +825,7 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
     
     cur = conn.cursor()       
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND lst>%.2f AND lst<%.2f ORDER BY LST ASC" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst_start, lst_end )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND %s ORDER BY LST ASC" %  (freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, szLST_Condition )
     if debug_level >= 2 :
        print("DEBUG SQL get_sensitivity_timerange_single_pol : %s" % (szSQL))
     cur.execute( szSQL )
@@ -866,6 +882,13 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
                              receiver_temperature=None ) :
 
     print("DEBUG : get_sensitivity_lstrange_single_pol")
+    
+    if lst_end > 24.00 :
+       lst_end = lst_end - 24.00
+    szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
+    if lst_end < lst_start :
+       szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
+
 
     out_lst = []
     out_aot    = []
@@ -882,7 +905,7 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
     # select closest FREQUENCY :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND polarisation='%s' AND lst>%.2f AND lst<%.2f" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), pol, lst_start, lst_end )
+    szSQL = "SELECT MIN(ABS(frequency_mhz-%.4f)) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<%.4f AND polarisation='%s' AND %s" %  (freq_mhz,freq_mhz,(db_freq_resolution_mhz+0.01), pol, szLST_Condition )
     print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -915,7 +938,7 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
   
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
     different_lsts = []
-    szSQL = "SELECT DISTINCT(lst) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND polarisation='%s' AND lst>=%.2f AND lst<=%.2f" %  (freq_mhz,(min_freq_distance+0.01), pol, lst_start, lst_end )
+    szSQL = "SELECT DISTINCT(lst) FROM Sensitivity WHERE ABS(frequency_mhz-%.4f)<=%.4f AND polarisation='%s' AND %s" %  (freq_mhz,(min_freq_distance+0.01), pol, szLST_Condition )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -1120,7 +1143,7 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
 
        kind='linear' # or 'cubic'
        print("DEBUG : creating interpolation function for %d elements (kind = %s) to be used in LST RANGE %.8f - %.8f [h] with LST_step = %.8f [h]" % (len(out_lst_x),kind,lst_start,lst_end,lst_step_h))       
-       print("Based on these LST and SEFD_X values:")
+       print("DEBUG : Based on these LST and SEFD_X values:")
        for i in range(0,len(out_lst_x)) :
           print("\t\t%.8f %.8f" % (out_lst_x[i],out_sefd_x[i]))
 
@@ -1132,32 +1155,49 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
           sefd_y_interpol = interp1d( out_lst_y, out_sefd_y, kind=kind, bounds_error=False, fill_value=(out_sefd_y[0],out_sefd_y[len(out_sefd_y)-1]) )   
           sefd_i_interpol = interp1d( out_lst_i, out_sefd_i, kind=kind, bounds_error=False, fill_value=(out_sefd_i[0],out_sefd_i[len(out_sefd_i)-1]) )   
    
+   
+       print("DEBUG : calculating image sensitivity for BW = %.2f MHz, inttime = %.2f [dec], antnum=%d stations and LST range = %.8f - %.8f [h] in steps of %.8f [h]" % (bandwidth_hz/1e6,time_step,n_stations,lst_start,lst_end,lst_step_h))
        # add noise in each snapshot in quadrature :
+       total_integration_time = 0.00
+       n_integrations = 0
        while lst < lst_end : # or < (lst_end-(1.00/3600.00)) :
            print("DEBUG : lst = %.8f [h]" % (lst))
            sefd_x = out_sefd_x[0]
            if len(out_lst_x) >= 2 :
               sefd_x = sefd_x_interpol( lst )
            image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_x, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
-           noise_x.append( image_noise )
-           noise_x_total += (image_noise*image_noise)
-           print("DEBUG : sefd_x = %.8f [Jy] -> image_noise = %.8f [Jy] -> noise_x_total = %.16f [Jy]" % (sefd_x,image_noise,noise_x_total))
+           
+           print("DEBUG : step2 ?") # buffer flusher !
+           
+           if sefd_x < 1e10 :
+              noise_x.append( image_noise )
+              noise_x_total += (image_noise*image_noise)
+              print("DEBUG : sefd_x = %.8f [Jy] -> image_noise = %.8f [Jy] -> noise_x_total = %.16f [Jy]" % (sefd_x,image_noise,noise_x_total))
         
-           sefd_y = out_sefd_y[0]
-           if len(out_lst_y) >= 2 :
-              sefd_y = sefd_y_interpol( lst )
-           image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_y, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
-           noise_y.append( image_noise )
-           noise_y_total += (image_noise*image_noise)
+              sefd_y = out_sefd_y[0]
+              if len(out_lst_y) >= 2 :
+                 sefd_y = sefd_y_interpol( lst )
+              image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_y, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
+              noise_y.append( image_noise )
+              noise_y_total += (image_noise*image_noise)
    
-           sefd_i = out_sefd_i[0] 
-           if len(out_lst_i) >= 2 :     
-              sefd_i = sefd_i_interpol( lst )
-           image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_i, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
-           noise_i.append( image_noise )
-           noise_i_total += (image_noise*image_noise)                        
+              sefd_i = out_sefd_i[0] 
+              if len(out_lst_i) >= 2 :     
+                 sefd_i = sefd_i_interpol( lst )
+              image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_i, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
+              noise_i.append( image_noise )
+              noise_i_total += (image_noise*image_noise)                        
+              
+              print("DEBUG : included integration %d at lst = %.4f" % (n_integrations,lst))
+              n_integrations += 1
+              
+           else :
+              print("DEBUG : sefd_x = %e , sefd_y = %e , sefd_i = %e which is most likely below horizon -> ignored" % (sefd_x,sefd_y,sefd_i))
                    
            lst += lst_step_h
+           total_integration_time += lst_step_h
+
+       print("DEBUG : loop over LST range finished at LST = %.4f [h]" % lst)
     
 #       print("DEBUG : %.8f / %.8f / %.8f vs. %d / %d / %d" % (noise_x_total,noise_y_total,noise_i_total,len(noise_x),len(noise_y),len(noise_i)))
        noise_x_total = math.sqrt( noise_x_total ) / len(noise_x) 
@@ -1165,9 +1205,9 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
        noise_i_total = math.sqrt( noise_i_total ) / len(noise_i) 
    
        if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
-          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] images is : noise_x = %.16f [mJy], noise_y = %.16f [mJy] , noise_i = %.16f [mJy]" % (len(noise_x),time_step,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00))
+          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.16f [mJy], noise_y = %.16f [mJy] , noise_i = %.16f [mJy]" % (len(noise_x),time_step,total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00))
        else :
-          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] images is : noise_x = %.6f [Jy], noise_y = %.6f [Jy] , noise_i = %.6f [Jy]" % (len(noise_x),time_step,noise_x_total,noise_y_total,noise_i_total))
+          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.6f [Jy], noise_y = %.6f [Jy] , noise_i = %.6f [Jy]" % (len(noise_x),time_step,total_integration_time,noise_x_total,noise_y_total,noise_i_total))
 
     else :
        print("WARNING : no data found")       
@@ -1363,12 +1403,17 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
        print("ERROR : could not connect to database %s" % (dbname_file))
        return (None,None,None,None,None,None)
 
+    if lst_end > 24.00 :
+       lst_end = lst_end - 24.00
+    szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
+    if lst_end < lst_start :
+       szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
 
 
     # get requested data :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE lst between %.4f and %.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND ABS(frequency_mhz-%.4f)<=%.4f ORDER BY lst ASC" %  (lst_start_h,lst_end_h,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, freq_mhz, freq_resolution_mhz )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE %s AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND ABS(frequency_mhz-%.4f)<=%.4f ORDER BY lst ASC" %  (szLST_Condition,za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, freq_mhz, freq_resolution_mhz )
     cur.execute( szSQL )
     rows = cur.fetchall()
  

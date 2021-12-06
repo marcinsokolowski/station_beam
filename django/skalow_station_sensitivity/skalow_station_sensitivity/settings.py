@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'sensitivity_vs_freq_show',
     'sensitivity_radec_vs_freq',
     'sensitivity_radec_vs_freq_show',
+    'sensitivity_radec_astro',
+    'sensitivity_radec_astro_show',
     'sensitivity_map',
     'sensitivity_map_show'
 ]
