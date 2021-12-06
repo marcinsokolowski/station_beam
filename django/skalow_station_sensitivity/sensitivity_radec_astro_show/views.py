@@ -88,17 +88,23 @@ def sensitivity_radec_astro_show(request):
    print("DEBUG : sensitivity_radec_astro_show LST range = %.8f - %.8f [hours]" % (lst_start,lst_end))
    
    # TODO : add a single number inside this functions !!!   
-   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start, lst_end=lst_end, time_step=inttime, station=station , db_path=db_path, bandwidth_hz=bw_mhz*1e6, n_stations=n_stations )
+   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total,total_integration_time ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start, lst_end=lst_end, time_step=inttime, station=station , db_path=db_path, bandwidth_hz=bw_mhz*1e6, n_stations=n_stations )
 
    
    # 
    save_output_path = config.save_output_path
    mkdir_p( save_output_path )
 
+   noise_info = None
+   if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
+      noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.6f [mJy] , %.6f [mJy] , %.6f [mJy]" % (total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00)
+   else :
+      noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.3f [Jy] , %.3f [Jy] , %.3f [Jy]" % (total_integration_time,noise_x_total,noise_y_total,noise_i_total)
+
    # create plots :   
    print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
    output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station )
+   (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
    
    # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
    out_file_name = save_output_path + "/" + output_file_base

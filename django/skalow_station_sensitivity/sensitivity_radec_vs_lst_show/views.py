@@ -74,7 +74,7 @@ def sensitivity_radec_vs_lst_show(request):
    
    print("Parameters = %s -> %.4f MHz, (ra,dec) = (%.4f,%.4f) [deg] , station = %s, db_path = %s , mode = %d ( return_zip_file = %s), LST range = %.4f - %.4f [h]" % (params,frequency_mhz,ra_deg,dec_deg,station,db_path,mode,return_zip_file,lst_start_h,lst_end_h))
    
-   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start_h, lst_end=lst_end_h, time_step=inttime, station=station , db_path=db_path )
+   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total, total_integration_time ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start_h, lst_end=lst_end_h, time_step=inttime, station=station , db_path=db_path )
 
    
    # 

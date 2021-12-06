@@ -1215,7 +1215,7 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
     return ( numpy.array(out_lst_x), numpy.array(out_aot_x) , numpy.array(out_sefd_x),
              numpy.array(out_lst_y), numpy.array(out_aot_y) , numpy.array(out_sefd_y),
              numpy.array(out_lst_i), numpy.array(out_aot_i) , numpy.array(out_sefd_i),
-             noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total )
+             noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total, total_integration_time )
 
 
 
@@ -1675,7 +1675,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
                               do_show = True, save_output_path="./",
                               lst_i=None, aot_i=None, point_i='b+',
                               fig_size_x=20, fig_size_y=10, info=None,
-                              ra_deg=None, dec_deg=None, station_name=None ) :
+                              ra_deg=None, dec_deg=None, station_name=None, noise_info=None ) :
 
    global web_interface_initialised
    global plot_requirements
@@ -1694,6 +1694,10 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
          
       if station_name is not None :
          info += (" for %s" % station_name )
+   
+   if noise_info is not None :
+      info += "\n"
+      info += noise_info
    
    if lst_x is not None :
       min_lst = min(lst_x)
@@ -1811,7 +1815,9 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    
    if info is not None :
       # place a text box in upper left in axes coords
-      text( min_lst*0.75, max_ylimit*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.98),info))
+      # was min_lst*0.75 
+      text( min_lst*0.98, max_ylimit*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
@@ -2488,7 +2494,7 @@ if __name__ == "__main__":
               
               if options.pointing_ra_deg is not None and options.pointing_dec_deg is not None :
                  print("\tSENS_vs_LST RADEC : Plotting for pointing direction (ra,dec) = (%.4f,%.4f) [deg]" % (options.pointing_ra_deg,options.pointing_dec_deg))
-                 (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total ) = get_sensitivity_radec_lstrange( options.pointing_ra_deg, options.pointing_dec_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
+                 (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total, total_integration_time ) = get_sensitivity_radec_lstrange( options.pointing_ra_deg, options.pointing_dec_deg, options.freq_mhz, options.lst_start_hours, options.lst_end_hours, 
                                                                                  time_step=options.step_seconds, station=options.station_name, receiver_temperature=options.receiver_temperature, n_stations=options.n_stations, bandwidth_hz=options.bandwidth_mhz*1000000.00 )
 
                  if options.do_plot :                 
