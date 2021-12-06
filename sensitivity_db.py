@@ -1815,9 +1815,9 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    
    if info is not None :
       # place a text box in upper left in axes coords
-      print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.98),info))
+      print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.97),info))
       # was min_lst*0.75 
-      text( min_lst*0.98, max_ylimit*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( min_lst*0.97, max_ylimit*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
