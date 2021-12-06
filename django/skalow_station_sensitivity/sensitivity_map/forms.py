@@ -13,4 +13,4 @@ class ParametersForm(forms.Form):
     station_name = forms.CharField( label='Station' , widget=forms.Select(choices=STATION_CHOICES) , initial='eda2' )   
     
     CHOICES = [('1', 'Show image'), ('2', 'Save zip file (data and image)')]    
-    mode = forms.ChoiceField( widget=forms.RadioSelect , choices=CHOICES , label='mode' , initial='1' )
+    mode = forms.ChoiceField( widget=forms.RadioSelect , choices=CHOICES , label='Output format' , initial='1' )
