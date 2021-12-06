@@ -80,54 +80,57 @@ def sensitivity_radec_vs_freq_show(request):
    za_deg   = 0.00
    ( freq_x,aot_x,sefd_x, freq_y, aot_y, sefd_y, freq_i, aot_i, sefd_i ) = sensitivity_db.get_sensitivity_azzalst( azim_deg, za_deg, lst_hours, station=station, db_path=db_path, ra_deg=ra_deg, dec_deg=dec_deg )
 
-   # 
-   save_output_path = config.save_output_path
-   mkdir_p( save_output_path )
+   args = None
+   if freq_x is not None and aot_x is not None and sefd_x is not None and freq_y is not None and aot_y is not None and sefd_y is not None and freq_i is not None and aot_i is not None and sefd_i is not None :
+      save_output_path = config.save_output_path
+      mkdir_p( save_output_path )
 
-   # create plots :   
-   print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s) - test" % (save_output_path))
-   output_file_base = "%s_sensitivity_ra%.2fdeg_dec_%.2fdeg_%.2fhours" % (station,ra_deg,dec_deg,lst_hours)
+      # create plots :   
+      print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_freq (saving to %s) - test" % (save_output_path))
+      output_file_base = "%s_sensitivity_ra%.2fdeg_dec_%.2fdeg_%.2fhours" % (station,ra_deg,dec_deg,lst_hours)
    
-   info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg]" % ( lst_hours, ra_deg, dec_deg )
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base, freq_i=freq_i, aot_i=aot_i, info=info, save_output_path=save_output_path )
+      info = "LST = %.1f h , (ra,dec) = (%.2f,%.2f) [deg]" % ( lst_hours, ra_deg, dec_deg )
+      (png_image_path,buf) = sensitivity_db.plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=output_file_base, freq_i=freq_i, aot_i=aot_i, info=info, save_output_path=save_output_path )
    
    
-   out_file_name = save_output_path + "/" + output_file_base
-   (text_file) = sensitivity_db.save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_file_name )   
+      out_file_name = save_output_path + "/" + output_file_base
+      (text_file) = sensitivity_db.save_sens_vs_freq_file( freq_x, aot_x, sefd_x, freq_y, aot_y, sefd_y, out_file_name )   
 
 
 #   return render(request,"sensitivity_vs_freq_show/index.html" )
    
-   buf.seek(0)
-   string = base64.b64encode(buf.read())
-   uri = 'data:image/png;base64,' + urllib.parse.quote(string)
+      buf.seek(0)
+      string = base64.b64encode(buf.read())
+      uri = 'data:image/png;base64,' + urllib.parse.quote(string)
 
-   response = None
-   zip_file_name = None
-   if zipfile :
-      zip_file_name = save_output_path + "/" + output_file_base + ".zip"
-      in_memory = StringIO()
-      zip = ZipFile( zip_file_name , "w" )
-      print("DEBUG : created zip archive %s" % (zip_file_name))
-      print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
+      response = None
+      zip_file_name = None
+      if zipfile :
+         zip_file_name = save_output_path + "/" + output_file_base + ".zip"
+         in_memory = StringIO()
+         zip = ZipFile( zip_file_name , "w" )
+         print("DEBUG : created zip archive %s" % (zip_file_name))
+         print("DEBUG : adding file %s to the zip archive as %s" % (text_file , os.path.basename(text_file) ))
       
-      zip.write( text_file , os.path.basename(text_file) )
-      zip.write( png_image_path , os.path.basename(png_image_path)  )
+         zip.write( text_file , os.path.basename(text_file) )
+         zip.write( png_image_path , os.path.basename(png_image_path)  )
 
-      # fix for Linux zip files read in Windows
-      for file in zip.filelist:
-         file.create_system = 0
+         # fix for Linux zip files read in Windows
+         for file in zip.filelist:
+            file.create_system = 0
 
-      zip.close()
+         zip.close()
       
-      if return_zip_file : # working - if needed :
-         response = FileResponse(open( zip_file_name , 'rb'))
+         if return_zip_file : # working - if needed :
+            response = FileResponse(open( zip_file_name , 'rb'))
 
-         return response
+            return response
 
-   lst_hours_str = "%.2f" % (lst_hours)
-   args = { 'image':uri , 'zipfile':zip_file_name, 'lst':lst_hours_str }
-   print("DEBUG : mode = %d" % (mode))
+      lst_hours_str = "%.2f" % (lst_hours)
+      args = { 'image':uri , 'zipfile':zip_file_name, 'lst':lst_hours_str }
+      print("DEBUG : mode = %d" % (mode))
+   else :
+      print("WARNING : no data found for specified parameters")
          
    return render(request,"sensitivity_radec_vs_freq_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )

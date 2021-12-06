@@ -327,7 +327,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     
     if conn is None :
        print("ERROR : could not connect to database %s" % (dbname_file))
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None)
 
   
     # select closest LST :
@@ -346,14 +346,14 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST at (az,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg))
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None)
 
     print("Best LST in database is closer than %.8f [hours]" % (min_lst_distance))
     min_lst_distance = min_lst_distance + 0.01
     
     if min_lst_distance is None :
        print("ERROR no records in the database exist closer than %.4f hours in LST in the direction of (azim,za) = (%.4f,%.4f) [deg]" % (db_lst_resolution,az_deg,za_deg))
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None)
  
     # get requested data :
     cur = conn.cursor()
@@ -381,7 +381,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
 
     if min_angular_distance_deg > 1000 :
        print("ERROR : no record in DB close enough to the requested pointing direction (azim,za) = (%.4f,%.4f) [deg]" % (az_deg,za_deg))
-       return (None,None,None,None,None,None)
+       return (None,None,None,None,None,None,None,None,None)
        
        
     print("Closest pointing direction in DB is at (azim,za) = (%.4f,%.4f) [deg] in angular distance = %.4f [deg]" % (closest_gridpoint_az_deg,closest_gridpoint_za_deg,min_angular_distance_deg))
