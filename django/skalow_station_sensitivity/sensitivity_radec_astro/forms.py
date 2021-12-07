@@ -6,7 +6,7 @@ class NameForm(forms.Form):
     
     
 class ParametersForm(forms.Form):
-    frequency_mhz = forms.FloatField( label='Frequency [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
+    frequency_mhz = forms.FloatField( label='Center frequency [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
     ra_deg   = forms.FloatField( label='RA [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
     dec_deg = forms.FloatField( label='DEC [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
     ha_start_h = forms.FloatField( label='Hour Angle Start [hours]'   , min_value=-12 , max_value=0.0, initial=-2.00 ) 

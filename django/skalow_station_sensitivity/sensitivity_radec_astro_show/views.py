@@ -176,8 +176,24 @@ def sensitivity_radec_astro_show(request):
 #   print("DEBUG string = %s -> %s" % (string,uri))
 #    args = {'form':form, 'text':text, 'image':uri}
    # if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :
-   args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x':(noise_x_total*1000.00), 'noise_y':(noise_y_total*1000.00), 'noise_i':(noise_i_total*1000.00) }
+   
+   noise_x_str = ""
+   noise_y_str = ""
+   noise_i_str = ""
+   if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :
+      noise_x_str = "%.6f [mJy]" % (noise_x_total*1000.00)
+      noise_y_str = "%.6f [mJy]" % (noise_y_total*1000.00)
+      noise_i_str = "%.6f [mJy]" % (noise_i_total*1000.00)
+   else :
+      noise_x_str = "%.6f [Jy]" % (noise_x_total)
+      noise_y_str = "%.6f [Jy]" % (noise_y_total)
+      noise_i_str = "%.6f [Jy]" % (noise_i_total)
+   
+   args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x_str':noise_x_str, 'noise_y_str':noise_y_str, 'noise_i_str':noise_i_str, 'warning':None }
    print("DEBUG : mode = %d" % (mode))
+   
+   if bw_mhz > 20 :
+      args['warning'] = ('WARNING : bandwidth = %.2f MHz but sensitivity from the center of the band used' % (bw_mhz))   
 
    return render(request,"sensitivity_radec_astro_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )

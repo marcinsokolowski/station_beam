@@ -16,8 +16,10 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMP = os.path.join(BASE_DIR,'templates')
 STAT = os.path.join(BASE_DIR,'static')
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+MEDIA_URL  = '/media/'
 
-print("BASE_DIR = %s , TEMP = %s , STAT = %s" % (BASE_DIR,TEMP,STAT))
+print("BASE_DIR = %s , TEMP = %s , STAT = %s , MEDIA_ROOT = %s" % (BASE_DIR,TEMP,STAT,MEDIA_ROOT))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
