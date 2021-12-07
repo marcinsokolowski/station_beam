@@ -79,6 +79,12 @@ def sensitivity_radec_astro_show(request):
    lst_start = ha_start_h + ra_deg/15.00
    lst_end = ha_end_h + ra_deg/15.00
    
+   if lst_start < 0 :
+      lst_start = 24.00 + lst_start 
+   
+   if lst_end < 0 :
+      lst_end = 24.00 + lst_end
+   
    if lst_start <= lst_end :
       print("DEBUG : OK lst_start = %.8f [h] < lst_end = %.8f [h]" % (lst_start,lst_end))
    else :

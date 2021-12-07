@@ -564,8 +564,18 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        # check if LST_end < LST_start :
        lst_start = (lst_hours-db_lst_resolution)
        lst_end = (lst_hours+db_lst_resolution)
+       
+       if lst_start < 0 :
+          lst_start = 24.00 + lst_start 
+
+       if lst_end < 0 :
+          lst_end = 24.00 + lst_end
+       
        if lst_end > 24.00 :
           lst_end = lst_end - 24.00
+          
+       print("DEBUG : final LST range is %.8f - %.8f [hours]" % (lst_start,lst_end))   
+          
        szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
        if lst_end < lst_start :
           szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
@@ -749,8 +759,17 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
        print("ERROR : could not connect to database %s" % (dbname_file))
        return (None,None,None,None,None,None)              
 
+    if lst_start < 0 :
+       lst_start = 24.00 + lst_start 
+   
+    if lst_end < 0 :
+       lst_end = 24.00 + lst_end
+
     if lst_end > 24.00 :
        lst_end = lst_end - 24.00
+       
+    print("DEBUG : final LST range is %.8f - %.8f [hours]" % (lst_start,lst_end))
+       
     szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
     if lst_end < lst_start :
        szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
@@ -882,9 +901,18 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
                              receiver_temperature=None ) :
 
     print("DEBUG : get_sensitivity_lstrange_single_pol")
+
+    if lst_start < 0 :
+       lst_start = 24.00 + lst_start 
+
+    if lst_end < 0 :
+       lst_end = 24.00 + lst_end
     
     if lst_end > 24.00 :
        lst_end = lst_end - 24.00
+       
+    print("DEBUG : final LST range is %.8f - %.8f [hours]" % (lst_start,lst_end))   
+       
     szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
     if lst_end < lst_start :
        szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
@@ -1137,9 +1165,17 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
        #        I can do it by doing simple interpolation !
        # def imaging_sensitivity( sefd_station, bandwidth_hz=30720000, inttime_sec=120, antnum=512, efficiency=1.00 ) :
        lst_step_h = time_step / 3600.00 # step in hours :
-       lst = lst_start + lst_step_h/2.00
+       
+       if lst_start < 0 :
+          lst_start = 24.00 + lst_start 
+   
+       if lst_end < 0 :
+          lst_end = 24.00 + lst_end
+       
        if lst_end < lst_start :
           lst_end += 24
+          
+       lst = lst_start + lst_step_h/2.00                    
 
        kind='linear' # or 'cubic'
        print("DEBUG : creating interpolation function for %d elements (kind = %s) to be used in LST RANGE %.8f - %.8f [h] with LST_step = %.8f [h]" % (len(out_lst_x),kind,lst_start,lst_end,lst_step_h))       
@@ -1167,7 +1203,7 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
               sefd_x = sefd_x_interpol( lst )
            image_noise = lfaa_sensitivity.imaging_sensitivity( sefd_x, bandwidth_hz=bandwidth_hz, inttime_sec=time_step, antnum=n_stations )
            
-           print("DEBUG : step2 ?") # buffer flusher !
+#           print("DEBUG : step2 ?") # buffer flusher !
            
            if sefd_x < 1e10 :
               noise_x.append( image_noise )
@@ -1188,16 +1224,16 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
               noise_i.append( image_noise )
               noise_i_total += (image_noise*image_noise)                        
               
-              print("DEBUG : included integration %d at lst = %.4f" % (n_integrations,lst))
+              print("DEBUG : included integration %d at lst = %.4f -> integration time = %.8f [hours]" % (n_integrations,lst,total_integration_time))
               n_integrations += 1
+              total_integration_time += lst_step_h
               
            else :
               print("DEBUG : sefd_x = %e , sefd_y = %e , sefd_i = %e which is most likely below horizon -> ignored" % (sefd_x,sefd_y,sefd_i))
                    
            lst += lst_step_h
-           total_integration_time += lst_step_h
 
-       print("DEBUG : loop over LST range finished at LST = %.4f [h]" % lst)
+       print("DEBUG : loop over LST range finished at LST = %.4f [h] -> total_integration_time = %.8f [hours]" % (lst,total_integration_time))
     
 #       print("DEBUG : %.8f / %.8f / %.8f vs. %d / %d / %d" % (noise_x_total,noise_y_total,noise_i_total,len(noise_x),len(noise_y),len(noise_i)))
        noise_x_total = math.sqrt( noise_x_total ) / len(noise_x) 
@@ -1403,8 +1439,19 @@ def get_sensitivity_azzalstrange( az_deg , za_deg , freq_mhz, lst_start_h, lst_e
        print("ERROR : could not connect to database %s" % (dbname_file))
        return (None,None,None,None,None,None)
 
+
+    if lst_start < 0 :
+       lst_start = 24.00 + lst_start 
+
+    if lst_end < 0 :
+       lst_end = 24.00 + lst_end
+
     if lst_end > 24.00 :
        lst_end = lst_end - 24.00
+
+    print("DEBUG : final LST range is %.8f - %.8f [hours]" % (lst_start,lst_end))
+
+
     szLST_Condition = ("lst>=%.4f AND lst<=%.4f" % (lst_start,lst_end))
     if lst_end < lst_start :
        szLST_Condition = ("((lst>=%.4f AND lst<24.00) OR (lst>=0 AND lst<=%.4f))" % (lst_start,lst_end))
@@ -1817,7 +1864,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
       # place a text box in upper left in axes coords
       print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.97),info))
       # was min_lst*0.75 
-      text( min_lst*0.97, max_ylimit*1.05, info , fontsize=25 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( min_lst*0.80, max_ylimit*1.05, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
