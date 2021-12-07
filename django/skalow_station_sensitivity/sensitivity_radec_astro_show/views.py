@@ -175,9 +175,10 @@ def sensitivity_radec_astro_show(request):
 
 #   print("DEBUG string = %s -> %s" % (string,uri))
 #    args = {'form':form, 'text':text, 'image':uri}
-   args = { 'image':uri , 'zipfile':zip_file_name }
+   # if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :
+   args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x':(noise_x_total*1000.00), 'noise_y':(noise_y_total*1000.00), 'noise_i':(noise_i_total*1000.00) }
    print("DEBUG : mode = %d" % (mode))
-         
-   return render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
+
+   return render(request,"sensitivity_radec_astro_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   return response
