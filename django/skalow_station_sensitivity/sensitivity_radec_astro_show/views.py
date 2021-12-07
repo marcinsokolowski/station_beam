@@ -80,6 +80,10 @@ def sensitivity_radec_astro_show(request):
    lst_start = ha_start_h + ra_deg/15.00
    lst_end = ha_end_h + ra_deg/15.00
    
+   if ha_start_h <= -12 and ha_end_h >= +12 :
+      lst_start = 0.00
+      lst_end   = 24.00
+
    if lst_start < 0 :
       lst_start = 24.00 + lst_start 
    
@@ -112,11 +116,11 @@ def sensitivity_radec_astro_show(request):
    if plot_type == 'LST' :
       print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
       output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
-      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
+      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=lst_start, lst_end=lst_end, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
    else : 
       print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_ha (saving to %s)" % (save_output_path))
-      output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
-      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
+      output_file_base = "%s_sensitivity_vs_ha_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
+      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y, ha_start_h=ha_start_h, ha_end_h=ha_end_h, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
 
    
    # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
