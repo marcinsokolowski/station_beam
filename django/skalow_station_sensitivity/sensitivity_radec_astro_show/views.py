@@ -65,6 +65,7 @@ def sensitivity_radec_astro_show(request):
    n_stations = int( params['n_stations'] )
    inttime = float( params['inttime'] )
    mode          = int( params['mode'] )
+   plot_type = params['plot_type']
    return_zip_file = False
    if mode >= 2 :
        zipfile = True
@@ -108,9 +109,15 @@ def sensitivity_radec_astro_show(request):
       noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.3f [Jy] , %.3f [Jy] , %.3f [Jy]" % (total_integration_time,noise_x_total,noise_y_total,noise_i_total)
 
    # create plots :   
-   print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
-   output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
-   (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
+   if plot_type == 'LST' :
+      print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_lst (saving to %s)" % (save_output_path))
+      output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
+      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
+   else : 
+      print("DEBUG : calling sensitivity_db.plot_sensitivity_vs_ha (saving to %s)" % (save_output_path))
+      output_file_base = "%s_sensitivity_lst0-24h_ra%.2fdeg_dec%.2fdeg_%.2fMHz" % (station,ra_deg,dec_deg,frequency_mhz)
+      (png_image_path,buf) = sensitivity_db.plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y, lst_start=0, lst_end=20, azim_deg=-1000, za_deg=-1000, freq_mhz=frequency_mhz, output_file_base=output_file_base, do_show=False, save_output_path=save_output_path, lst_i=lst_i, aot_i=aot_i, ra_deg=ra_deg, dec_deg=dec_deg, station_name=station, noise_info=noise_info )
+
    
    # def save_sens_vs_lst_file( lst_x, aot_x, sefd_x, lst_y, aot_y, sefd_y out_file_base ) :
    out_file_name = save_output_path + "/" + output_file_base
@@ -189,11 +196,11 @@ def sensitivity_radec_astro_show(request):
       noise_y_str = "%.6f [Jy]" % (noise_y_total)
       noise_i_str = "%.6f [Jy]" % (noise_i_total)
    
-   args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x_str':noise_x_str, 'noise_y_str':noise_y_str, 'noise_i_str':noise_i_str, 'warning':None }
+   args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x_str':noise_x_str, 'noise_y_str':noise_y_str, 'noise_i_str':noise_i_str, 'warning':"" }
    print("DEBUG : mode = %d" % (mode))
    
    if bw_mhz > 20 :
-      args['warning'] = ('WARNING : bandwidth = %.2f MHz but sensitivity from the center of the band used' % (bw_mhz))   
+      args['warning'] = ('WARNING : bandwidth = %.2f MHz but sensitivity at the center frequency used' % (bw_mhz))   
 
    return render(request,"sensitivity_radec_astro_show/index.html" , args ) # , context_instance=RequestContext(request) )
 #   render(request,"sensitivity_vs_lst_show/index.html" , args ) # , context_instance=RequestContext(request) )

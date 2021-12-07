@@ -21,5 +21,11 @@ class ParametersForm(forms.Form):
     ] 
     station_name = forms.CharField( label='Station' , widget=forms.Select(choices=STATION_CHOICES) , initial='eda2' )   
     
+    PLOT_CHOICES = [
+       ('Hour_Angle', 'Hour_Angle'),
+       ('LST', 'LST')
+    ] 
+    plot_type = forms.CharField( label='Plot A/T [m^2/K] vs.' , widget=forms.Select(choices=PLOT_CHOICES) , initial='Hour_Angle' )
+    
     CHOICES = [('1', 'Show image'), ('2', 'Save zip file (data and image)')]    
     mode = forms.ChoiceField( widget=forms.RadioSelect , choices=CHOICES , label='Output format' , initial='1' )

@@ -1894,6 +1894,186 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
 
    return (png_image_path)
 
+
+def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
+                              output_file_base=None, point_x='go', point_y='rx',
+                              min_ylimit=0.00, max_ylimit=2.00,
+                              do_show = True, save_output_path="./",
+                              lst_i=None, aot_i=None, point_i='b+',
+                              fig_size_x=20, fig_size_y=10, info=None,
+                              ra_deg=None, dec_deg=None, station_name=None, noise_info=None ) :
+
+   global web_interface_initialised
+   global plot_requirements
+   global plot_braun2019
+
+   legend_list = []
+
+   max_aot = 0.00   
+   min_lst = 0.00
+   
+   if info is None :
+      if ra_deg is not None and dec_deg is not None :
+         info = "Frequency %.2f MHz, (RA,Dec) = (%.2f$^o$, %.2f$^o$)" % (freq_mhz,ra_deg,dec_deg)
+      else :
+         info = "Frequency %.2f MHz, Azimuth = %.2f$^o$, ZA = %.2f$^o$" % (freq_mhz,azim_deg,za_deg)
+         
+      if station_name is not None :
+         info += (" for %s" % station_name )
+   
+   if noise_info is not None :
+      info += "\n"
+      info += noise_info
+   
+   if lst_x is not None :
+      min_lst = min(lst_x)
+   
+   if aot_x is not None :
+      if max(aot_x) > max_aot :
+         max_aot = max(aot_x)
+         
+   if aot_y is not None :
+      if max(aot_y) > max_aot :
+         max_aot = max(aot_y)
+
+   if aot_i is not None :
+      if max(aot_i) > max_aot :
+         max_aot = max(aot_i)
+   
+   plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   if lst_x is not None and aot_x is not None :
+      ax_x =  plt.plot( lst_x, aot_x, point_x )
+      legend_list.append( 'X polarisation' )
+   
+   if lst_y is not None and aot_y is not None :
+      ax_y = plt.plot( lst_y, aot_y, point_y )
+      legend_list.append( 'Y polarisation' )
+
+   if lst_i is not None and aot_i is not None :
+      ax_i = plt.plot( lst_i, aot_i, point_i )
+      
+      max_i = max( aot_i )
+      legend_list.append( 'Stokes I' )
+#      if max_i > max_ylimit :
+#         max_ylimit = max_i * 1.1 # max_i + 10% of max_i
+
+
+   if plot_requirements :
+      lst_req = []
+      sens_req_zenith = []
+      sens_req_avg45 = []
+      
+      for lst in lst_x :
+         print("DEBUG : getting requirement for lst = %.4f [hours]" % (lst))
+         sens_zenith = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
+         sens_avg45  =  lfaa_requirements.lfaa_per_station( freq_mhz, subversion="AvgAboveElev45deg" )
+         print("DEBUG : getting requirement DONE")
+         
+         lst_req.append( lst )
+         sens_req_zenith.append( sens_zenith )
+         sens_req_avg45.append( sens_avg45 )
+         
+         print("DEBUG : appended")
+         
+      lst_req = numpy.array( lst_req )   
+      sens_req_zenith = numpy.array( sens_req_zenith )
+      sens_req_avg45 = numpy.array( sens_req_avg45 )
+
+      # 
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH ...")         
+      plt.plot( lst_req, sens_req_zenith, linestyle='dashed', color='orange', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : plotting SKA-Low requrirements at ZENITH DONE")
+      legend_list.append('SKA-Low requirement at zenith')
+      
+      plt.plot( lst_req, sens_req_avg45, linestyle='dotted', color='red', linewidth=2, markersize=12 ) # marker='o'
+      legend_list.append('SKA-Low requirement (average above $45^o$)')
+      
+      # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
+
+   if plot_braun2019 :
+      lst_braun = []
+      sens_braun = []
+      
+      for lst in lst_x :
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019) for lst = %.4f [hours]" % (lst))
+         sens_value = sensitivity_braun2019.lfaa_per_station( freq_mhz )
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019)  DONE , A/T = %.4f [m^2/K]" % (sens_value))
+
+         lst_braun.append( lst )
+         sens_braun.append( sens_value )
+         print("DEBUG : appended")
+
+      lst_braun = numpy.array( lst_braun )   
+      sens_braun = numpy.array( sens_braun )
+
+      # 
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun ...")
+      plt.plot( lst_braun, sens_braun, linestyle='dashed', color='magenta', linewidth=2, markersize=12 ) # marker='o'
+      print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun DONE")
+      legend_list.append('Table 9 in Braun et al. (2019)')
+
+
+   # legend :
+   if lst_x is not None and aot_x is not None and lst_y is not None and aot_y is not None :
+      if lst_i is None and aot_i is None :      
+         plt.legend( legend_list , loc='upper right' , fontsize=20 )
+      else :
+         plt.legend( legend_list, loc='upper right' , fontsize=20 )
+   else :
+      if lst_x is not None and aot_x is not None :
+         plt.legend( legend_list , loc='upper right' , fontsize=20 )
+      else :
+         plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[lst_y, lst_y])
+   
+   plt.xlabel('Local sidereal time [hours]' , fontsize=30 )
+   plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=30 )
+   plt.gcf().autofmt_xdate()
+#   ax=plt.gca()
+#   xfmt = md.DateFormatter('%Y-%m-%d %H:%M:%S')
+#   xfmt = md.DateFormatter('%H:%M:%S')
+#   ax.xaxis.set_major_formatter(xfmt)
+#   ax.set_ylim(( min_ylimit,  max_ylimit ))
+
+   if max_aot > (max_ylimit-0.5) :
+      max_ylimit = max_aot + 0.5
+      
+   plt.ylim(( min_ylimit,  max_ylimit ))  
+   
+   if info is not None :
+      # place a text box in upper left in axes coords
+      print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.97),info))
+      # was min_lst*0.75 
+      text( min_lst*0.80, max_ylimit*1.05, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+   
+   plt.grid()
+   
+   png_image_path = None
+   if output_file_base is not None :
+      png_image_path = ( "%s/%s.png" % ( save_output_path , output_file_base) )
+      
+      plt.savefig( png_image_path )
+      print("Saved output image to file %s" % (png_image_path))
+      
+      if web_interface_initialised :
+#         sio = StringIO() # use io.StringIO() in Python 3x
+#         sio = io.StringIO()
+         buf = BytesIO()
+         plt.savefig( buf, format="png")
+#         buf.seek(0)
+#         string = base64.b64encode(buf.read())
+         
+#         print("web_interface_initialised = True -> returning image = %s" % (buf))
+
+         # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
+         return (png_image_path,buf)
+
+   if do_show :   
+      plt.show()
+   
+
+   return (png_image_path)
+
+
 def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point_x='go', point_y='rx', freq_i=None, aot_i=None, point_i='b+', min_ylimit=0.00, max_ylimit=2.00, info=None,
                       fig_size_x=20, fig_size_y=10, save_output_path="./" ):
 
