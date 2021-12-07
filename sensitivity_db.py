@@ -1159,6 +1159,7 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
     noise_x_total = 0
     noise_y_total = 0
     noise_i_total = 0
+    total_integration_time = 0.00
     
     if len(out_lst_x) > 0 :
        # TODO : this is currently wrong - it needs to be in steps on time_step !!!!
@@ -1194,7 +1195,6 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
    
        print("DEBUG : calculating image sensitivity for BW = %.2f MHz, inttime = %.2f [dec], antnum=%d stations and LST range = %.8f - %.8f [h] in steps of %.8f [h]" % (bandwidth_hz/1e6,time_step,n_stations,lst_start,lst_end,lst_step_h))
        # add noise in each snapshot in quadrature :
-       total_integration_time = 0.00
        n_integrations = 0
        while lst < lst_end : # or < (lst_end-(1.00/3600.00)) :
            print("DEBUG : lst = %.8f [h]" % (lst))
@@ -1895,7 +1895,7 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    return (png_image_path)
 
 
-def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
+def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
                               min_ylimit=0.00, max_ylimit=2.00,
                               do_show = True, save_output_path="./",
@@ -1911,6 +1911,11 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azi
 
    max_aot = 0.00   
    min_lst = 0.00
+   min_ha  = 0.00
+      
+   ra_h = ra_deg / 15.00
+   lst_start = ha_start_h + ra_h
+   lst_end   = ha_end_h + ra_h
    
    if info is None :
       if ra_deg is not None and dec_deg is not None :
@@ -1939,18 +1944,68 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azi
    if aot_i is not None :
       if max(aot_i) > max_aot :
          max_aot = max(aot_i)
+         
+   # convert LST to HA :
+   ha_x = []
+   for lst in lst_x :
+       ha = lst - ra_h
+       if ha < -12 :
+          ha = ha + 24
+       print("DEBUG : LST -> HA : %.4f -> %.4f" % (lst,ha))
+       ha_x.append( ha )     
+
+   # check if range is ok :   
+   if ha_x[0] > ha_x[-1] and ha_x[0]>12.00 and ha_x[-1] < 12.00 : 
+      for i in range(0,len(ha_x)) :
+         if ha_x[i] > 12.00 :
+            ha_x[i] = ha_x[i] - 24.00
+   
+   print("DEBUG : final HA order:")
+   for i in range(0,len(ha_x)) :
+      print("%.4f" % (ha_x[i]))
+
+   ha_y = []
+   for lst in lst_y :
+       ha = lst - ra_h
+       if ha < -12 :
+          ha = ha + 24
+       ha_y.append( ha )     
+
+   # check if range is ok :   
+   if ha_y[0] > ha_y[-1] and ha_y[0]>12.00 and ha_y[-1] < 12.00: 
+      for i in range(0,len(ha_y)) :
+         if ha_y[i] > 12.00 :
+            ha_y[i] = ha_y[i] - 24.00
+
+  
+   ha_i = []
+   for lst in lst_i :
+       ha = lst - ra_h
+       if ha < -12 :
+          ha = ha + 24
+       ha_i.append( ha )     
+
+   # check if range is ok :   
+   if ha_i[0] > ha_i[-1] and ha_i[0]>12.00 and ha_i[-1] < 12.00 : 
+      for i in range(0,len(ha_i)) :
+         if ha_i[i] > 12.00 :
+            ha_i[i] = ha_i[i] - 24.00
+
+   if lst_x is not None :
+      min_ha = min(ha_x)
+
    
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
    if lst_x is not None and aot_x is not None :
-      ax_x =  plt.plot( lst_x, aot_x, point_x )
+      ax_x =  plt.plot( ha_x, aot_x, point_x )
       legend_list.append( 'X polarisation' )
    
    if lst_y is not None and aot_y is not None :
-      ax_y = plt.plot( lst_y, aot_y, point_y )
+      ax_y = plt.plot( ha_y, aot_y, point_y )
       legend_list.append( 'Y polarisation' )
 
    if lst_i is not None and aot_i is not None :
-      ax_i = plt.plot( lst_i, aot_i, point_i )
+      ax_i = plt.plot( ha_i, aot_i, point_i )
       
       max_i = max( aot_i )
       legend_list.append( 'Stokes I' )
@@ -1959,56 +2014,56 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azi
 
 
    if plot_requirements :
-      lst_req = []
+      ha_req = []
       sens_req_zenith = []
       sens_req_avg45 = []
       
-      for lst in lst_x :
-         print("DEBUG : getting requirement for lst = %.4f [hours]" % (lst))
+      for ha in ha_x :
+         print("DEBUG : getting requirement for HA = %.4f [hours]" % (ha))
          sens_zenith = lfaa_requirements.lfaa_per_station( freq_mhz, subversion="zenith" )
          sens_avg45  =  lfaa_requirements.lfaa_per_station( freq_mhz, subversion="AvgAboveElev45deg" )
          print("DEBUG : getting requirement DONE")
          
-         lst_req.append( lst )
+         ha_req.append( ha )
          sens_req_zenith.append( sens_zenith )
          sens_req_avg45.append( sens_avg45 )
          
-         print("DEBUG : appended")
+         # print("DEBUG : appended")
          
-      lst_req = numpy.array( lst_req )   
+      ha_req = numpy.array( ha_req )   
       sens_req_zenith = numpy.array( sens_req_zenith )
       sens_req_avg45 = numpy.array( sens_req_avg45 )
 
       # 
       print("DEBUG : plotting SKA-Low requrirements at ZENITH ...")         
-      plt.plot( lst_req, sens_req_zenith, linestyle='dashed', color='orange', linewidth=2, markersize=12 ) # marker='o'
+      plt.plot( ha_req, sens_req_zenith, linestyle='dashed', color='orange', linewidth=2, markersize=12 ) # marker='o'
       print("DEBUG : plotting SKA-Low requrirements at ZENITH DONE")
       legend_list.append('SKA-Low requirement at zenith')
       
-      plt.plot( lst_req, sens_req_avg45, linestyle='dotted', color='red', linewidth=2, markersize=12 ) # marker='o'
+      plt.plot( ha_req, sens_req_avg45, linestyle='dotted', color='red', linewidth=2, markersize=12 ) # marker='o'
       legend_list.append('SKA-Low requirement (average above $45^o$)')
       
       # plt.legend(('X polarisation','Y polarisation','Stokes I'), loc='upper right' , fontsize=20) 
 
    if plot_braun2019 :
-      lst_braun = []
+      ha_braun = []
       sens_braun = []
       
-      for lst in lst_x :
-         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019) for lst = %.4f [hours]" % (lst))
+      for ha in ha_x :
+         print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019) for HA = %.4f [hours]" % (ha))
          sens_value = sensitivity_braun2019.lfaa_per_station( freq_mhz )
          print("DEBUG : getting Table 9 (avg above 45deg) from Braun et al. (2019)  DONE , A/T = %.4f [m^2/K]" % (sens_value))
 
-         lst_braun.append( lst )
+         ha_braun.append( ha )
          sens_braun.append( sens_value )
-         print("DEBUG : appended")
+         # print("DEBUG : appended")
 
-      lst_braun = numpy.array( lst_braun )   
+      ha_braun = numpy.array( ha_braun )   
       sens_braun = numpy.array( sens_braun )
 
       # 
       print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun ...")
-      plt.plot( lst_braun, sens_braun, linestyle='dashed', color='magenta', linewidth=2, markersize=12 ) # marker='o'
+      plt.plot( ha_braun, sens_braun, linestyle='dashed', color='magenta', linewidth=2, markersize=12 ) # marker='o'
       print("DEBUG : over-plotting Table 9 (avg above 45deg) from Braun DONE")
       legend_list.append('Table 9 in Braun et al. (2019)')
 
@@ -2025,7 +2080,7 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azi
       else :
          plt.legend(bbox_to_anchor=(0.68, 0.82),loc=3,handles=[lst_y, lst_y])
    
-   plt.xlabel('Local sidereal time [hours]' , fontsize=30 )
+   plt.xlabel('Hour Angle [hours]' , fontsize=30 )
    plt.ylabel('Sensitivity A / T [m$^2$/K]' , fontsize=30 )
    plt.gcf().autofmt_xdate()
 #   ax=plt.gca()
@@ -2037,13 +2092,14 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azi
    if max_aot > (max_ylimit-0.5) :
       max_ylimit = max_aot + 0.5
       
-   plt.ylim(( min_ylimit,  max_ylimit ))  
+   plt.xlim(( ha_start_h,  ha_end_h ))  
+   plt.ylim(( min_ylimit,  max_ylimit*1.3 ))  
    
    if info is not None :
       # place a text box in upper left in axes coords
       print("DEBUG : adding text at LST = %.4f [h] , text = |%s|" % ((min_lst*0.97),info))
       # was min_lst*0.75 
-      text( min_lst*0.80, max_ylimit*1.05, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
+      text( ha_start_h, max_ylimit*1.35, info , fontsize=20 ) # , transform=ax.transAxes, verticalalignment='top', bbox=props)
    
    plt.grid()
    
