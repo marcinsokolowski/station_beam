@@ -12,7 +12,7 @@ class ParametersForm(forms.Form):
     ha_start_h = forms.FloatField( label='Hour Angle Start [hours]'   , min_value=-12 , max_value=0.0, initial=-2.00 ) 
     ha_end_h = forms.FloatField( label='Hour Angle End [hours]'   , min_value=0, max_value=12.0, initial=2.00 ) 
     bw_mhz = forms.FloatField( label='Observing Bandwidth [MHz]'   , min_value=0.00, max_value=300, initial=30.00 )
-    n_stations = forms.IntegerField( label='Number of stations'   , min_value=512 , max_value=512, initial=512 )
+    n_stations = forms.IntegerField( label='Number of stations'   , min_value=1, max_value=512, initial=512 )
     inttime = forms.FloatField( label='Integrations [seconds]'   , min_value=0.5, max_value=3600, initial=120 ) # duration of individual integrations 
 
     STATION_CHOICES = [
