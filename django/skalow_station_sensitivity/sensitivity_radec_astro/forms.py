@@ -27,5 +27,5 @@ class ParametersForm(forms.Form):
     ] 
     plot_type = forms.CharField( label='Plot A/T [m^2/K] vs.' , widget=forms.Select(choices=PLOT_CHOICES) , initial='Hour_Angle' )
     
-    CHOICES = [('1', 'Show image'), ('2', 'Save zip file (data and image)')]    
+    CHOICES = [('1', 'Show plot'), ('2', 'Save zip file (data and plots)')]    
     mode = forms.ChoiceField( widget=forms.RadioSelect , choices=CHOICES , label='Output format' , initial='1' )

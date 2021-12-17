@@ -1,27 +1,29 @@
 <h1><center>SKA-Low sensitivity calculator</center></h1>
-This service allows to calculate SKA-Low station sensitivity (A/T [m^2/K]) using EDA2 and AAVS2 prototype station simulations.<br>
-Please, select from the following options (LST is local sidereal time):
+This service allows users to calculate SKA-Low station sensitivity (A/T [m^2/K]) and expected imaging noise using EDA2 and AAVS2 prototype station simulations, as described in Sokolowski et al. PASA, 2022<br>
+The assumptions in regards to calculation of the imaging noise (natural weighting etc.) are listed on the page implementing this specific option.
+Select from the following options (LST is Local Sidereal Time):
 
 <ul>
-  <li><b>Imaging sensitivity and A/T [m^2/K] vs. LST for a source at a specified (RA,DEC) [deg] position and range of Hour Angle [hours]</b></li>
+  <li><b>Imaging sensitivity and A/T [m^2/K] vs. LST or Hour Angle [hours] for a source at a specified RA and DEC [deg] position and a range of Hour Angle [hours]</b></li>
       <ul>
-         <li><a href="sensitivity_radec_astro">Imaging sensitivity for a source at a specified (RA,DEC) [deg] position and range of Hour Angle [hours]</a></li>
+         <li><a href="sensitivity_radec_astro">Imaging sensitivity for a source at a specified RA and DEC [deg] and Hour Angle [hours] range</a></li>
       </ul><br><br>
 
   <li><b>Sensitivity A/T [m^2/K] vs. frequency:</b></li>
       <ul>
-         <li><a href="sensitivity_vs_freq">At a specified LST and pointing direction (Azimuth,Elevation [deg]):</a></li>
-         <li><a href="sensitivity_radec_vs_freq">At a specified LST and pointing direction (Right ascension [deg], Declination [deg]):</a></li>
+         <li><a href="sensitivity_vs_freq">At a specified LST and pointing direction in Azimuth and Elevation [deg]:</a></li>
+         <li><a href="sensitivity_radec_vs_freq">At a specified LST and pointing direction in RA and DEC [deg]:</a></li>
       </ul><br><br>
 
-  <li><b>Sensitivity A/T [m^2/K] vs. LST:</b></li>
+  <li><b>Sensitivity A/T [m^2/K] vs. Local Sidereal Time (LST):</b></li>
       <ul>
-      <li><a href="sensitivity_vs_lst">At a specified frequency and pointing direction (Azimuth,Elevation [deg]) vs. LST:</a></li>      
-      <li><a href="sensitivity_radec_vs_lst">At a specified frequency and pointing direction (Right ascension [deg], Declination [deg]) vs. LST:</a></li>
+      <li><a href="sensitivity_vs_lst">At a specified frequency and pointing direction in Azimuth and Elevation [deg] vs. LST:</a></li>      
+      <li><a href="sensitivity_radec_vs_lst">At a specified frequency and pointing direction in RA and DEC [deg] vs. LST:</a></li>
       </ul><br><br>
+
   <li><b>All-sky sensitivity (A/T [m^2/K]) maps</b></li>
       <ul>
-      <li><a href="sensitivity_map">All-sky sensitivity map for a specific frequency and LST</a></li><br><br>
+      <li><a href="sensitivity_map">All-sky sensitivity map for a specific frequency and Local Sidereal Time</a></li><br><br>
       </ul><br><br>
 </ul> 
 
