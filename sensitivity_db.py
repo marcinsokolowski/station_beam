@@ -898,9 +898,12 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
 def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_start, lst_end, pol, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
-                             receiver_temperature=None ) :
+                             receiver_temperature=None, glon_deg=None, glat_deg=None ) :
 
     print("DEBUG : get_sensitivity_lstrange_single_pol")
+    
+    if glon_deg is not None and glat_deg is not None :
+       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
 
     if lst_start < 0 :
        lst_start = 24.00 + lst_start 
@@ -1063,7 +1066,9 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
           else :
              print("ERROR : no record found for lst = %.4f [h] and (ra,dec) = (%.4f,%.4f) [deg] -> (az,za) = (%.4f,%.4f) [deg]" % (lst_db,ra_deg, dec_deg, az_deg, za_deg)) 
        else :
-          print("DEBUG : alt_deg = %.4f [deg] is below horizon -> ignored")
+          print("DEBUG : alt_deg = %.4f [deg] is below horizon -> ignored" % (alt_deg))
+          
+    print("DEBUG : %d records found" % (len(out_lst)))       
           
     return (out_lst, out_aot, out_sefd)
 
@@ -1132,10 +1137,12 @@ def get_sensitivity_lstrange( az_deg , za_deg , freq_mhz, lst_start, lst_end, ti
 def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_end, time_step=300,
                              station="EDA2", db_base_name="ska_station_sensitivity", db_path="sql/", 
                              db_lst_resolution=0.5, db_ang_res_deg=5.00, db_freq_resolution_mhz=10.00, 
-                             receiver_temperature=None, bandwidth_hz=30720000, n_stations=512 ) :
+                             receiver_temperature=None, bandwidth_hz=30720000, n_stations=512, glon_deg=None, glat_deg=None ) :
 
     global debug_level
-                                 
+
+    if glon_deg is not None and glat_deg is not None :
+       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )                                 
 
 # Change to loop over time range in steps of step      
     (out_lst_x, out_aot_x, out_sefd_x) = get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_start, lst_end, pol='X', time_step=time_step,
@@ -1183,7 +1190,10 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
        print("DEBUG : Based on these LST and SEFD_X values:")
        for i in range(0,len(out_lst_x)) :
           print("\t\t%.8f %.8f" % (out_lst_x[i],out_sefd_x[i]))
-
+ 
+       sefd_x = None
+       sefd_y = None
+       sefd_i = None
        sefd_x_interpol = None 
        sefd_y_interpol = None
        sefd_i_interpol = None
@@ -1205,7 +1215,7 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
            
 #           print("DEBUG : step2 ?") # buffer flusher !
            
-           if sefd_x < 1e10 :
+           if sefd_x < 1e10 and sefd_x is not None :
               noise_x.append( image_noise )
               noise_x_total += (image_noise*image_noise)
               print("DEBUG : sefd_x = %.8f [Jy] -> image_noise = %.8f [Jy] -> noise_x_total = %.16f [Jy]" % (sefd_x,image_noise,noise_x_total))
@@ -1229,7 +1239,12 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
               total_integration_time += lst_step_h
               
            else :
-              print("DEBUG : sefd_x = %e , sefd_y = %e , sefd_i = %e which is most likely below horizon -> ignored" % (sefd_x,sefd_y,sefd_i))
+              if sefd_x is not None and sefd_y is not None and sefd_i is not None :
+                 print("DEBUG : sefd_x = %e , sefd_y = %e , sefd_i = %e which is most likely below horizon -> ignored" % (sefd_x,sefd_y,sefd_i))
+              else :
+                 print("WARNNING : at least one of SEFDs sefd_x, sefd_y, or sefd_i is None")
+                 if sefd_x is not None :
+                    print("WARNNING : sefd_x = %d which is most likely below horizon -> ignored" % (sefd_x))
                    
            lst += lst_step_h
 

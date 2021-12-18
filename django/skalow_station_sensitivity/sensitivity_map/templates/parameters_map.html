@@ -1,9 +1,11 @@
-<h1>Sensitivity all-sky map at a specified local sidereal time and frequency</h1>
+<h1><center>Sensitivity (A/T [m<sup>2</sup>/K]) all-sky map at a specified local sidereal time (LST) and frequency</center></h1>
 
 <form action="/sensitivity_map_show" method="post">
+<center>
     {% csrf_token %}
     <table border="1">
     {{ form }} <!-- linebreaks -->
     </table>
     <input type="submit" value="Submit">
+</center>
 </form>

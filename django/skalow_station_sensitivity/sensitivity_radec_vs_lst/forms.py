@@ -6,12 +6,12 @@ class NameForm(forms.Form):
     
     
 class ParametersForm(forms.Form):
-    frequency_mhz = forms.FloatField( label='Frequency [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
-    ra_deg   = forms.FloatField( label='RA [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
-    dec_deg = forms.FloatField( label='DEC [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
+    frequency_mhz = forms.FloatField( label='Frequency (50 - 350) [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
+    ra_deg   = forms.FloatField( label='RA (0 - 360) [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+    dec_deg = forms.FloatField( label='DEC (-90 - 90) [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
     inttime = forms.FloatField( label='Integrations [seconds]'   , min_value=0.5, max_value=3600, initial=120 ) # duration of individual integrations
-    lst_start_h = forms.FloatField( label='Start LST [hours]' , min_value=0.0 , max_value=24.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
-    lst_end_h = forms.FloatField( label='End LST [hours]' , min_value=0.0 , max_value=24.0, initial=24.00 ) # ,max_digits=5,decimal_places=1)
+    lst_start_h = forms.FloatField( label='Start LST (0 - 24) [hours]' , min_value=0.0 , max_value=24.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+    lst_end_h = forms.FloatField( label='End LST (0 - 24) [hours]' , min_value=0.0 , max_value=24.0, initial=24.00 ) # ,max_digits=5,decimal_places=1)
 
 
     STATION_CHOICES = [

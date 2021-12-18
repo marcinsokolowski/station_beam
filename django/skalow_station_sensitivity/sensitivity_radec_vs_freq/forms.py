@@ -2,9 +2,9 @@ from django import forms
 from django.utils.safestring import mark_safe
 
 class ParametersForm(forms.Form):
-    lst_hours = forms.FloatField( label='LST [hours]' , min_value=0.0 , max_value=24.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
-    ra_deg   = forms.FloatField( label='RA [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
-    dec_deg = forms.FloatField( label='DEC [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
+    lst_hours = forms.FloatField( label='LST (0 - 24) [hours]' , min_value=0.0 , max_value=24.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+    ra_deg   = forms.FloatField( label='RA (0 - 360) [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+    dec_deg = forms.FloatField( label='DEC (-90 - 90) [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
 
     STATION_CHOICES = [
        ('EDA2', 'EDA2'),

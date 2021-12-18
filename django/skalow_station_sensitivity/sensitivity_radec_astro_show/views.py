@@ -108,7 +108,10 @@ def sensitivity_radec_astro_show(request):
 
    noise_info = None
    if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
-      noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.6f [mJy] , %.6f [mJy] , %.6f [mJy]" % (total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00)
+      if noise_x_total < 0.001 and noise_y_total < 0.001 and noise_i_total < 0.001 :
+         noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.6f [uJy] , %.6f [uJy] , %.6f [uJy]" % (total_integration_time,noise_x_total*1000000.00,noise_y_total*1000000.00,noise_i_total*1000000.00)
+      else :
+         noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.6f [mJy] , %.6f [mJy] , %.6f [mJy]" % (total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00)
    else :
       noise_info = "Expected %.4f [hours] image noise for X/Y/Stokes I is  %.3f [Jy] , %.3f [Jy] , %.3f [Jy]" % (total_integration_time,noise_x_total,noise_y_total,noise_i_total)
 
@@ -192,9 +195,14 @@ def sensitivity_radec_astro_show(request):
    noise_y_str = ""
    noise_i_str = ""
    if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :
-      noise_x_str = "%.6f [mJy]" % (noise_x_total*1000.00)
-      noise_y_str = "%.6f [mJy]" % (noise_y_total*1000.00)
-      noise_i_str = "%.6f [mJy]" % (noise_i_total*1000.00)
+      if noise_x_total < 0.001 and noise_y_total < 0.001 and noise_i_total < 0.001 :
+         noise_x_str = "%.6f [uJy]" % (noise_x_total*1000000.00)
+         noise_y_str = "%.6f [uJy]" % (noise_y_total*1000000.00)
+         noise_i_str = "%.6f [uJy]" % (noise_i_total*1000000.00)
+      else :
+         noise_x_str = "%.6f [mJy]" % (noise_x_total*1000.00)
+         noise_y_str = "%.6f [mJy]" % (noise_y_total*1000.00)
+         noise_i_str = "%.6f [mJy]" % (noise_i_total*1000.00)
    else :
       noise_x_str = "%.6f [Jy]" % (noise_x_total)
       noise_y_str = "%.6f [Jy]" % (noise_y_total)

@@ -1,9 +1,12 @@
-<h1>Sensitivity vs. LST at a specified frequency and pointing direction (Azimuth,Elevation) [deg]</h1>
+<h1><center>Sensitivity (A/T [m<sup>2</sup>/K]) vs. local sidereal time (LST) at a specified frequency</center></h1>
+<h1><center>and pointing direction Azimuth and Elevation [deg]</center></h1>
 
 <form action="/sensitivity_vs_lst_show" method="post">
+<center>
     {% csrf_token %}
     <table border="1">
     {{ form }} <!-- linebreaks -->
     </table>
     <input type="submit" value="Submit">
+</center>
 </form>

@@ -6,14 +6,14 @@ class NameForm(forms.Form):
     
     
 class ParametersForm(forms.Form):
-    frequency_mhz = forms.FloatField( label='Center frequency [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # ,max_digits=5,decimal_places=1)
-    ra_deg   = forms.FloatField( label='RA [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
-    dec_deg = forms.FloatField( label='DEC [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
-    ha_start_h = forms.FloatField( label='Hour Angle Start [hours]'   , min_value=-12 , max_value=0.0, initial=-2.00 ) 
-    ha_end_h = forms.FloatField( label='Hour Angle End [hours]'   , min_value=0, max_value=12.0, initial=2.00 ) 
-    bw_mhz = forms.FloatField( label='Observing Bandwidth [MHz]'   , min_value=0.00, max_value=300, initial=30.00 )
+    frequency_mhz = forms.FloatField( label='Centre frequency (50 - 350) [MHz]' , min_value=40.0 , max_value=350.0, initial=160.00 ) # , max_decimal_places=2 ) # , decimal_places=2 ) # ,max_digits=5,decimal_places=1)
+    ra_deg   = forms.FloatField( label='RA (0 - 360) [deg]'   , min_value=0.0 , max_value=360.0, initial=0.00 ) # ,max_digits=5,decimal_places=1)
+    dec_deg = forms.FloatField( label='DEC (-90 - 90) [deg]' , min_value=-90.0 , max_value=90.0, initial = 0.00 ) # ,max_digits=5,decimal_places=1)
+    ha_start_h = forms.FloatField( label='Hour Angle Start (-12 - 0) [hours]'   , min_value=-12 , max_value=0.0, initial=-2.00 ) 
+    ha_end_h = forms.FloatField( label='Hour Angle End (0 - 12) [hours]'   , min_value=0, max_value=12.0, initial=2.00 ) 
+    bw_mhz = forms.FloatField( label='Observing Bandwidth (0 - 300) [MHz]'   , min_value=0.00, max_value=300, initial=30.00 )
     n_stations = forms.IntegerField( label='Number of stations'   , min_value=1, max_value=512, initial=512 )
-    inttime = forms.FloatField( label='Integrations [seconds]'   , min_value=0.5, max_value=3600, initial=120 ) # duration of individual integrations 
+    inttime = forms.FloatField( label='Integration time (duration of snapshot images) [seconds]'   , min_value=0.5, max_value=3600, initial=120 ) # duration of individual integrations 
 
     STATION_CHOICES = [
        ('EDA2', 'EDA2'),

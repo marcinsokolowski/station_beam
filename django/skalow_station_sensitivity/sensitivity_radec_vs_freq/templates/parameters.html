@@ -1,9 +1,12 @@
-<h1>Sensitivity vs. frequency at a specified local sidereal time and pointing direction (RA,DEC)</h1>
+<h1><center>Sensitivity (A/T [m^2/K]) vs. frequency at a specified local sidereal time (LST)</center></h1>
+<h1><center> and pointing direction RA and DEC [deg]</center></h1>
 
 <form action="/sensitivity_radec_vs_freq_show" method="post">
+<center>
     {% csrf_token %}
     <table border="1">
     {{ form }} <!-- linebreaks -->
     </table>
     <input type="submit" value="Submit">
+</center>
 </form>

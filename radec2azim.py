@@ -1,6 +1,7 @@
 import sys
 import math
 
+from astropy import units as u
 from astropy.coordinates import SkyCoord, EarthLocation
 MWA_POS=EarthLocation.from_geodetic(lon="116:40:14.93",lat="-26:42:11.95",height=377.8)
 
@@ -38,7 +39,11 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
       azim_deg = (180.00 + azim_deg)
    
    print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
+
+def radec2gal( ra_deg, dec_deg ) :
+   i_icrs = SkyCoord(ra=ra_deg*u.degree, dec=dec_deg*u.degree, frame='icrs')
    
+   return (c_icrs.galactic.l.value,c_icrs.galactic.b.value)
    
 
 def main() :

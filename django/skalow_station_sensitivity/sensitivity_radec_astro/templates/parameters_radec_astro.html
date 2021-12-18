@@ -1,9 +1,15 @@
-<h1>Sensitivity at a specified frequency and pointing direction (RA,DEC)</h1>
+<!-- <div style="background-image: url('background_aavs2_milkyway1.jpg');"> -->
+<!-- <div style="background-image: src="{{ MEDIA_URL }}/background_aavs2_milkyway1.jpg"/> -->
+<!-- <img src="{{ MEDIA_URL }}//background_aavs2_milkyway1.jpg>" /> -->
+<h1><center>Sensitivity expected in images ( in [Jy] ) and A/T [m<sup>2</sup>/K] as a function of time<center></h1>  
+      <h1><center>at a specified frequency and pointing direction in RA and DEC [deg]<center></h1>
 
 <form action="/sensitivity_radec_astro_show" method="post">
+<center>
     {% csrf_token %}
     <table border="1">
     {{ form }} <!-- linebreaks -->
     </table>
     <input type="submit" value="Submit">
+</center>
 </form>
