@@ -124,6 +124,10 @@ if __name__ == "__main__":
     for n_sigma in (3,5,8,10) :
        outname = "sens_nchan%d_freq%.2fMHz_%.1fsigma.txt" % (n_chan,freq_mhz,n_sigma)
        out_f = open( outname , "w" )
+       
+       # (inttime_ms,limit_ms_Nsigma,per_sky_per_day,per_sky_per_year,sens_mjy,n_sigma)
+       line = "# INTTIME[ms] Fluence_limit[Jy ms] FRBs/day FRBs/year Sens[mJy] N_sigma\n"
+       out_f.write( line )
     
        for inttime_ms in (1,10,50,100,150,200,300,500,762,1000,2000,2286,3000,4000,5000,10000) : 
           inttime_sec = inttime_ms/1000.00
