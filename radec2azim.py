@@ -39,11 +39,20 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
       azim_deg = (180.00 + azim_deg)
    
    print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
+   
+   return (azim_deg,alt_deg)
 
+# https://docs.astropy.org/en/stable/coordinates/index.html
 def radec2gal( ra_deg, dec_deg ) :
-   i_icrs = SkyCoord(ra=ra_deg*u.degree, dec=dec_deg*u.degree, frame='icrs')
+   c_icrs = SkyCoord(ra=ra_deg*u.degree, dec=dec_deg*u.degree, frame='icrs')
    
    return (c_icrs.galactic.l.value,c_icrs.galactic.b.value)
+
+def gal2radec( glon_deg, glat_deg ) :
+   c_icrs = SkyCoord(l=glon_deg*u.degree, b=glat_deg*u.degree, frame='galactic')
+   
+   return (c_icrs.icrs.ra.value,c_icrs.icrs.dec.value)
+   
    
 
 def main() :
