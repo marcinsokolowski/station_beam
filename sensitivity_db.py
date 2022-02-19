@@ -2314,7 +2314,7 @@ def get_radius_list( za_rad, za_list ) :
    return radius_px_list
       
 
-def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5, vmax_value=2.00, station=None ) :
+def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity" , save_text_file=False, do_plot=False, freq_mhz=0.00, lst_h=0.00, pol="Unknown", out_dir="./", s=3.5, vmax_value=2.00, vmin_value=0.00, station=None ) :
    from scipy.interpolate import SmoothSphereBivariateSpline    
    global web_interface_initialised
 
@@ -2415,7 +2415,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
 #      vmax = 1.75
 #      vmax = max_sens
       vmax=vmax_value
-      im=ax1.imshow( sensitivity , interpolation='none', vmax=vmax )
+      vmin=vmin_value
+      im=ax1.imshow( sensitivity , interpolation='none', vmax=vmax, vmin=vmin )
 
       # https://matplotlib.org/stable/api/_as_gen/matplotlib.patches.Circle.html      
       # add circles with za=15, 30, 45, 75 degrees :
@@ -2733,18 +2734,19 @@ if __name__ == "__main__":
               # Ensuring same color bar scale :
               vmax_value = max( max(aot_x) , max(aot_y) , max(aot_i) )
               vmax_value = 1.0
+              vmin_value = 0.0
               print("DEBUG : common vmax for X,Y,I maps = %.4f" % (vmax_value))
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="X", vmax_value=vmax_value )
+              plot_sensitivity_map( azim_x, za_x, aot_x , out_fitsname_base=out_fitsname_base, save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="X", vmax_value=vmax_value, vmin_value=vmin_value )
               
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y", vmax_value=vmax_value )
+              plot_sensitivity_map( azim_y, za_y, aot_y , out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="Y", vmax_value=vmax_value, vmin_value=vmin_value )
 
 
               print("DEBUG : %d / %d / %d" % (len(aot_x),len(aot_y),len(aot_i)))             
               out_fitsname_base = "sensitivity_map_lst%06.2fh_freq%06.2fMHz" % (options.lst_hours,options.freq_mhz)
-              plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="I", s=5, vmax_value=vmax_value )
+              plot_sensitivity_map( azim_i, za_i, aot_i, out_fitsname_base=out_fitsname_base , save_text_file = options.save_text_file, do_plot=True, freq_mhz=options.freq_mhz, lst_h=options.lst_hours, pol="I", s=5, vmax_value=vmax_value, vmin_value=vmin_value )
                             
 
     elif options.unixtime_start is not None and options.unixtime_end is not None :
