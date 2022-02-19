@@ -213,6 +213,20 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
    return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
 
 
+def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None ):
+   # TODO : implement calculation of valid HA range for now returns 0-24 hours
+
+   return (0,24)
+
+def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_end, glon_deg=None, glat_deg=None ):
+   if glon_deg is not None and glat_deg is not None :
+      print("DEBUG : over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
+      (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
+
+   # TODO : implement verification that the object at (RA,DEC) is indeed above the horizon in a given time range
+
+   return True
+
 def read_text_file( filename , do_fit=True ) : 
    print("read_data(%s) ..." % (filename))
 

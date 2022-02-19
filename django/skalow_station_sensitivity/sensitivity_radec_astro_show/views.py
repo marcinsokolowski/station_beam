@@ -59,6 +59,8 @@ def sensitivity_radec_astro_show(request):
    frequency_mhz = float( params['frequency_mhz'] )
    ra_deg   = float( params['ra_deg'] )
    dec_deg = float( params['dec_deg'] )
+   glon_deg = None
+   glat_deg = None
    ha_start_h = float( params['ha_start_h'] )
    ha_end_h = float( params['ha_end_h'] )
    bw_mhz = float( params['bw_mhz'] )
@@ -95,11 +97,16 @@ def sensitivity_radec_astro_show(request):
    else :
       # lst_end < lst_start -> adding 24 hours to lst_end, but it has to be dealt later inside this function below :
       lst_end += 24 
-      
-   print("DEBUG : sensitivity_radec_astro_show LST range = %.8f - %.8f [hours]" % (lst_start,lst_end))
+
+   if sensitivity_db.validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start_h*15.00, ha_end_h*15.00, glon_deg=glon_deg, glat_deg=glat_deg ) :      
+      print("DEBUG : sensitivity_radec_astro_show LST range = %.8f - %.8f [hours]" % (lst_start,lst_end))
+   else :
+      print("WARNING : wrong parameters, the object at (RA,DEC) = (%.4f,%.4f) [deg] is not above the horizon in the LST range (%.4f,%.4f) [hours]" % (ra_deg , dec_deg, lst_start, lst_end ))      
+      # TODO : action and message to the user that wrong parameter range was provided 
+      return None
    
    # TODO : add a single number inside this functions !!!   
-   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total,total_integration_time ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start, lst_end=lst_end, time_step=inttime, station=station , db_path=db_path, bandwidth_hz=bw_mhz*1e6, n_stations=n_stations )
+   (lst_x,aot_x,sefd_x, lst_y,aot_y,sefd_y, lst_i,aot_i,sefd_i, noise_x, noise_y, noise_i, noise_x_total, noise_y_total, noise_i_total,total_integration_time ) = sensitivity_db.get_sensitivity_radec_lstrange( ra_deg, dec_deg, frequency_mhz, lst_start=lst_start, lst_end=lst_end, time_step=inttime, station=station , db_path=db_path, bandwidth_hz=bw_mhz*1e6, n_stations=n_stations, glon_deg=glon_deg, glat_deg=glat_deg )
 
    
    # 
