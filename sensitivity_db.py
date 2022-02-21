@@ -2005,6 +2005,7 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
          if ha_x[i] > 12.00 :
             ha_x[i] = ha_x[i] - 24.00
 
+   # check if the values of ha_x are within the range and if not if they can be brought back to the specified HA range (as from the form):
    if ha_start_h < 0 and ha_end_h > 0 :
       print("DEBUG : plotting range specified to be %.4f - %.4f [hours]" % (ha_start_h,ha_end_h))
   
