@@ -70,6 +70,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as md  # to convert unix time to date on X-axis 
 import os
+import copy
 from scipy.interpolate import interp1d # for interpolation 
 
 import matplotlib
@@ -1947,6 +1948,7 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
    global web_interface_initialised
    global plot_requirements
    global plot_braun2019
+   global debug_level
 
    legend_list = []
 
@@ -1996,41 +1998,46 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
        ha_x.append( ha )     
 
    # check if range is ok :   
+   print("DEBUG2 : ha_x[0] = %.4f [h], ha_x[-1] = %.4f [h] -> does it need to fix the HA values ?" % (ha_x[0],ha_x[-1]))
    if ha_x[0] > ha_x[-1] and ha_x[0]>12.00 and ha_x[-1] < 12.00 : 
+      print("DEBUG2 : Yes, ha_x[0] = %.4f [h], ha_x[-1] = %.4f [h] -> need to fix the HA values" % (ha_x[0],ha_x[-1]))
       for i in range(0,len(ha_x)) :
          if ha_x[i] > 12.00 :
             ha_x[i] = ha_x[i] - 24.00
-   
+
+   if ha_start_h < 0 and ha_end_h > 0 :
+      print("DEBUG : plotting range specified to be %.4f - %.4f [hours]" % (ha_start_h,ha_end_h))
+  
+      if max(ha_x) > ha_end_h or min(ha_x) < ha_start_h :
+         print("DEBUG found values > %.4f hours -> changing HA values to be in the specified range -12 - +12 hours" % (ha_end_h))
+         
+         can_be_fixed = True         
+         for i in range(0,len(ha_x)) :
+            if ha_x[i] > ha_end_h and (ha_x[i] - 24.00) < ha_start_h :
+               can_be_fixed = False
+               
+            if ha_x[i] < ha_start_h and (ha_x[i] + 24.00) > ha_end_h :
+               can_be_fixed = False
+         
+         if can_be_fixed :
+            print("DEBUG : HA values can be brought back to the specified HA range %.4f - %.4f [hours]" % (ha_start_h,ha_end_h))
+            for i in range(0,len(ha_x)) :
+               if ha_x[i] > 12.00 :
+                  ha_x[i] = ha_x[i] - 24.00
+               
+               if ha_x[i] < -12.00 :
+                  ha_x[i] = ha_x[i] + 24.00
+                  
+         else :
+            print("WARNING : HA values cannot be brought back to the specified HA range %.4f - %.4f [hours]" % (ha_start_h,ha_end_h))
+               
+
    print("DEBUG : final HA order:")
    for i in range(0,len(ha_x)) :
       print("%.4f" % (ha_x[i]))
 
-   ha_y = []
-   for lst in lst_y :
-       ha = lst - ra_h
-       if ha < -12 :
-          ha = ha + 24
-       ha_y.append( ha )     
-
-   # check if range is ok :   
-   if ha_y[0] > ha_y[-1] and ha_y[0]>12.00 and ha_y[-1] < 12.00: 
-      for i in range(0,len(ha_y)) :
-         if ha_y[i] > 12.00 :
-            ha_y[i] = ha_y[i] - 24.00
-
-  
-   ha_i = []
-   for lst in lst_i :
-       ha = lst - ra_h
-       if ha < -12 :
-          ha = ha + 24
-       ha_i.append( ha )     
-
-   # check if range is ok :   
-   if ha_i[0] > ha_i[-1] and ha_i[0]>12.00 and ha_i[-1] < 12.00 : 
-      for i in range(0,len(ha_i)) :
-         if ha_i[i] > 12.00 :
-            ha_i[i] = ha_i[i] - 24.00
+   ha_y = copy.copy( ha_x )
+   ha_i = copy.copy( ha_x )
 
    if lst_x is not None :
       min_ha = min(ha_x)
@@ -2040,16 +2047,32 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( ha_x, aot_x, point_x )
       legend_list.append( 'X polarisation' )
+
+      if debug_level >= 2 :
+         print("DEBUG2 : sensitivity vs. HA for X :")
+         for i in range(0,len(ha_x)) :
+            print("DEBUG2 : %.4f %.4f" % (ha_x[i],aot_x[i]))
    
    if lst_y is not None and aot_y is not None :
       ax_y = plt.plot( ha_y, aot_y, point_y )
       legend_list.append( 'Y polarisation' )
+
+      if debug_level >= 2 :
+         print("DEBUG2 : sensitivity vs. HA for Y :")
+         for i in range(0,len(ha_y)) :
+            print("DEBUG2 : %.4f %.4f" % (ha_y[i],aot_y[i]))
+
 
    if lst_i is not None and aot_i is not None :
       ax_i = plt.plot( ha_i, aot_i, point_i )
       
       max_i = max( aot_i )
       legend_list.append( 'Stokes I' )
+      
+      if debug_level >= 2 :
+         print("DEBUG2 : sensitivity vs. HA for Stokes I:")
+         for i in range(0,len(ha_i)) :
+            print("DEBUG2 : %.4f %.4f" % (ha_i[i],aot_i[i]))
 #      if max_i > max_ylimit :
 #         max_ylimit = max_i * 1.1 # max_i + 10% of max_i
 
