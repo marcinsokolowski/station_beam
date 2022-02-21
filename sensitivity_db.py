@@ -213,10 +213,22 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
    return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
 
 
-def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None ):
+def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_lat=MWA_POS.lat.value ):
    # TODO : implement calculation of valid HA range for now returns 0-24 hours
+   # http://slittlefair.staff.shef.ac.uk/teaching/phy115/session3/page7/page7.html
+   tan_geo_lat = math.tan( geo_lat*(math.pi/180.00) )
+   tan_dec     = math.tan( dec_deg*(math.pi/180.00) )
+   cos_ha = -tan_dec * tan_geo_lat
+   
+   ha_rad = math.acos( cos_ha )
+   ha_deg = ha_rad*(180.00/math.pi)
+   ha_h   = ha_deg/15.00
+   
+   print("DEBUG : HA range = +/- %.4f [deg] or +/- %.4f [hours]" % (ha_deg,ha_h))
 
-   return (0,24)
+   return (-math.fabs(ha_h) , +math.fabs(ha_h) )
+#  initial - full range 
+#   return (0,24)
 
 def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_end, glon_deg=None, glat_deg=None ):
    if glon_deg is not None and glat_deg is not None :
