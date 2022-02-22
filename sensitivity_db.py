@@ -231,14 +231,28 @@ def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_l
 #  initial - full range 
 #   return (0,24)
 
-def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_end, glon_deg=None, glat_deg=None ):
+def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_end, glon_deg=None, glat_deg=None, time_step_sec=120, min_elevation=0  ): # time_step in seconds
    if glon_deg is not None and glat_deg is not None :
       print("DEBUG : over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
 
    # TODO : implement verification that the object at (RA,DEC) is indeed above the horizon in a given time range
-
-   return True
+   time_step_h = (time_step_sec / 3600.00)
+   lst = lst_start 
+   source_above_horizon = False
+   total_ok_time = 0
+   while lst <= lst_end :
+      ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst )
+      if alt_deg > min_elevation :
+         source_above_horizon = True
+         total_ok_time += time_step_h
+         # print("DEBUG : verified that the source (RA,DEC) = (%.4f,%.4f) [deg] is above minimum elevation = %.4f [deg] at lst = %.4f          
+         
+      lst += time_step_h
+      
+   print("DEBUG : total time when the source (RA,DEC) = (%.4f,%.4f) [deg] is above minimum elevation = %.4f [deg] is approx. %.8f hours" % (ra_deg,dec_deg,min_elevation,total_ok_time))
+       
+   return source_above_horizon
 
 def read_text_file( filename , do_fit=True ) : 
    print("read_data(%s) ..." % (filename))
