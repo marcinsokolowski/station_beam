@@ -215,6 +215,10 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
 
 
 def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_lat=MWA_POS.lat.value ):
+   if glon_deg is not None and glat_deg is not None :
+      print("DEBUG (calc_hour_angle_range) : over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
+      (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
+
    # TODO : implement calculation of valid HA range for now returns 0-24 hours
    # http://slittlefair.staff.shef.ac.uk/teaching/phy115/session3/page7/page7.html
    tan_geo_lat = math.tan( geo_lat*(math.pi/180.00) )
@@ -233,7 +237,7 @@ def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_l
 
 def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_end, glon_deg=None, glat_deg=None, time_step_sec=120, min_elevation=0  ): # time_step in seconds
    if glon_deg is not None and glat_deg is not None :
-      print("DEBUG : over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
+      print("DEBUG (validate parameters): over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
 
    # TODO : implement verification that the object at (RA,DEC) is indeed above the horizon in a given time range
