@@ -258,6 +258,73 @@ def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_en
        
    return source_above_horizon
 
+
+def is_digit( znak ) :
+   if znak=='0' or znak=='1' or znak=='2' or znak=='3' or znak=='4' or znak=='5' or znak=='6' or znak=='7' or znak=='8' or znak=='9' :
+      return True
+
+   return False
+
+def round_and_get_error( value , rel_error=0.2, debug=False ):
+   error = rel_error*value 
+   error_string = ("%.20f" % error)
+   x = error
+   
+   n=1   
+   error_string = ("%.20f" % x)
+   len_buff = len(error_string)
+   first_digit = -1
+   after_dot=-1
+   
+   for i in range(0,len_buff): 
+      if is_digit( error_string[i] ) :
+         if after_dot >= 0 :
+            after_dot += 1
+
+         if first_digit < 0 and error_string[i]!='0' :
+            first_digit = error_string[i];
+            break;
+      else :
+         if error_string[i] == '.' :
+            after_dot = 0
+      
+   rounded = x;
+
+   if after_dot < 0 :
+      after_dot = 0
+
+   if first_digit != '1' :
+      # rounded = ceil(x*TMath::Power(10,after_dot))/TMath::Power(10,after_dot);
+      rounded = math.ceil(x*math.pow(10,after_dot))/(math.pow(10,after_dot))
+
+   if debug :
+      print("First digit in %s is %c, after dot = %d -> rounded = %.20f\n" % (error_string,first_digit,after_dot,rounded))
+   if first_digit == '1' :
+      n = 2
+
+   if after_dot > 0 :
+       error_string = ( "%.*g" % (n, rounded))
+   else :
+       error_string = ("%.0f" % rounded)
+
+   if debug :
+      print("Buff = %s\n" % error_string)
+
+   dot_idx=error_string.find(".")
+   if dot_idx >= 0 :
+      digits=error_string[dot_idx+1:]
+      if debug :
+         print("DEBUG : error_string := %s , digits = %s" % (error_string,digits))
+      len_digits=len(digits)
+   else :
+      len_digits=0
+
+   # len_digits=len(error_string)
+   ret = ('%.*f' % (len_digits,round(value,len_digits)))
+
+   return (ret,error_string)
+         
+
 def read_text_file( filename , do_fit=True ) : 
    print("read_data(%s) ..." % (filename))
 
