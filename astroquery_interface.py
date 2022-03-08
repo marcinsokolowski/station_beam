@@ -14,7 +14,7 @@ except :
 
 def get_radec_for_a_source( source_name ) :
    if has_astroquery :
-      source_info = Simbad.query_object("3c444")
+      source_info = Simbad.query_object( source_name )
       # general :
       # source_info = Simbad.query_object( source_name )
       coord_str=source_info['RA'][0] + " " + source_info['DEC'][0]
