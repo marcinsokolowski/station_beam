@@ -203,18 +203,56 @@ def sensitivity_radec_astro_show(request):
    noise_i_str = ""
    if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :
       if noise_x_total < 0.001 and noise_y_total < 0.001 and noise_i_total < 0.001 :
-         noise_x_str = "%.6f [uJy]" % (noise_x_total*1000000.00)
-         noise_y_str = "%.6f [uJy]" % (noise_y_total*1000000.00)
-         noise_i_str = "%.6f [uJy]" % (noise_i_total*1000000.00)
+#         noise_x_str = "%.6f [uJy]" % (noise_x_total*1000000.00)      
+#         noise_y_str = "%.6f [uJy]" % (noise_y_total*1000000.00)
+#         noise_i_str = "%.6f [uJy]" % (noise_i_total*1000000.00)
+      
+         value_tmp = noise_x_total*1000000.00
+         (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )      
+         noise_x_str = ( "%s +/- %s [uJy]" % (value_str,error_str) )
+         
+         value_tmp = noise_y_total*1000000.00
+         (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )
+         noise_y_str = ( "%s +/- %s [uJy]" % (value_str,error_str) )
+         
+         value_tmp = noise_i_total*1000000.00
+         (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )
+         noise_i_str = ("%s +/- %s [uJy]" % (value_str,error_str))         
       else :
-         noise_x_str = "%.6f [mJy]" % (noise_x_total*1000.00)
-         noise_y_str = "%.6f [mJy]" % (noise_y_total*1000.00)
-         noise_i_str = "%.6f [mJy]" % (noise_i_total*1000.00)
+#         noise_x_str = "%.6f [mJy]" % (noise_x_total*1000.00)
+#         noise_y_str = "%.6f [mJy]" % (noise_y_total*1000.00)
+#         noise_i_str = "%.6f [mJy]" % (noise_i_total*1000.00)
+
+          value_tmp = noise_x_total*1000.00
+          (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )
+          noise_x_str = ( "%s +/- %s [mJy]" % (value_str,error_str) )
+          
+          value_tmp = noise_y_total*1000.00
+          (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )
+          noise_y_str = ( "%s +/- %s [mJy]" % (value_str,error_str) )
+ 
+          value_tmp = noise_i_total*1000.00
+          (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )
+          noise_i_str = ( "%s +/- %s [mJy]" % (value_str,error_str) )
    else :
-      noise_x_str = "%.6f [Jy]" % (noise_x_total)
-      noise_y_str = "%.6f [Jy]" % (noise_y_total)
-      noise_i_str = "%.6f [Jy]" % (noise_i_total)
-   
+#      noise_x_str = "%.6f [Jy]" % (noise_x_total)
+#      noise_y_str = "%.6f [Jy]" % (noise_y_total)
+#      noise_i_str = "%.6f [Jy]" % (noise_i_total)
+
+       value_tmp = noise_x_total
+       (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )   
+       noise_x_str = ( "%s +/- %s [Jy]" % (value_str,error_str) )
+
+       value_tmp = noise_y_total
+       (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )   
+       noise_y_str = ( "%s +/- %s [Jy]" % (value_str,error_str) )
+
+       value_tmp = noise_i_total
+       (value_str,error_str) = sensitivity_db.round_and_get_error( value_tmp, rel_error=0.2 )   
+       noise_i_str = ( "%s +/- %s [Jy]" % (value_str,error_str) )
+
+   print("DEBUG : sensitivity results : %.8f / %.8f / %.8f -> %s / %s / %s" % (noise_x_total,noise_y_total,noise_i_total,noise_x_str,noise_y_str,noise_i_str))
+       
    args = { 'image':uri , 'zipfile':zip_file_name, 'noise_x_str':noise_x_str, 'noise_y_str':noise_y_str, 'noise_i_str':noise_i_str, 'warning':"" }
    print("DEBUG : mode = %d" % (mode))
    
