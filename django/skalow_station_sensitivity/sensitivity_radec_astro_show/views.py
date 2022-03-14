@@ -61,6 +61,15 @@ def sensitivity_radec_astro_show(request):
    dec_deg = float( params['dec_deg'] )
    glon_deg = None
    glat_deg = None
+   if params['coord_type'] == 'GAL' :
+      print("DEBUG : Galactic coordinates detected")
+      glon_deg = float( params['glon_deg'] )       
+      glat_deg = float( params['glat_deg'] )
+      print("DEBUG : Galactic coordinates used (GLON,GLAT) = (%.4f,%.4f) [deg], will overwrite (RA,DEC) = (%.4f,%.4f) [deg] with RA,DEC calculated from GAL coord" % (glon_deg,glat_deg,ra_deg,dec_deg))
+      
+      (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
+      print("DEBUG : Galactic coordinates used (GLON,GLAT) = (%.4f,%.4f) [deg] -> (RA,DEC) = (%.4f,%.4f) [deg]" % (glon_deg,glat_deg,ra_deg,dec_deg))
+   
    ha_start_h = float( params['ha_start_h'] )
    ha_end_h = float( params['ha_end_h'] )
    bw_mhz = float( params['bw_mhz'] )
