@@ -1,4 +1,4 @@
-_from __future__ import print_function
+# _from __future__ import print_function
 # SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
 # example commands :
 #  1/ A/T vs. frequency at a particular pointing direction :
@@ -219,6 +219,7 @@ def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_l
    if glon_deg is not None and glat_deg is not None :
       print("DEBUG (calc_hour_angle_range) : over-writing ra_deg, dec_deg = %.4f , %.4f [deg] with Galactic coordinates %.4f,%.4f [deg]" % (ra_deg,dec_deg,glon_deg,glat_deg))
       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
+      print("DEBUG : calculated (RA,DEC) = (%.4f,%.4f) [deg]" % (ra_deg,dec_deg))
 
    # TODO : implement calculation of valid HA range for now returns 0-24 hours
    # http://slittlefair.staff.shef.ac.uk/teaching/phy115/session3/page7/page7.html
