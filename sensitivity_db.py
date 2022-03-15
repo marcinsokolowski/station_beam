@@ -1,4 +1,4 @@
-from __future__ import print_function
+_from __future__ import print_function
 # SCRIPT for getting station sensitivity from the sensitivity database (SQLITE3 or PostgreSQL) :
 # example commands :
 #  1/ A/T vs. frequency at a particular pointing direction :
@@ -80,6 +80,7 @@ matplotlib.rc('ytick', labelsize=25)
 # local packages :
 import beam_tools
 import fits_beam
+import radec2azim
 
 # time operations :
 from astropy.coordinates import SkyCoord, EarthLocation
@@ -188,30 +189,30 @@ def ha2range_deg( ha ) :
 # 
 #  calculates (AZIM,ELEVATION) from (RA,DEC) using LST 
 # 
-def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
-   DEG2RAD = (math.pi/180.00)
-   RAD2DEG = (180.00/math.pi)
-
-   ha_deg = lst_hours*15.00 - ra_deg
-   ha_deg = ha2range_deg( ha_deg )
-   if debug : 
-      print("DEBUG : ha := %.4f [deg]" % (ha_deg))
-         
-   sin_alt = math.sin( geo_lat*DEG2RAD ) * math.sin( dec_deg*DEG2RAD )  + math.cos( geo_lat*DEG2RAD ) * math.cos( dec_deg*DEG2RAD ) * math.cos( ha_deg*DEG2RAD )
-   alt_rad = math.asin( sin_alt )
-   alt_deg = alt_rad * RAD2DEG
-   
-   up = ( math.cos( dec_deg*DEG2RAD ) * math.sin( ha_deg*DEG2RAD ) ) 
-   bottom =  ( math.sin( geo_lat*DEG2RAD )*math.cos( dec_deg*DEG2RAD )*math.cos( ha_deg*DEG2RAD ) - math.cos( geo_lat*DEG2RAD )*math.sin( dec_deg*DEG2RAD ) ) 
-   azim_rad = math.atan2( up, bottom )
-   azim_deg = azim_rad*RAD2DEG
-   
-   if astro_azim : 
-      azim_deg = (180.00 + azim_deg)
-   
-   print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
-   
-   return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
+# def radec2azim_local( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
+#   DEG2RAD = (math.pi/180.00)
+#   RAD2DEG = (180.00/math.pi)
+#
+#   ha_deg = lst_hours*15.00 - ra_deg
+#   ha_deg = ha2range_deg( ha_deg )
+#   if debug : 
+#      print("DEBUG : ha := %.4f [deg]" % (ha_deg))
+#         
+#   sin_alt = math.sin( geo_lat*DEG2RAD ) * math.sin( dec_deg*DEG2RAD )  + math.cos( geo_lat*DEG2RAD ) * math.cos( dec_deg*DEG2RAD ) * math.cos( ha_deg*DEG2RAD )
+#   alt_rad = math.asin( sin_alt )
+#   alt_deg = alt_rad * RAD2DEG
+#   
+#   up = ( math.cos( dec_deg*DEG2RAD ) * math.sin( ha_deg*DEG2RAD ) ) 
+#   bottom =  ( math.sin( geo_lat*DEG2RAD )*math.cos( dec_deg*DEG2RAD )*math.cos( ha_deg*DEG2RAD ) - math.cos( geo_lat*DEG2RAD )*math.sin( dec_deg*DEG2RAD ) ) 
+#   azim_rad = math.atan2( up, bottom )
+#   azim_deg = azim_rad*RAD2DEG
+#   
+#   if astro_azim : 
+#      azim_deg = (180.00 + azim_deg)
+#   
+#   print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
+#   
+#   return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
 
 
 def calc_hour_angle_range( ra_deg , dec_deg, glon_deg=None, glat_deg=None, geo_lat=MWA_POS.lat.value ):
@@ -246,7 +247,7 @@ def validate_parameters(  ra_deg , dec_deg , lst_start, lst_end, ha_start, ha_en
    source_above_horizon = False
    total_ok_time = 0
    while lst <= lst_end :
-      ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst )
+      ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat ) = radec2azim.radec2azim( ra_deg, dec_deg, lst )
       if alt_deg > min_elevation :
          source_above_horizon = True
          total_ok_time += time_step_h
@@ -422,7 +423,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
        # def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
        # return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
        
-       (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=MWA_POS.lat.value )
+       (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim.radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=MWA_POS.lat.value )
        za_deg = (90.00 - alt_deg )
        print("DEBUG : calculated horizontal coordinates (az,za,ha) = (%.4f,%.4f,%.4f) [deg] from (ra,dec) = (%.4f,%.4f) [deg] at LST = %.4f [h]" % (az_deg, za_deg, ha_deg, ra_deg, dec_deg, lst_hours)) 
     
@@ -663,7 +664,7 @@ def get_sensitivity_timerange_single_pol( az_deg , za_deg , freq_mhz, ux_start, 
        
        # if (RA,DEC) are specified -> use them to calculate AZIM,ELEV for the current LST :
        if ra_deg is not None and dec_deg is not None :
-          (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=MWA_POS.lat.value )
+          (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim.radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=MWA_POS.lat.value )
           za_deg = (90.00 - alt_deg )
           print("DEBUG : calculated horizontal coordinates (az,za,ha) = (%.4f,%.4f,%.4f) [deg] from (ra,dec) = (%.4f,%.4f) [deg] at LST = %.4f [h]" % (az_deg, za_deg, ha_deg, ra_deg, dec_deg, lst_hours)) 
 
@@ -1109,7 +1110,7 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
     for lst in different_lsts :         
        cur = conn.cursor()       
        
-       (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim( ra_deg, dec_deg, lst, geo_lat=MWA_POS.lat.value )
+       (az_deg, alt_deg, ha_deg, ra_deg2, dec_deg2, lst_hours, geo_lat ) = radec2azim.radec2azim( ra_deg, dec_deg, lst, geo_lat=MWA_POS.lat.value )
        za_deg = (90.00 - alt_deg )
        
        # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !

@@ -20,6 +20,30 @@ def ha2range_deg( ha ) :
 # 
 #  calculates (AZIM,ELEVATION) from (RA,DEC) using LST 
 # 
+# OLD function as it was here now replaced with function from sensitivity_db 
+# def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
+#   ha_deg = lst_hours*15.00 - ra_deg
+#   ha_deg = ha2range_deg( ha_deg )
+#   if debug : 
+#      print("DEBUG : ha := %.4f [deg]" % (ha_deg))
+#         
+#   sin_alt = math.sin( geo_lat*DEG2RAD ) * math.sin( dec_deg*DEG2RAD )  + math.cos( geo_lat*DEG2RAD ) * math.cos( dec_deg*DEG2RAD ) * math.cos( ha_deg*DEG2RAD )
+#   alt_rad = math.asin( sin_alt )
+#   alt_deg = alt_rad * RAD2DEG
+#   
+#   up = ( math.cos( dec_deg*DEG2RAD ) * math.sin( ha_deg*DEG2RAD ) ) 
+#   bottom =  ( math.sin( geo_lat*DEG2RAD )*math.cos( dec_deg*DEG2RAD )*math.cos( ha_deg*DEG2RAD ) - math.cos( geo_lat*DEG2RAD )*math.sin( dec_deg*DEG2RAD ) ) 
+#   azim_rad = math.atan2( up, bottom )
+#   azim_deg = azim_rad*RAD2DEG
+#   
+#   if astro_azim : 
+#      azim_deg = (180.00 + azim_deg)
+#   
+#   print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
+#   
+#   return (azim_deg,alt_deg)
+
+# NEW function from sensitivity_db
 def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=True, astro_azim=True ) : # default GEO_LAT is MRO 
    ha_deg = lst_hours*15.00 - ra_deg
    ha_deg = ha2range_deg( ha_deg )
@@ -40,7 +64,9 @@ def radec2azim( ra_deg, dec_deg, lst_hours, geo_lat=-26.70331944444445, debug=Tr
    
    print("(Azim,alt) = (%.4f,%.4f) [deg]" % (azim_deg,alt_deg))
    
-   return (azim_deg,alt_deg)
+   return ( azim_deg, alt_deg, ha_deg, ra_deg, dec_deg, lst_hours, geo_lat )
+
+
 
 # https://docs.astropy.org/en/stable/coordinates/index.html
 def radec2gal( ra_deg, dec_deg ) :
