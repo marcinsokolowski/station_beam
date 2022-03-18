@@ -29,3 +29,5 @@ CREATE UNIQUE INDEX Sensitivity_unique_index on Sensitivity (array_type,code_ver
 CREATE INDEX Sensitivity_lst_freq on Sensitivity (lst,frequency_mhz);
 
 CREATE INDEX Sensitivity_freq on Sensitivity (frequency_mhz);
+
+CREATE INDEX Sensitivity_za on Sensitivity (za_deg);

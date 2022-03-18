@@ -1115,7 +1115,7 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
        za_deg = (90.00 - alt_deg )
        
        # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE (frequency_mhz between (%.4f-%.4f) AND (%.4f+%.4f)) AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND (lst between (%.8f-0.0001) and (%.8f+0.0001)) ORDER BY ((azim_deg-%.8f)*(azim_deg-%.8f)+(za_deg-%.8f)*(za_deg-%.8f)) ASC" %  (freq_mhz,(min_freq_distance+0.01), freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst, lst, az_deg, az_deg, za_deg, za_deg )
+       szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE (frequency_mhz between (%.4f-%.4f) AND (%.4f+%.4f)) AND (za_deg between (%.4f-%.4f) AND (%.4f+%.4f)) AND (ABS(azim_deg-%.4f)<=%.4f OR %.4f<0.1) AND polarisation='%s' AND (lst between (%.8f-0.0001) and (%.8f+0.0001)) ORDER BY ((azim_deg-%.8f)*(azim_deg-%.8f)+(za_deg-%.8f)*(za_deg-%.8f)) ASC" %  (freq_mhz,(min_freq_distance+0.01), freq_mhz,(min_freq_distance+0.01), za_deg, db_ang_res_deg, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg, pol, lst, lst, az_deg, az_deg, za_deg, za_deg )
        if debug_level >= 2 :
           print("DEBUG SQL get_sensitivity_radec_lstrange_single_pol : %s" % (szSQL))
        cur.execute( szSQL )
