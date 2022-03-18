@@ -447,7 +447,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     # select closest LST :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f or %.4f<0.1)" %  (lst_hours,lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg )
+    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE (lst between (%.4f-%.4f) AND (%.4f+%.4f)) AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f or %.4f<0.1)" %  (lst_hours,lst_hours,db_lst_resolution, lst_hours,db_lst_resolution, za_deg, db_ang_res_deg, az_deg, db_ang_res_deg, za_deg )
     print("DEBUG SQL1 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -472,7 +472,7 @@ def get_sensitivity_azzalst( az_deg , za_deg , lst_hours ,
     # get requested data :
     cur = conn.cursor()
     # Condition %.4f<0.1 means that if za_deg is close to 0 (zenith) azimuth does not matter !
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<%.4f AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f or %.4f<0.1)" %  (lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg , za_deg )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE (lst between (%.4f-%.4f) AND (%.4f+%.4f)) AND ABS(za_deg-%.4f)<=%.4f AND (ABS(azim_deg-%.4f)<=%.4f or %.4f<0.1)" %  (lst_hours,(min_lst_distance+0.01), lst_hours,(min_lst_distance+0.01), za_deg, db_ang_res_deg, az_deg, db_ang_res_deg , za_deg )
     print("DEBUG SQL2 : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -1403,7 +1403,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
   
     # select closest LST :
     cur = conn.cursor()
-    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (lst_hours,lst_hours,db_lst_resolution, freq_mhz, db_freq_resolution_mhz )
+    szSQL = "SELECT MIN(ABS(lst-%.8f)) FROM Sensitivity WHERE (lst between (%.4f-%.4f) AND (%.4f+%.4f)) AND  frequency_mhz between (%.4f-%.4f) AND (%.4f+%.4f) " %  (lst_hours,lst_hours,db_lst_resolution, lst_hours,db_lst_resolution, freq_mhz, db_freq_resolution_mhz, freq_mhz, db_freq_resolution_mhz )
     print("DEBUG SQL_best_lst : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -1423,7 +1423,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
 
     # select closest FREQUENCY :
     cur = conn.cursor()
-    szSQL = "SELECT MIN(ABS(frequency_mhz-%.8f)) FROM Sensitivity WHERE ABS(lst-%.4f)<=%.4f AND ABS(frequency_mhz-%.4f)<=%.4f" %  (freq_mhz, lst_hours, min_lst_distance, freq_mhz, db_freq_resolution_mhz )
+    szSQL = "SELECT MIN(ABS(frequency_mhz-%.8f)) FROM Sensitivity WHERE (lst between (%.4f-%.4f) AND (%.4f+%.4f)) AND  frequency_mhz between (%.4f-%.4f) AND (%.4f+%.4f)" %  (freq_mhz, lst_hours, min_lst_distance, lst_hours, min_lst_distance, freq_mhz, db_freq_resolution_mhz, freq_mhz, db_freq_resolution_mhz )
     print("DEBUG SQL_best_freq : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
@@ -1439,7 +1439,7 @@ def get_sensitivity_map( freq_mhz, lst_hours,
  
     # get requested data :
     cur = conn.cursor()
-    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE ABS(lst-%.4f)<=%.8f AND ABS(frequency_mhz-%.4f)<=%.8f ORDER BY za_deg, azim_deg ASC" %  (lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1) )
+    szSQL = "SELECT id,azim_deg,za_deg,frequency_mhz,polarisation,lst,unixtime,gpstime,sensitivity,t_sys,a_eff,t_rcv,t_ant,array_type,timestamp,creator,code_version FROM Sensitivity WHERE (lst between (%.8f-%.4f) AND (%.4f+%.8f)) AND  frequency_mhz between (%.4f-%.8f) AND (%.4f+%.8f) ORDER BY za_deg, azim_deg ASC" % (lst_hours,(min_lst_distance+0.01), lst_hours,(min_lst_distance+0.01), freq_mhz, (min_freq_distance+0.1), freq_mhz, (min_freq_distance+0.1) )
     print("DEBUG SQL_main : %s" % (szSQL))
     cur.execute( szSQL )
     rows = cur.fetchall()
