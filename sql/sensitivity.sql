@@ -26,4 +26,6 @@ CREATE TABLE Sensitivity (
 
 CREATE UNIQUE INDEX Sensitivity_unique_index on Sensitivity (array_type,code_version,azim_deg,za_deg,frequency_mhz,unixtime,polarisation);   
    
-CREATE INDEX Sensitivity_lst on Sensitivity (lst);
+CREATE INDEX Sensitivity_lst_freq on Sensitivity (lst,frequency_mhz);
+
+CREATE INDEX Sensitivity_freq on Sensitivity (frequency_mhz);
