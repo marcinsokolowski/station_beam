@@ -42,6 +42,8 @@ if __name__ == "__main__":
    directory="/tmp/station_beam"
    if len(sys.argv) > 1:
       directory = sys.argv[1]
+
+   print("INFO : cleaning directory %s started at unixtime = %d" % (directory,time.time()))
    
    clean_old(directory=directory)
       
