@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-def clean_old( directory="/tmp/station_beam" , max_age=300 ) :
+def clean_old( directory="/tmp/station_beam" , max_age=432000 ) : # 5 days 
    if not os.path.exists(directory) :
       print("INFO : directory %s does not exist -> nothing to clean up" % (directory))
       return False
