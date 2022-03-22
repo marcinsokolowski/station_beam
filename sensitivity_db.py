@@ -120,6 +120,24 @@ import sensitivity_braun2019
 #        https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.LSQSphereBivariateSpline.html
 #        https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.SmoothSphereBivariateSpline.html
 
+import threading
+global_plot_lock = threading.Lock()
+class PlotLock :
+    def __init__(self) :
+       global global_plot_lock
+       global_plot_lock.acquire()
+       print("DEBUG : locking")
+       
+    def __del__(self) :
+       self.unlock()
+       
+    def unlock(self) :
+       global global_plot_lock
+       global_plot_lock.release()
+       print("DEBUG : un-locking")
+    
+        
+
 
 web_interface_initialised = False
 try:
@@ -154,6 +172,13 @@ def create_connection_sqlite3( db_file ):
 
  
     return conn
+
+figure_counter=1
+def get_figure( fig_size_x , fig_size_y ) :
+    global figure_counter
+    
+    plt.figure( num=figure_counter, figsize=( fig_size_x , fig_size_y ) )
+    figure_counter += 1
 
 def calc_anglular_distance_degrees( azim1_deg, za1_deg, azim2_deg , za2_deg ) :
     azim1_rad = azim1_deg * (math.pi/180.00)
@@ -1889,8 +1914,11 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    if aot_i is not None :
       if max(aot_i) > max_aot :
          max_aot = max(aot_i)
-   
+
+   lock = PlotLock()
+      
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   # fig, axes = plt.subplots( (fig_size_x,fig_size_y) ) # crashes ( example from https://towardsdatascience.com/plotting-in-parallel-with-matplotlib-and-python-f7efb3d944de )
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( lst_x, aot_x, point_x )
       legend_list.append( 'X polarisation' )
@@ -2020,7 +2048,6 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
    if do_show :   
       plt.show()
    
-
    return (png_image_path)
 
 
