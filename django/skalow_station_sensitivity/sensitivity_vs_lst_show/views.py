@@ -1,6 +1,7 @@
 import sys
 import os
 import errno
+import uuid
 from string import Template
 
 # from django.shortcuts import render
@@ -76,7 +77,8 @@ def sensitivity_vs_lst_show(request):
 
    
    # 
-   save_output_path = config.save_output_path
+   unique_dir=str(uuid.uuid1())
+   save_output_path = config.save_output_path + "/" + unique_dir
    mkdir_p( save_output_path )
 
    # create plots :   
