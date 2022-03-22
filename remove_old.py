@@ -42,8 +42,12 @@ if __name__ == "__main__":
    directory="/tmp/station_beam"
    if len(sys.argv) > 1:
       directory = sys.argv[1]
+      
+   max_age=432000
+   if len(sys.argv) > 2:   
+      max_age = float( sys.argv[2] )
 
-   print("INFO : cleaning directory %s started at unixtime = %d" % (directory,time.time()))
+   print("INFO : cleaning directory %s started at unixtime = %d , removing files and directories older than %d seconds" % (directory,time.time(),max_age))
    
-   clean_old(directory=directory)
+   clean_old(directory=directory,max_age=max_age)
       
