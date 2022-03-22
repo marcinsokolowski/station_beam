@@ -127,14 +127,15 @@ class PlotLock :
        global global_plot_lock
        global_plot_lock.acquire()
        print("DEBUG : locking")
-       
+
     def __del__(self) :
        self.unlock()
-       
+
     def unlock(self) :
        global global_plot_lock
-       global_plot_lock.release()
-       print("DEBUG : un-locking")
+       if global_plot_lock.locked() :
+          global_plot_lock.release()
+          print("DEBUG : un-locking")
     
         
 
@@ -2042,11 +2043,14 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
          
 #         print("web_interface_initialised = True -> returning image = %s" % (buf))
 
+         lock.unlock()
          # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
          return (png_image_path,buf)
 
    if do_show :   
       plt.show()
+
+   lock.unlock()
    
    return (png_image_path)
 
