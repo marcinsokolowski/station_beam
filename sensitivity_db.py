@@ -71,6 +71,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as md  # to convert unix time to date on X-axis 
 import os
 import copy
+import time
 from scipy.interpolate import interp1d # for interpolation 
 
 import matplotlib
@@ -123,12 +124,33 @@ import sensitivity_braun2019
 import threading
 global_plot_lock = threading.Lock()
 class PlotLock :
-    def __init__(self) :
-       global global_plot_lock
-       global_plot_lock.acquire()
+    def __init__(self,waittime=300) :
+       # global global_plot_lock
+       # global_plot_lock.acquire()
+       #
+       # safer version of the lock with maximum wait limit of default 300 seconds 
+       # most queries should not be longer than this so if they take longer it will be better to force unlock and just continue 
+       # otherwise the program my go into a deadlock       
+       self.mylock(waittime=waittime)
        print("DEBUG : locking")
 
+    def mylock(self,waittime=300) :
+       global global_plot_lock
+       
+       start_ux=time.time()
+       delta = 0
+       while global_plot_lock.locked() and delta < waittime :
+          time.sleep(1)
+          delta = (time.time() - start_ux)
+          
+       if delta >= waittime :
+          print("WARNING : maximum waittime of %d seconds reached without success -> forcing lock release" % (waittime))          
+          self.unlock()
+       else :
+          global_plot_lock.acquire()
+
     def __del__(self) :
+       print("DEBUG : lock destructor")
        self.unlock()
 
     def unlock(self) :
@@ -173,13 +195,6 @@ def create_connection_sqlite3( db_file ):
 
  
     return conn
-
-figure_counter=1
-def get_figure( fig_size_x , fig_size_y ) :
-    global figure_counter
-    
-    plt.figure( num=figure_counter, figsize=( fig_size_x , fig_size_y ) )
-    figure_counter += 1
 
 def calc_anglular_distance_degrees( azim1_deg, za1_deg, azim2_deg , za2_deg ) :
     azim1_rad = azim1_deg * (math.pi/180.00)
@@ -1715,7 +1730,9 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
       utc = datetime.utcfromtimestamp(ux)
       y_utc.append( utc )
    
+   lock = PlotLock()
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   
    fig = plt.gcf()
 #   fig.axes[0].xaxis.set_major_formatter( md.DateFormatter('%Y') )
    
@@ -1848,7 +1865,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
       outfile = ( "%s/%s.png" % (save_output_path,output_file_base) )
       plt.savefig( outfile )
    
-   plt.show()
+   plt.show()   
    
       # save txt file :
    out_txt_filename = None
@@ -1870,6 +1887,7 @@ def plot_sensitivity_vs_time( uxtime_x, aot_x, uxtime_y, aot_y,  unixtime_start,
  
       print("Sensitivity map saved to text file %s" % (out_txt_filename))
 
+   lock.unlock()
    
 def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, azim_deg, za_deg, freq_mhz,
                               output_file_base=None, point_x='go', point_y='rx',
@@ -1916,9 +1934,9 @@ def plot_sensitivity_vs_lst( lst_x, aot_x, lst_y, aot_y,  lst_start, lst_end, az
       if max(aot_i) > max_aot :
          max_aot = max(aot_i)
 
-   lock = PlotLock()
-      
+   lock = PlotLock()            
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   
    # fig, axes = plt.subplots( (fig_size_x,fig_size_y) ) # crashes ( example from https://towardsdatascience.com/plotting-in-parallel-with-matplotlib-and-python-f7efb3d944de )
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( lst_x, aot_x, point_x )
@@ -2161,8 +2179,9 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
    if lst_x is not None :
       min_ha = min(ha_x)
 
-   
+   lock = PlotLock()
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   
    if lst_x is not None and aot_x is not None :
       ax_x =  plt.plot( ha_x, aot_x, point_x )
       legend_list.append( 'X polarisation' )
@@ -2302,13 +2321,15 @@ def plot_sensitivity_vs_ha( lst_x, aot_x, lst_y, aot_y,  ha_start_h, ha_end_h, a
 #         string = base64.b64encode(buf.read())
          
 #         print("web_interface_initialised = True -> returning image = %s" % (buf))
+         lock.unlock()
 
          # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
          return (png_image_path,buf)
 
    if do_show :   
       plt.show()
-   
+
+   lock.unlock()   
 
    return (png_image_path)
 
@@ -2325,7 +2346,9 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
    max_aot = 0.00
    min_freq = min(freq_x)
    
+   lock = PlotLock()
    plt.figure( figsize=( fig_size_x , fig_size_y ) )
+   
    ax = None
    legend_list = []
    if freq_x is not None and aot_x is not None :
@@ -2450,10 +2473,12 @@ def plot_sensitivity( freq_x, aot_x, freq_y, aot_y, output_file_base=None, point
          buf = BytesIO()
          plt.savefig( buf, format="png")
          # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
+         lock.unlock()
          return (outfile,buf)
    
    plt.show()
-   
+   lock.unlock()
+      
    return( outfile , None )
 
 def get_radius_list( za_rad, za_list ) :
@@ -2556,7 +2581,9 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
    if do_plot :
       # see /home/msok/ska/aavs/aavs0.5/trunk/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_local.py
       figsize=16
+      lock = PlotLock()
       fig=plt.figure(figsize=(figsize,0.6*figsize),dpi=300)
+      
       axis('on')
       ax1=fig.add_subplot(1,1,1,polar=False)
     
@@ -2637,6 +2664,8 @@ def plot_sensitivity_map( azim_deg, za_deg, aot, out_fitsname_base="sensitivity"
          buf = BytesIO()
          plt.savefig( buf, format="png")
          # WORKS : see https://stackoverflow.com/questions/52368870/display-matplotlib-image-on-html-page-using-django         
+         
+      lock.unlock()   
 
    
    return (lut,sensitivity,sens_fits_file,azim_fits_file,za_fits_file,out_txt_filename,pngfile,buf)
