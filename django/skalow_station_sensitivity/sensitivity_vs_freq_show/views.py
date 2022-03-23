@@ -1,6 +1,7 @@
 import sys
 import os
 import errno
+import uuid
 
 # from django.shortcuts import render
 from .models import Post
@@ -80,7 +81,8 @@ def sensitivity_vs_freq_show(request):
    ( freq_x,aot_x,sefd_x, freq_y, aot_y, sefd_y, freq_i, aot_i, sefd_i ) = sensitivity_db.get_sensitivity_azzalst( azimuth_deg, za_deg, lst_hours, station=station, db_path=db_path )
 
    # 
-   save_output_path = config.save_output_path
+   unique_dir=str(uuid.uuid1())
+   save_output_path = config.save_output_path + "/" + unique_dir
    mkdir_p( save_output_path )
 
    # create plots :   

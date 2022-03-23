@@ -1,6 +1,7 @@
 import sys
 import os
 import errno
+import uuid
 from string import Template
 
 # from django.shortcuts import render
@@ -57,8 +58,8 @@ def sensitivity_radec_astro_show(request):
       params = request.POST
 
    frequency_mhz = float( params['frequency_mhz'] )
-   ra_deg   = float( params['ra_deg'] )
-   dec_deg = float( params['dec_deg'] )
+   ra_deg   = None
+   dec_deg  = None
    glon_deg = None
    glat_deg = None
    if params['coord_type'] == 'GAL' :
@@ -69,6 +70,9 @@ def sensitivity_radec_astro_show(request):
       
       (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
       print("DEBUG : Galactic coordinates used (GLON,GLAT) = (%.4f,%.4f) [deg] -> (RA,DEC) = (%.4f,%.4f) [deg]" % (glon_deg,glat_deg,ra_deg,dec_deg))
+   else :
+      ra_deg   = float( params['ra_deg'] )
+      dec_deg = float( params['dec_deg'] )
    
    ha_start_h = float( params['ha_start_h'] )
    ha_end_h = float( params['ha_end_h'] )
@@ -119,7 +123,8 @@ def sensitivity_radec_astro_show(request):
 
    
    # 
-   save_output_path = config.save_output_path
+   unique_dir=str(uuid.uuid1())
+   save_output_path = config.save_output_path + "/" + unique_dir
    mkdir_p( save_output_path )
 
    noise_info = None

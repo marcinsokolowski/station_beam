@@ -1,6 +1,7 @@
 import sys
 import os
 import errno
+import uuid
 
 # from django.shortcuts import render
 from .models import Post
@@ -82,7 +83,8 @@ def sensitivity_radec_vs_freq_show(request):
 
    args = None
    if freq_x is not None and aot_x is not None and sefd_x is not None and freq_y is not None and aot_y is not None and sefd_y is not None and freq_i is not None and aot_i is not None and sefd_i is not None :
-      save_output_path = config.save_output_path
+      unique_dir=str(uuid.uuid1())
+      save_output_path = config.save_output_path + "/" + unique_dir
       mkdir_p( save_output_path )
 
       # create plots :   
