@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-def clean_old( directory="/tmp/station_beam" , max_age=432000 ) : # 5 days 
+def clean_old( directory="/tmp/station_beam" , max_age=432000 , do_remove=False ) : # 5 days 
    if not os.path.exists(directory) :
       print("INFO : directory %s does not exist -> nothing to clean up" % (directory))
       return False
@@ -29,6 +29,10 @@ def clean_old( directory="/tmp/station_beam" , max_age=432000 ) : # 5 days
 
                cmd=("rm -fr %s" % subdir)
                print("\t ---> command = %s" % (cmd))
+               if do_remove :
+                  print("\tExecuting command: %s" % (cmd))
+                  os.system(cmd)
+                  
          else :
             print("ERROR : in code could not find directory name %s in string %s -> better not to remove something important !!!" % (directory,subdir))
          
@@ -46,8 +50,13 @@ if __name__ == "__main__":
    max_age=432000
    if len(sys.argv) > 2:   
       max_age = float( sys.argv[2] )
+      
+   do_remove=False
+   if len(sys.argv) > 3:      
+      if int( sys.argv[3] ) > 0 :
+         do_remove=True
 
-   print("INFO : cleaning directory %s started at unixtime = %d , removing files and directories older than %d seconds" % (directory,time.time(),max_age))
+   print("INFO : cleaning directory %s started at unixtime = %d , removing files and directories older than %d seconds (do_remove = %s)" % (directory,time.time(),max_age,do_remove))
    
-   clean_old(directory=directory,max_age=max_age)
+   clean_old( directory=directory , max_age=max_age , do_remove=do_remove )
       
