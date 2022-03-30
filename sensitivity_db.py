@@ -914,6 +914,11 @@ def get_sensitivity_lstrange_single_pol( az_deg , za_deg , freq_mhz, lst_start, 
        print("ERROR : could not connect to database %s" % (dbname_file))
        return (None,None,None,None,None,None)              
 
+    if lst_start <= -11.99999 and lst_end >= 11.99999 :
+       print("DEBUG : lst range -12 to +12 detected -> changing to 0 - 24")
+       lst_start = 0
+       lst_end   = 24 
+
     if lst_start < 0 :
        lst_start = 24.00 + lst_start 
    
@@ -1059,6 +1064,10 @@ def get_sensitivity_radec_lstrange_single_pol( ra_deg , dec_deg , freq_mhz, lst_
     
     if glon_deg is not None and glat_deg is not None :
        (ra_deg,dec_deg) = radec2azim.gal2radec( glon_deg, glat_deg )
+
+    if lst_start <= -11.99999 and lst_end >= 11.99999 :
+       lst_start = 0
+       lst_end   = 24 
 
     if lst_start < 0 :
        lst_start = 24.00 + lst_start 
@@ -1403,17 +1412,20 @@ def get_sensitivity_radec_lstrange( ra_deg , dec_deg , freq_mhz, lst_start, lst_
                    
            lst += lst_step_h
 
-       print("DEBUG : loop over LST range finished at LST = %.4f [h] -> total_integration_time = %.8f [hours]" % (lst,total_integration_time))
+       print("DEBUG : loop over LST range finished at LST = %.4f [h] -> total_integration_time = %.8f [hours] ( n_integrations = %d )" % (lst,total_integration_time,n_integrations))
     
 #       print("DEBUG : %.8f / %.8f / %.8f vs. %d / %d / %d" % (noise_x_total,noise_y_total,noise_i_total,len(noise_x),len(noise_y),len(noise_i)))
-       noise_x_total = math.sqrt( noise_x_total ) / len(noise_x) 
-       noise_y_total = math.sqrt( noise_y_total ) / len(noise_y) 
-       noise_i_total = math.sqrt( noise_i_total ) / len(noise_i) 
+       if n_integrations > 0 :
+          noise_x_total = math.sqrt( noise_x_total ) / len(noise_x) 
+          noise_y_total = math.sqrt( noise_y_total ) / len(noise_y) 
+          noise_i_total = math.sqrt( noise_i_total ) / len(noise_i) 
    
-       if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
-          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.16f [mJy], noise_y = %.16f [mJy] , noise_i = %.16f [mJy]" % (len(noise_x),time_step,total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00))
+          if noise_x_total < 1.00 and noise_y_total < 1.00 and noise_i_total < 1.00 :   
+             print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.16f [mJy], noise_y = %.16f [mJy] , noise_i = %.16f [mJy]" % (len(noise_x),time_step,total_integration_time,noise_x_total*1000.00,noise_y_total*1000.00,noise_i_total*1000.00))
+          else :
+             print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.6f [Jy], noise_y = %.6f [Jy] , noise_i = %.6f [Jy]" % (len(noise_x),time_step,total_integration_time,noise_x_total,noise_y_total,noise_i_total))
        else :
-          print("DEBUG : expected noise in average of all (%d) x %.2f [sec] (total observing time = %.4f [hours]) images is : noise_x = %.6f [Jy], noise_y = %.6f [Jy] , noise_i = %.6f [Jy]" % (len(noise_x),time_step,total_integration_time,noise_x_total,noise_y_total,noise_i_total))
+          print("WARNING : no data above horizon found")
 
     else :
        print("WARNING : no data found")       
