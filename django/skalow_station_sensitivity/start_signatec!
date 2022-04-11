@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# source /home/msok/env/python3/bin/activate
-# export PATH=/opt/caastro/ext/anaconda3/bin/:$PATH
-export PATH="/home/bighorns/anaconda3/bin:$PATH"
-
-# cd /home/msok/github/station_beam/django/skalow_station_sensitivity
-nohup python manage.py runserver 134.7.50.180:8001 > out 2>&1 &
