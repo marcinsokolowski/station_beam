@@ -2,7 +2,7 @@
 SKA-Low station beam models, sensitivity etc
 
 # Web Interface is currently deployed at these locations :
-  - sensitivity.skalow.link or https://sensitivity.skalow.link/backup 
+  - https://sensitivity.skalow.link/ or https://sensitivity.skalow.link/backup 
     
 
 # Deployment procedure for the python package :
