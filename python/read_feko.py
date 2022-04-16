@@ -293,7 +293,8 @@ def main() :
    hdulist.writeto('new.fits',clobber=True)
 
    import fits_beam      
-   fits_beam.beammap2sin( theta_phi, beam_values_2d , x_size=512 ) 
+   outfits = feko_file.replace(".txt",".fits")
+   fits_beam.beammap2sin( theta_phi, beam_values_2d , x_size=512, out_file=outfits ) 
    
    # plt.subplot(221)
    # plt.imshow(func(grid_x, grid_y).T, extent=(0,1,0,1), origin='lower')

@@ -45,7 +45,7 @@ def gridpoint2delays(gridpoint, sweet_spot_path='MWA_sweet_spot_gridpoints.csv')
 # 
 # ZA MAP : joe out_za.txt
 # This one looks normal with za=0 in the center and increasing symetrically as we go away from center 
-def makeAZZA(npix=256,projection='SIN',azim_from_north=False,return_all=False):
+def makeAZZA(npix=256,projection='SIN',azim_from_north=False,return_all=False,force_zenith=False):
     """
     Make azimuth and zenith angle arrays for a square image of side npix
     Projection is SIN or ZEA, all-sky
@@ -54,6 +54,13 @@ def makeAZZA(npix=256,projection='SIN',azim_from_north=False,return_all=False):
     # build az and za arrays
     # use linspace to ensure we go to horizon on all sides
     z = np.linspace(-npix/2.0,npix/2.0,num=npix) # was dtype=np.float32  
+    if force_zenith :
+       z[npix/2] = 0
+       step = (npix/2) / ( (npix-1) - (npix/2) )
+       for i in range(1,(npix/2)) :
+          z[256+i] = i*step
+          z[256-i] = -i*step
+          
     x = np.empty((npix,npix),dtype=np.float32)
     y = np.empty((npix,npix),dtype=np.float32)
     for i in range(npix):

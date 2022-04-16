@@ -18,3 +18,6 @@ fi
 echo "python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=\"\""
 python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection="" 
 
+echo "python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea"
+python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea
+

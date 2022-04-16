@@ -393,7 +393,8 @@ class ApertureArray:
         for i in range(n_dipoles):
             dipole=self.dipoles[i]
             temp = port_current[:,i]    # view into big array as [Y,X]. Changing temp changes the original...
-            temp_r = numpy.dot(dipole.gain,temp[::-1])  # apply gains to get result as [X,Y]
+            temp_r = numpy.dot(dipole.gain,temp[::-1])  # apply gains to get result as [X,Y] , [::-1] - reverses the order of elements in the array, this is because Y dipoles are first in port_current array
+                                                        # and in gains X dipoles are first see comment above (with Hmmm.)
             temp[::] = temp_r[::-1] # apply back to original as
         return port_current
 
@@ -513,7 +514,8 @@ class ApertureArray:
         p_z = numpy.cos(za)
         unit_vec = numpy.array([p_x,p_y,p_z])
         baselines = numpy.array([self.xpos,self.ypos,self.zpos])
-        print("DEBUG : getIdealDelays : using z = %s" % (self.zpos))
+        if debug > 0 : 
+           print("DEBUG : getIdealDelays : using z = %s" % (self.zpos))
         delays = numpy.dot(unit_vec,baselines)
 #        print "Ideal delays in nanoseconds = %s" % ((delays/vel_light)*1e9)
 
