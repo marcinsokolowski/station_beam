@@ -1383,9 +1383,11 @@ if __name__ == "__main__":
       freq_mhz = options.frequency_mhz
       
       if options.beam_on_sun :
-         if options.unix_time is None or options.unix_time <= 0 :
-            print("ERROR : calculation of beam on Sun is required, but time is not specified -> cannot continue, please provide --uxtime or --unix_time parameter value")
-            os.sys.exit(-1)
+         if options.unix_time is None or options.unix_time <= 0 : 
+             options.unix_time = time.time()
+             print("WARNING : calculation of beam on Sun is required, but time is not specified -> using current time = %.8f" % (options.unix_time))
+#            print("ERROR : calculation of beam on Sun is required, but time is not specified -> cannot continue, please provide --uxtime or --unix_time parameter value")
+#            os.sys.exit(-1)
       
          print("INFO : calculation of beam on Sun is required")         
          ( ra, dec, az, alt, za ) = sun_position( options.unix_time )
