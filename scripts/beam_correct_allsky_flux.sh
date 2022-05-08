@@ -15,9 +15,11 @@ if [[ -n "$3" && "$3" != "-" ]]; then
    pol=$3
 fi
 
-echo "python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=\"\""
-python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection="" 
+path=`which fits_beam.py`
 
-echo "python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea"
-python ~/github/station_beam/fits_beam.py --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea
+echo "python $path --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=\"\""
+python $path --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection="" 
+
+echo "python $path --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea"
+python $path --time_azh_file=${input_file} --freq_mhz=${freq_mhz} --polarisation=${pol} --projection=zea
 
