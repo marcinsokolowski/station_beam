@@ -594,8 +594,8 @@ def get_fits_beam( azim_deg, za_deg, frequency_mhz, polarisation="X", station_na
 
    # single pixel :
 #   beam_value = current_fits_beam[0].data[int(y_pixel),int(x_pixel)]
-   x_int = int( round(x_pixel) )
-   y_int = int( round(y_pixel) )
+   x_int = int( x_pixel.round() )
+   y_int = int( y_pixel.round() )
    
    if x_int >= 0 and x_int < x_size and y_int >=0 and y_int < y_size : 
       try : 
