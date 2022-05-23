@@ -12,7 +12,7 @@ if [[ $station != "eda2" ]]; then
    beams_name=AAVS2
 fi
 
-local_dir=/media/msok/0754e982-0adb-4e33-80cc-f81dda1580c8/${station}/data/real_time_calibration/
+local_dir=`pwd`
 if [[ -n "$3" && "$3" != "-" ]]; then
    local_dir=$3
 fi
