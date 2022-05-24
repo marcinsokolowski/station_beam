@@ -2,6 +2,9 @@
 
 # generate_beam_on_sun_file.sh
 
+# add paths:
+export PATH=/home/aavs/Software/station_beam/scripts/:/home/aavs/Software/station_beam/python/:$PATH
+
 station=eda2
 if [[ -n "$1" && "$1" != "-" ]]; then
    station=$1
