@@ -36,6 +36,12 @@ if [[ -n "$4" && "$4" != "-" ]]; then
    do_copy=$4
 fi
 
+copy_output=0
+if [[ -n "$5" && "$5" != "-" ]]; then
+   copy_output=$5
+fi
+
+
 echo "####################################################################"
 echo "PARAMETERS:"
 echo "####################################################################"
@@ -43,6 +49,7 @@ echo "station = $station"
 echo "beam_name = $beam_name"
 echo "local_dir = $local_dir"
 echo "do_copy = $do_copy"
+echo "copy_output = $copy_output"
 echo "####################################################################"
 date
 
@@ -64,10 +71,15 @@ if [[ -d ${local_dir}/${dtm} ]]; then
    generate_beam_on_sun_file.sh ${beams_name} > beam_on_sun.out 2>&1
    
    # copy to server :
-   ssh ${station} "mkdir -p /tmp/msok"
+   if [[ $copy_output -gt 0 ]]; then
+      echo "INFO : copying output file beam_on_sun.txt to ${station}:/tmp/msok"
+      ssh ${station} "mkdir -p /tmp/msok"
    
-   echo "scp beam_on_sun.txt ${station}:/tmp/msok"
-   scp beam_on_sun.txt ${station}:/tmp/msok
+      echo "scp beam_on_sun.txt ${station}:/tmp/msok"   
+      scp beam_on_sun.txt ${station}:/tmp/msok
+   else
+      echo "WARNING : copying output file beam_on_sun.txt is not required"
+   fi
    
    cd -
 else
