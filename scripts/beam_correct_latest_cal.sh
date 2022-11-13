@@ -11,7 +11,7 @@ if [[ -n "$1" && "$1" != "-" ]]; then
 fi
 
 beams_name=EDA
-if [[ $station != "eda2" ]]; then
+if [[ $station != "eda2" && $station != "EDA2" ]]; then
    beams_name=AAVS2
 fi
 
