@@ -1030,6 +1030,7 @@ def read_time_azh_file( filename, options,
 
 
 def save_beam_on_sun_file( options ) :
+   print("DEBUG : save_beam_on_sun_file")
    out_file = "beam_on_sun.txt"
    if options.outfile_beam_on_sun is not None :
       out_file = options.outfile_beam_on_sun
@@ -1071,6 +1072,41 @@ def save_beam_on_sun_file( options ) :
    else :
       print("ERROR : no files in the list file %s" % (hdf5_files_list))
       os.sys.exit(-1)
+
+def save_beam_on_sun_file_ux( options ) :
+   print("DEBUG : save_beam_on_sun_file_ux")
+   out_file = "beam_on_sun.txt"
+   if options.outfile_beam_on_sun is not None :
+      out_file = options.outfile_beam_on_sun
+
+   if options.unix_time > 0 :      
+      out_f = open( options.outfile_beam_on_sun , "w" )
+      out_f.write( "# Channel SUN_BEAM_X SUN_BEAM_Y UXTIME FREQ_MHz UXTIME\n" )
+      
+      ux = options.unix_time
+      channel_id = options.channel
+      freq_mhz = float( channel_id )*(400.00/512.00)
+         
+      if freq_mhz >= 49 and freq_mhz <= 350 : # only these FITS files are available for the beam models 
+         ( ra, dec, az, alt, za ) = sun_position( ux )
+         print("INFO : ux = %.4f , channel_id = %d (%.2f MHz) -> sun position calculated (RA,DEC) = (%.4f,%.4f) [deg] , (AZ,ELEV,ZA) = (%.4f,%.4f,%.4f) [deg]" % (ux, channel_id, freq_mhz, ra, dec, az, alt, za))
+         
+         beam_x = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='X', projection=options.projection, station_name=options.station_name )   
+         beam_y = get_fits_beam( numpy.array([[az]]) , numpy.array([[za]]) , freq_mhz, polarisation='Y', projection=options.projection, station_name=options.station_name )   
+         print("\tBEAM_X = %.4f , BEAM_Y = %.4f " % (beam_x,beam_y))
+         
+         line = "%d %.4f %.4f %.4f %.4f %.6f\n" % (channel_id,beam_x,beam_y,ux,freq_mhz,options.unix_time)
+         out_f.write( line )
+      else :
+         print("WARNING : channel_id = %d , freq = %.2f MHz - skipped (missing beam model FITS files)" % (channel_id,freq_mhz))
+
+      out_f.close()   
+         
+   else :
+      print("ERROR : unix time not specified (use --unix_time=???)")
+      os.sys.exit(-1)
+
+
 
 def fits2txt( outfile, options=None ) :
    out_f = open( outfile , "w" )
@@ -1245,6 +1281,7 @@ def parse_options(idx=0):
    parser.add_option('--sun','--beam_on_sun','--sun_beam',dest="beam_on_sun",default=False,action="store_true", help="Calculate beam value on the Sun [default %default]")
    parser.add_option('--outfile_beam_on_sun',dest="outfile_beam_on_sun",default=None, help="Beam on Sun output text file in format : Channel SUN_BEAM_X SUN_BEAM_Y UXTIME FREQ_MHz HDF5-FILE [default %default]")
    parser.add_option('--infile_hdf5list',dest="infile_hdf5list",default=None, help="Input list of HDF5 files to calculate value of the beam in the direction of the Sun [default %default]")
+   parser.add_option('--ch','--chan','--channel',dest="channel",default=204, help="Channel [default %default]",type="int")
    
    # reading text file for beam correction :
    parser.add_option('--lightcurve_file' , dest="lightcurve_file",default=None, help="Lightcurve text file output from dump_pixel_radec.py")
@@ -1376,6 +1413,9 @@ if __name__ == "__main__":
       
    elif options.infile_hdf5list is not None : 
       save_beam_on_sun_file( options )
+   
+   elif options.outfile_beam_on_sun is not None and options.unix_time is not None :
+      save_beam_on_sun_file_ux( options)
       
    else :
       az = options.azim_deg
