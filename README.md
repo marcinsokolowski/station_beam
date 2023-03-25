@@ -46,6 +46,12 @@ SKA-Low station beam models, sensitivity etc
      - python ./eda_sensitivity.py --freq=160 -p None -g 1320891467  -m analytic --ra=333.607249950 --dec=-17.02661111 --outsens_file=HydA_aavs2_sensitivity --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err  --nos11 --header=HEADER  --use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg --antenna_locations=antenna_locations_aavs2.txt --projection=aee
 
 
+# Acknowledgements
+   
+   If you have been using this software or the related web interface for your research. Please, cite the paper: 
 
+     Sokolowski at al., Publications of the Astronomical Society of Australia, Volume 39, article id. e015
+
+     ( https://ui.adsabs.harvard.edu/abs/2022PASA...39...15S/abstract )
 
     
