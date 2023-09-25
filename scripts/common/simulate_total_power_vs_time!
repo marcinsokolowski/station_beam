@@ -1,0 +1,141 @@
+#!/bin/bash
+
+freq=85 # MHz 
+if [[ -n "$1" && "$1" != "-" ]]; then
+   freq=$1
+fi
+
+start_ux=`date +%s`
+if [[ -n "$2" && "$2" != "-" ]]; then
+   start_ux=$2
+fi
+
+step=300
+if [[ -n "$3" && "$3" != "-" ]]; then
+   step=$3
+fi
+
+pointing_az_deg=0
+if [[ -n "$4" && "$4" != "-" ]]; then
+   pointing_az_deg=$4
+fi
+
+pointing_za_deg=0
+if [[ -n "$5" && "$5" != "-" ]]; then
+   pointing_za_deg=$5
+fi
+
+skymodel=MODEL
+if [[ -n "$6" && "$6" != "-" ]]; then
+   skymodel=$6
+fi
+
+freq_start=${freq}
+if [[ -n "$7" && "$7" != "-" ]]; then
+   freq_start=$7
+fi
+
+freq_end=${freq}
+if [[ -n "$8" && "$8" != "-" ]]; then
+   freq_end=$8
+fi
+
+model_options=""
+if [[ -n "$9" && "$9" != "-" ]]; then
+   model_options=$9
+fi
+
+interval=86400
+if [[ -n "${10}" && "${10}" != "-" ]]; then
+   interval=${10}
+fi
+
+add_sun=1
+if [[ -n "${11}" && "${11}" != "-" ]]; then
+   add_sun=${11}
+fi
+
+beam_type=0 # 0-eda, 1-mwa
+if [[ -n "${12}" && "${12}" != "-" ]]; then
+   beam_type=${12}
+fi
+
+feko_file=
+if [[ -n "${13}" && "${13}" != "-" ]]; then
+   feko_file=${13}
+fi
+
+new_code=1
+if [[ -n "${14}" && "${14}" != "-" ]]; then
+   new_code=${14}
+fi
+
+echo "#################################################"
+echo "PARAMTERS:"
+echo "#################################################"
+echo "new_code = $new_code"
+echo "#################################################"
+
+sun_options=""
+if [[ $add_sun -gt 0 ]]; then   
+   sun_ra=`print_sun ${start_ux} -s -s -c | grep "(RA,DEC)" | awk '{print $4;}'`
+   sun_dec=`print_sun ${start_ux} -s -s -c | grep "(RA,DEC)" | awk '{print $6;}'`
+   
+   sun_options="--add_sun --sun_ra=${sun_ra} --sun_dec=${sun_dec}"
+   echo "Sun options = |${sun_options}|"
+fi
+   
+if [[ $skymodel == "ANGELICA" ]]; then
+   if [[ $beam_type -gt 0 ]]; then
+      echo "Beam type = $beam_type (MWA ?)"
+      mkdir -p mwapy/data/
+      cd mwapy/data/
+      echo "ln -s $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/mwa_full_embedded_element_pattern.h5"
+      ln -s $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/mwa_full_embedded_element_pattern.h5
+      cd -
+      
+      gsm_dir=/mnt/sdc1/mwa/gsm/
+      mwa_gridpoint=0 # WARNING : only zenith implemented now 
+      
+      # ./showspec_standalone_mwa ni_list -s ${start_ux} -i ${interval} -r ${step} -f tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.spec  -c 0 -q sun=0 -q save_map_fits=1 -q map_file_base=1530585485_ -q save_map_at_freq=-1 -q freq_start=72.96 -q freq_end=231.00 -q cache_on=0 -q site=mwa -q ant_eff=0 -q binary_input=1 -q ant_rotation_deg=0.00 -q save_pattern_map_db=0 -p /mnt/sdc1/mwa/gsm/ -q mwa_beam_type=2016 -q mwa_gridpoint=${mwa_gridpoint} -q show_sensitivity=0 -q t_amb=290 -q refraction=0/            
+      echo "showspec_standalone_mwa ni_list -s ${start_ux} -i ${interval} -r ${step} -f tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.spec  -c 0 -q sun=0 -q freq_start=${freq} -q freq_end=${freq} -q cache_on=0 -q site=mwa -q ant_eff=0 -q binary_input=1 -q ant_rotation_deg=0.00 -q save_pattern_map_db=0 -p /mnt/sdc1/mwa/gsm/ -q mwa_beam_type=2016 -q mwa_gridpoint=${mwa_gridpoint} -q show_sensitivity=0 -q t_amb=290 -q refraction=0"
+      showspec_standalone_mwa ni_list -s ${start_ux} -i ${interval} -r ${step} -f tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.spec  -c 0 -q sun=0 -q freq_start=${freq} -q freq_end=${freq} -q cache_on=0 -q site=mwa -q ant_eff=0 -q binary_input=1 -q ant_rotation_deg=0.00 -q save_pattern_map_db=0 -p /mnt/sdc1/mwa/gsm/ -q mwa_beam_type=2016 -q mwa_gridpoint=${mwa_gridpoint} -q show_sensitivity=0 -q t_amb=290 -q refraction=0
+
+      awk '{print $3" "$2" "$4;}' tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.plot | sort -n > ${ux}_${freq}_tsky_vs_uxtime_ANGELICA.txt
+      # awk '{print $3" "$2" "$4;}' ${ux}_${freq_end}.plot | sort -n > ${ux}_${freq_end}_tsky_vs_uxtime_ANGELICA.txt      
+      # merge_text_files.py ${ux}_${freq_start}_tsky_vs_uxtime_ANGELICA.txt ${ux}_${freq_end}_tsky_vs_uxtime_ANGELICA.txt |  awk '{print $1" "($2+$5)/2.00" "$3;}' > ${outfile}
+      awk '{print $3" "$2" "$4;}' tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.plot > tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out
+   else
+      echo "eda_model_angelica! ${freq} ${start_ux} ${step} tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out ${freq_start} ${freq_end}"
+      eda_model_angelica! ${freq} ${start_ux} ${step} tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out ${freq_start} ${freq_end}
+   fi
+else
+   echo "DEBUG : trying to use the new code in ~/github/station_beam/"
+      
+   export PATH=~/github/station_beam/:$PATH
+
+   # see example :  cat /raid/data/aavs/aavs2/simulations/20210531_140000/total_power_160_160_MHz_MODEL/TEST/doit!
+   # python ~/github/station_beam/primarybeammap_eda.py -f 160 --step=60 --unixtime=1622440860 --outfile=tant_vs_uxtime_1622440860_60sec_160MHz.out --za=0.00 --az=0.00 --interval=86340 --add_sun --sun_ra=68.0655 --sun_dec=21.9086 --plottype=none --antenna_list_file=/home/bighorns/aavs-calibration/config/aavs2/antenna_locations_20191202.txt --antlist_start_column=1       
+   echo "python ~/github/station_beam/python/primarybeammap_eda.py -f ${freq} --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg}  --interval=${interval} ${sun_options} ${model_options}"
+   python ~/github/station_beam/python/primarybeammap_eda.py -f ${freq} --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg}  --interval=${interval} ${sun_options} ${model_options}
+
+#   else
+#      if [[ $beam_type -gt 0 ]]; then
+#         echo "ln -s $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/mwa_full_embedded_element_pattern.h5"
+#         ln -s $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/mwa_full_embedded_element_pattern.h5
+#
+#         echo "python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_tant_test.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} ${sun_options} ${model_options}"
+#         python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/primarybeammap_tant_test.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} ${sun_options} ${model_options} 
+#      else
+#         if [[ -n $feko_file ]]; then
+#            echo "python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/eda/primarybeammap_eda.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} --feko_file=${feko_file} ${sun_options} ${model_options}"
+#            python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/eda/primarybeammap_eda.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} --feko_file=${feko_file} ${sun_options} ${model_options} 
+#         else   
+#            echo "python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/eda/primarybeammap_eda.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} ${sun_options} ${model_options}"
+#            python $AAVS_PATH/simulations/FEKO/beam_models/MWA_EE/MWAtools_pb/eda/primarybeammap_eda.py  -f ${freq}  --step=${step} --unixtime=${start_ux} --outfile=tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out --za=${pointing_za_deg} --az=${pointing_az_deg} --interval=${interval} ${sun_options} ${model_options} 
+#         fi
+#      fi
+#   fi
+fi
+
+awk '{print $3" "$2;}' tant_vs_uxtime_${start_ux}_${step}sec_${freq}MHz.out | sort -n > tant_vs_lst_${start_ux}_${step}sec_${freq}MHz.out
