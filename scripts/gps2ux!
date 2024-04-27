@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# http://stackoverflow.com/questions/20521750/ticks-between-unix-epoch-and-gps-epoch
+# no leap seconds taken into account !!!
+
+gps=$1
+# ux=$(($gps+315964800))
+ux=$(($gps+315964782))
+echo $ux
