@@ -9,7 +9,6 @@ ar_file=20240501T101103_ch290.ar
 if [[ -n "$1" && "$1" != "-" ]]; then
    ar_file="$1"
 fi
-txt_file=${ar_file%%ar}txt
 
 pulse_start_bin=0
 if [[ -n "$2" && "$2" != "-" ]]; then
@@ -31,13 +30,13 @@ echo "#########################################"
 
 
 pdv -FTtp ${ar_file} > ascii_archive.txt
-awk '{if(NR>1){print $3" "$4;}}' ascii_archive.txt > pulse_profile.txt
 
 echo "python $fp/get_sigma_clip_manual.py $pulse_start_bin $pulse_end_bin"
 info=$(python $fp/get_sigma_clip_manual.py $pulse_start_bin $pulse_end_bin)
 std_vcs=$(echo $info | awk '{print $1}')
 off_pts=$(echo $info | awk '{print $2}')
 prof_sum=$(echo $info | awk '{print $3}')
+
 metadata=$(vap -c "name nbin mjd freq period length bw" -n ${ar_file} 2>/dev/null)
 src=$(echo $metadata | awk '{print $2}')
 bins=$(echo $metadata | awk '{print $3}')
@@ -48,6 +47,10 @@ inttime=$(echo $metadata | awk '{print $7}')
 bw_MHz=$(echo $metadata | awk '{print $8}')
 bw=$(echo "$bw_MHz*1000000" | bc)
 
+pulse_profile_file=${src}_${ar_file%%.ar}_pulse_profile.txt
+sens_file=${src}_${ar_file%%.ar}_sensitivity.out
+awk '{if(NR>1){print $3" "$4;}}' ascii_archive.txt > ${pulse_profile_file}
+
 echo ""python $fp/mjd_uxt.py $mjd
 uxt=$(python $fp/mjd_uxt.py $mjd)
 
@@ -55,7 +58,7 @@ psrinfo=$(psrcat -c "RAJD DECJD" -o short -nohead -nonumber $src)
 rajd=$(echo $psrinfo | awk '{print $1}')
 decjd=$(echo $psrinfo | awk '{print $2}')
 
-echo "python ~/github/station_beam/python/eda_sensitivity.py --bandwidth $bw --frequency $freq --unixtime $uxt --ra=$rajd --dec=$decjd --inttime=$inttime --outsens_file=uxtime${uxt}_eda2_sensitivity --antenna_locations=${HOME}/aavs-calibration/config/eda2/antenna_locations.txt --outfile_mode=a  --trcv_type=trcv_from_skymodel_with_err --nos11 --header=HEADER --use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2 -p None -m analytic > ${src}_sensitivity.out 2>&1"
+echo "python ~/github/station_beam/python/eda_sensitivity.py --bandwidth $bw --frequency $freq --unixtime $uxt --ra=$rajd --dec=$decjd --inttime=$inttime --outsens_file=uxtime${uxt}_eda2_sensitivity --antenna_locations=${HOME}/aavs-calibration/config/eda2/antenna_locations.txt --outfile_mode=a  --trcv_type=trcv_from_skymodel_with_err --nos11 --header=HEADER --use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2 -p None -m analytic > ${sens_file} 2>&1"
 python ~/github/station_beam/python/eda_sensitivity.py \
          --bandwidth $bw \
          --frequency $freq \
@@ -75,9 +78,9 @@ python ~/github/station_beam/python/eda_sensitivity.py \
          --trcv_type=trcv_eda2 \
          -p None \
          -m analytic \
-         > ${src}_sensitivity.out 2>&1
+         > ${sens_file} 2>&1
 
-lastline=$(grep 'Stokes I images' ${src}_sensitivity.out)
+lastline=$(grep 'Stokes I images' ${sens_file})
 std_sim=$(echo $lastline | awk '{print $8}')
 
 #Debugging
@@ -103,7 +106,7 @@ python ${fp}/flux_calc.py $std_vcs $std_sim $bins $off_pts $period $prof_sum
 
 
 echo "MSOK's calculation in root"
-echo "plot_psr_profile.C(\"pulse_profile.txt\",true,\"pulse_gauss\",0,1.0,$std_sim)"
+echo "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"pulse_gauss\",0,1.0,$std_sim)"
 echo "WARNING : modify noise range manually !!!"
 cp ~/github/station_beam/scripts/psrflux/plot_psr_profile.C .
-root -l "plot_psr_profile.C(\"pulse_profile.txt\",true,\"pulse_gauss\",0,1.0,$std_sim)"
+root -l "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"pulse_gauss\",0,1.0,$std_sim)"
