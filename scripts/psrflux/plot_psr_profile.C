@@ -336,8 +336,8 @@ TGraphErrors* DrawGraph( Double_t* x_values, Double_t* y_values, int numVal,
 
          par[0] = 0.00; // offset (mean off-pulse)
          par[1] = phase_max;
-         par[2] = max_value;
-//         par[1] = 0.68; // t_peak  0.53 for the MWA data
+         par[2] = int(max_value);
+//         par[1] = 0.75; // t_peak  0.53 for the MWA data
 //         par[2] = 8; // peak flux 
          par[3] = 0.112; // sigma 
          printf("DEBUG : initial values for pulse_gauss_only fitting : %.4f, %.4f, %.4f, %.4f\n",par[0],par[1],par[2],par[3]);
