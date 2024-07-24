@@ -103,7 +103,7 @@ python ${fp}/flux_calc.py $std_vcs $std_sim $bins $off_pts $period $prof_sum
 
 
 echo "MSOK's calculation in root"
-echo ""plot_psr_profile.C(\"pulse_profile.txt\",true,\"pulse_gauss\",0,1.0,$std_sim)
+echo "plot_psr_profile.C(\"pulse_profile.txt\",true,\"pulse_gauss\",0,1.0,$std_sim)"
 echo "WARNING : modify noise range manually !!!"
 cp ~/github/station_beam/scripts/psrflux/plot_psr_profile.C .
 root -l "plot_psr_profile.C(\"pulse_profile.txt\",true,\"pulse_gauss\",0,1.0,$std_sim)"
