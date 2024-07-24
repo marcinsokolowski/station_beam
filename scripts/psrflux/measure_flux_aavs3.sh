@@ -25,6 +25,22 @@ if [[ -n "$4" && "$4" != "-" ]]; then
    options="$4"
 fi
 
+fitted_func="pulse_gauss_only"
+if [[ -n "$5" && "$5" != "-" ]]; then
+   fitted_func="$5"
+fi
+
+noise_start=0.00
+if [[ -n "$6" && "$6" != "-" ]]; then
+   noise_start=$6
+fi
+
+noise_end=1.00
+if [[ -n "$7" && "$7" != "-" ]]; then
+   noise_end=$7
+fi
+
+
 echo "#########################################"
 echo "PARAMETERS:"
 echo "#########################################"
@@ -32,6 +48,8 @@ echo "ar_file = $ar_file"
 echo "pulse_start_bin = $pulse_start_bin"
 echo "pulse_end_bin = $pulse_end_bin"
 echo "options = $options"
+echo "fitted_func = $fitted_func"
+echo "Noise range : $noise_start - $noise_end"
 echo "#########################################"
 
 
@@ -67,6 +85,7 @@ decjd=$(echo $psrinfo | awk '{print $2}')
 echo "cp ${HOME}/aavs-calibration/config/aavs3/antenna_locations.txt ."
 cp ${HOME}/aavs-calibration/config/aavs3/antenna_locations.txt .
 
+echo "python ~/github/station_beam/python/eda_sensitivity.py --bandwidth $bw --frequency $freq --unixtime $uxt --ra=$rajd --dec=$decjd --inttime=$inttime --outsens_file=uxtime${uxt}_aavs3_sensitivity --antenna_locations=${HOME}/aavs-calibration/config/aavs3/antenna_locations.txt --outfile_mode=a --trcv_type=trcv_from_skymodel_with_err --nos11 --header=HEADER --use_beam_fits --station_name=SKALA4 --size=512 --trcv_type=trcv_aavs2_vs_za_deg -p None -m analytic ${options} > ${sens_file} 2>&1"
 python ~/github/station_beam/python/eda_sensitivity.py \
          --bandwidth $bw \
          --frequency $freq \
@@ -114,7 +133,15 @@ python ${fp}/flux_calc.py $std_vcs $std_sim $bins $off_pts $period $prof_sum
 
 
 echo "MSOK's calculation in root"
-echo "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"pulse_gauss\",0,1.0,$std_sim)"
+echo "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"${fitted_func}\",0,1.0,$std_sim)"
 echo "WARNING : modify noise range manually !!!"
-cp ~/github/station_beam/scripts/psrflux/plot_psr_profile.C .
-root -l -q -b "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"pulse_gauss\",0,1.0,$std_sim)"
+
+if [[ ! -s plot_psr_profile.C ]]; then
+   echo "cp ~/github/station_beam/scripts/psrflux/plot_psr_profile.C ."
+   cp ~/github/station_beam/scripts/psrflux/plot_psr_profile.C .
+else
+   echo "INFO : file plot_psr_profile.C found - no need to overwrite"
+fi   
+
+mkdir -p images/
+root -l -q -b "plot_psr_profile.C(\"${pulse_profile_file}\",true,\"${fitted_func}\",${noise_start},${noise_end},$std_sim)"
