@@ -107,7 +107,7 @@ python ~/github/station_beam/python/eda_sensitivity.py \
 sefd_x=`grep SEFD_XX ${sens_file} | awk '{print $25;}'`
 sefd_y=`grep SEFD_YY ${sens_file} | awk '{print $25;}'`
 sefd_i=`echo $sefd_x" "$sefd_y | awk '{print 0.5*sqrt($1*$1+$2*$2);}'`
-echo "$channel $sefd_x $sefd_y $sefd_i" > sefd_simul.txt
+echo "$channel $sefd_x $sefd_y $sefd_i" >> sefd_simul.txt
 
 lastline=$(grep 'Stokes I images' ${sens_file})
 std_sim=$(echo $lastline | awk '{print $8}')
