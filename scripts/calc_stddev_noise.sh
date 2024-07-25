@@ -12,6 +12,14 @@ if [[ -n "$2" && "$2" != "-" ]]; then
    ar_file=$2
 fi
 
+echo "#################################"
+echo "PARAMETERS:"
+echo "#################################"
+echo "station = $station"
+echo "ar_file = $ar_file"
+echo "#################################"
+
+
 pdv -FTtp ${2} > ascii_archive.txt
 # info=$(python ${fp}/get_sigma_clip_manual.py $3 $4)
 # std_vcs=$(echo $info | awk '{print $1}')
