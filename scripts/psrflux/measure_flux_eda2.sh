@@ -69,6 +69,7 @@ period=$(echo $metadata | awk '{print $6}')
 inttime=$(echo $metadata | awk '{print $7}')
 bw_MHz=$(echo $metadata | awk '{print $8}')
 bw=$(echo "$bw_MHz*1000000" | bc)
+channel=$(echo $freq | awk '{printf("%d\n",int($1/(400.00/512.00)));}')
 
 pulse_profile_file=${src}_${ar_file%%.ar}_pulse_profile.txt
 sens_file=${src}_${ar_file%%.ar}_sensitivity.out
@@ -102,6 +103,11 @@ python ~/github/station_beam/python/eda_sensitivity.py \
          -p None \
          -m analytic ${options} \
          > ${sens_file} 2>&1
+
+sefd_x=`grep SEFD_XX ${sens_file} | awk '{print $25;}'`
+sefd_y=`grep SEFD_YY ${sens_file} | awk '{print $25;}'`
+sefd_i=`echo $sefd_x" "$sefd_y | awk '{print 0.5*sqrt($1*$1+$2*$2);}'`
+echo "$channel $sefd_x $sefd_y $sefd_i" > sefd_simul.txt
 
 lastline=$(grep 'Stokes I images' ${sens_file})
 std_sim=$(echo $lastline | awk '{print $8}')
