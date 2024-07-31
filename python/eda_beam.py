@@ -32,7 +32,8 @@ n_dipoles_eda=256
 
 def read_antenna_list( filename, 
                        start_column=1, 
-                       overwrite=False # overwrite default EDA1 antenna list 
+                       overwrite=False, # overwrite default EDA1 antenna list 
+                       flagged_antennas=None
                      ):
    file = open( filename , 'r' )
    data = file.readlines()
@@ -47,6 +48,11 @@ def read_antenna_list( filename,
 
        if line[0] == '#' :
           continue
+          
+       # use count as antenna index as it should be the same !
+#       if flagged_antennas is not None and count in flagged_antennas :
+#          print("WARNING : antenna %d is flagged -> ignored")
+#          continue   
 
        if line[0] != "#" :
            x = float(words[0+start_column])
@@ -59,8 +65,24 @@ def read_antenna_list( filename,
            y_arr.append(y)
            z_arr.append(z)
            count = count + 1
-
+                      
    file.close()
+   
+   # skip flagged antennas if actually provided :
+   if flagged_antennas is not None :
+      x_arr_tmp = []
+      y_arr_tmp = []
+      z_arr_tmp = []
+      
+      for index in range(0,len(x_arr)) :
+         if index not in flagged_antennas :
+            x_arr_tmp.append( x_arr[index] )
+            y_arr_tmp.append( y_arr[index] )
+            z_arr_tmp.append( z_arr[index] )
+            
+      x_arr=numpy.array(x_arr_tmp)
+      y_arr=numpy.array(y_arr_tmp)
+      z_arr=numpy.array(z_arr_tmp)            
 
    print("Read %d / %d / %d of x, y, z positions from file %s" % (len(x_arr),len(y_arr),len(z_arr),filename))
    
@@ -72,9 +94,11 @@ def read_antenna_list( filename,
       
       xs = numpy.copy( x_arr )
       ys = numpy.copy( y_arr )
-      n_dipoles_eda = count     
-
-   return (x_arr,y_arr,z_arr,count)
+      n_dipoles_eda = len(xs)
+      
+      print("INFO : n_dipoles_eda set to %d" % (n_dipoles_eda))
+      
+   return (x_arr,y_arr,z_arr,len(x_arr))
 
 
 
@@ -372,10 +396,14 @@ class ApertureArray:
             self.zpos = numpy.array(zpos)
             print("DEBUG : Initialised array with zpos != None : \n%s" % (self.zpos))
 
-    def getPortCurrents(self,freq=155e6,delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)):
+    def getPortCurrents(self,freq=155e6,delays=None):
         """
         Return the port currents on a tile given the freq (Hz) and delays (in units of the DQ)
         """
+        if delays is None :           
+           printf("INFO : delays = None -> initialising in getPortCurrents")
+           delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)
+        
         n_dipoles=numpy.size(delays)/2
         lam = vel_light/freq
         phases = -2.0*numpy.pi*delays*(DQ/lam) # delays were calculated in seconds/DQ (steps of beamformer) it was specifically for the EDA1, now DQ could be set to 1 !
@@ -390,6 +418,7 @@ class ApertureArray:
         # apply electronic gains, including crosstalk
         # select out views of the big array and apply gains...
         # in port currents, Y dipoles are first, but in gains X dipoles are first. Hmmm.
+        print("DEBUG : n_dipoles = %d vs. n_dipoles_eda = %d" % (n_dipoles,n_dipoles_eda))
         for i in range(n_dipoles):
             dipole=self.dipoles[i]
             temp = port_current[:,i]    # view into big array as [Y,X]. Changing temp changes the original...
@@ -398,7 +427,7 @@ class ApertureArray:
             temp[::] = temp_r[::-1] # apply back to original as
         return port_current
 
-    def getArrayFactor(self,az,za,freq=155e6,delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)):
+    def getArrayFactor(self,az,za,freq=155e6,delays=None):
         """
         Get the scalar array factor response of the array for a given
         freq (Hz) and delay settings.
@@ -408,6 +437,10 @@ class ApertureArray:
         respectively.
         Result are in same coords as the az/za input arrays
         """
+        if delays is None :
+           print("INFO : delays = None -> initialising in getArrayFactor")
+           delays=numpy.zeros((2,n_dipoles_eda),dtype=numpy.float32)
+        
         lam = vel_light/freq
         port_current = self.getPortCurrents(freq,delays)
 
@@ -1027,6 +1060,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
     # delays_0_75_ideal = delays_0_75_ideal*1.05
     
 #    delays_0_75_ideal = tile.getIdealDelays(0,numpy.pi*float(6.81)/float(180))/DQ
+    print("DEBUG : get_eda_beam n_dipoles_eda = %d" % (n_dipoles_eda))
     delays_0_75_quantised = numpy.round(delays_0_75_ideal)
     delays1=numpy.array([[0]*n_dipoles_eda,[0]*n_dipoles_eda],dtype=numpy.float32)
     za_delays = {'0':delays1*0,'15':numpy.array([delays_0_75_ideal,delays_0_75_ideal])}
@@ -1054,6 +1088,7 @@ def get_eda_beam( za, az, pointing_za_deg=0.00, pointing_az_deg=0.00, resolution
             logger.info("Plotting visbility response for two identical tiles ZA "+str(za_delay))
             plotVisResponse(j,freq,za_delay)
 
+    print("DEBUG1 ???")
     myza='15' # set to 0 for zenith  '15' to use pointing as specified by parameters
     za_delay = za_delays[myza]
     j = tile.getResponse(az,za,freq,za_delay)

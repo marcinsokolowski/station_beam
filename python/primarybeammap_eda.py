@@ -319,6 +319,8 @@ def main():
         print("\tys = %s" % (ypos_list))
         print()
         print("\tzs = %s" % (zpos_list))
+    else :
+       print("WARNING : antenna positions not provided -> not read from file")
              
     # calculate receiver temperature :
     T_rcv = options.T_rcv

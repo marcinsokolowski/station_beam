@@ -82,7 +82,7 @@ psrinfo=$(psrcat -c "RAJD DECJD" -o short -nohead -nonumber $src)
 rajd=$(echo $psrinfo | awk '{print $1}')
 decjd=$(echo $psrinfo | awk '{print $2}')
 
-echo "python ~/github/station_beam/python/eda_sensitivity.py --bandwidth $bw --frequency $freq --unixtime $uxt --ra=$rajd --dec=$decjd --inttime=$inttime --outsens_file=uxtime${uxt}_eda2_sensitivity --antenna_locations=${HOME}/aavs-calibration/config/eda2/antenna_locations.txt --outfile_mode=a  --trcv_type=trcv_from_skymodel_with_err --nos11 --header=HEADER --use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2 -p None -m analytic > ${sens_file} 2>&1"
+echo "python ~/github/station_beam/python/eda_sensitivity.py --bandwidth $bw --frequency $freq --unixtime $uxt --ra=$rajd --dec=$decjd --inttime=$inttime --outsens_file=uxtime${uxt}_eda2_sensitivity --antenna_locations=${HOME}/aavs-calibration/config/eda2/antenna_locations.txt --outfile_mode=a  --trcv_type=trcv_from_skymodel_with_err --nos11 --header=HEADER --use_beam_fits --station_name=EDA --size=512 --trcv_type=trcv_eda2 -p None -m analytic ${options} > ${sens_file} 2>&1"
 python ~/github/station_beam/python/eda_sensitivity.py \
          --bandwidth $bw \
          --frequency $freq \

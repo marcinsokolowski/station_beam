@@ -208,6 +208,9 @@ def main():
     # antenna locations file :
     # read_antenna_list
     parser.add_option('--antfile','--antenna_locations',dest="antenna_locations",default=None,help="Read antenna locations and flags from this file [default %default]")
+    
+    # list of flagged antennas:
+    parser.add_option('--flag_antennas','--flagged_antennas','--flag_ants',dest="flagged_antennas",default=None, help="List of flagged antennas using CASA/instr_config.txt 0-based indexing [default %default]") 
 
     # parameters for sensitivity calculations :
     parser.add_option('--inttime', dest='inttime', default=1800, type=float, help='Integration time to calculate sensitivity for [default % sec]')
@@ -230,9 +233,14 @@ def main():
     elif options.trcv_fit_lightcurve_20160703_cubic :
        options.trcv_type="lightcurve20160703_cubic"
 
+    flagged_antennas=None
+    if options.flagged_antennas is not None :
+       flagged_antennas=options.flagged_antennas.split(",")
+       flagged_antennas=map(int,flagged_antennas)
+       
     ant_count = None
     if options.antenna_locations is not None :
-       (xs,ys,zs,ant_count) = read_antenna_list( options.antenna_locations , overwrite=True )
+       (xs,ys,zs,ant_count) = read_antenna_list( options.antenna_locations , overwrite=True, flagged_antennas=flagged_antennas )
        print("Read %d antenna positions from file %s ( starting with (%.2f,%.2f,%.2f) and ending with (%.2f,%.2f,%.2f))" % (ant_count,options.antenna_locations,xs[0],ys[0],zs[0],xs[ant_count-1],ys[ant_count-1],zs[ant_count-1]))
    
     if options.unixtime_start is not None :
