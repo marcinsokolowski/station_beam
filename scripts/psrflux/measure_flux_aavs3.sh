@@ -70,7 +70,7 @@ period=$(echo $metadata | awk '{print $6}')
 inttime=$(echo $metadata | awk '{print $7}')
 bw_MHz=$(echo $metadata | awk '{print $8}')
 bw=$(echo "$bw_MHz*1000000" | bc)
-channel=$(echo $freq | awk '{printf("%d\n",int($1/(400.00/512.00)));}')
+channel=$(echo $freq | awk '{printf("%d\n",int($1/(400.00/512.00)+0.5));}')
 
 pulse_profile_file=${src}_${ar_file%%.ar}_pulse_profile.txt
 sens_file=${src}_${ar_file%%.ar}_sensitivity.out
