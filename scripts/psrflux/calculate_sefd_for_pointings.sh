@@ -13,15 +13,23 @@ if [[ -n "$2" && "$2" != "-" ]]; then
    outfile="$2"
 fi
 
+inttime=3600
+if [[ -n "$3" && "$3" != "-" ]]; then
+   inttime=$3
+fi
+
+bw=50
+if [[ -n "$4" && "$4" != "-" ]]; then
+   bw=$4
+fi
+
+
 if [[ -s ${outfile} ]]; then
    echo "mv ${outfile} ${outfile}.backup"
    mv ${outfile} ${outfile}.backup
 fi
 
 options=""
-
-bw=50
-inttime=3600
 
 while read line
 do
