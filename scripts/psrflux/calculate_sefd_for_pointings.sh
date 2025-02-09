@@ -64,9 +64,10 @@ do
          --station_name=EDA \
          --size=512 \
          --trcv_type=trcv_eda2 \
-         -p None \
-         -m analytic ${options} \
-         > ${sens_file} 2>&1
+         -p None -m analytic ${options} > ${sens_file} 2>&1
+#         --plottype None \ # was all vs. None
+#         -m analytic ${options} \
+#         > ${sens_file} 2>&1
 
     sefd_x=`tail -6 ${sens_file} | grep SEFD_XX | awk '{print $25;}'`
     sefd_y=`tail -6 ${sens_file} | grep SEFD_YY | awk '{print $25;}'`
