@@ -27,7 +27,7 @@ def parse_options(idx=0):
 def imaging_sensitivity( sefd_station, bandwidth_hz=30720000, inttime_sec=120, antnum=512, efficiency=1.00 ) :
     image_noise = -1000
     if antnum >= 2 :
-       image_noise = (efficiency * sefd_station) / math.sqrt(bandwidth_hz * inttime_sec * antnum * (antnum - 1))
+       image_noise = (efficiency * sefd_station) / math.sqrt(bandwidth_hz * inttime_sec * antnum * (antnum - 1) * 0.5 ) # missing factor of 1/2 added from number of baselines, see Tools of Radio Astronomy page 228
     else :
        image_noise = (efficiency * sefd_station) / math.sqrt(bandwidth_hz * inttime_sec )
        
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 #    if len(sys.argv) >= 3 :
 #       inttime = float( sys.argv[2] )
        
-    bw_chan=(400.00/512.00)*(32.00/27.00) # single channel :    
+    bw_chan=(400.00/512.00) # *(32.00/27.00) # single channel :    
     n_chan=1
     if len(sys.argv) >= 3 :
        n_chan = int( sys.argv[2] )
@@ -120,6 +120,7 @@ if __name__ == "__main__":
     print("Station SEFD = %.2f m^2/K" % (sefd_station))
  
     bw_hz = bw*1000000.00
+    print("DEBUG : bw_hz = %.6f [Hz]" % (bw_hz))
     
     for n_sigma in (3,5,8,10) :
        outname = "sens_nchan%d_freq%.2fMHz_%.1fsigma.txt" % (n_chan,freq_mhz,n_sigma)
@@ -129,11 +130,13 @@ if __name__ == "__main__":
        line = "# INTTIME[ms] Fluence_limit[Jy ms] FRBs/day FRBs/year Sens[mJy] N_sigma\n"
        out_f.write( line )
     
-       for inttime_ms in (1,10,50,100,150,200,300,500,762,1000,2000,2286,3000,4000,5000,10000) : 
+#       for inttime_ms in (1,10,50,100,150,200,300,500,762,1000,2000,2286,3000,4000,5000,10000) : 
+       for inttime_ms in (1,10) :
           inttime_sec = inttime_ms/1000.00
               
           sens_jy = sefd_station / math.sqrt( bw_hz * inttime_sec * options.n_polarisations )
           sens_mjy = sens_jy*1000.00
+          print("DEBUG : sens_jy = %.8f [Jy]" % (sens_jy))
        
 #       n_sigma=3
 #       limit_ms_3sigma = sens_jy*n_sigma*inttime_sec
